@@ -46,18 +46,24 @@ class Session {
     // TODO: make it configurable in the url
     this.devMode = true
 
-    //set up gateway
-    let xhr = new XMLHttpRequest()
+    // set up gateway
+    const xhr = new XMLHttpRequest()
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
-        let data = JSON.parse(xhr.response)
-        let addr = data['Addr']
-        let port = data['Port']
-        let websocket = new WebSocket(`ws://${addr}:${port}/register`);
+        interface InitResponse {
+          /** Address for websocket */
+          Addr: string,
+          /** Port for websocket */
+          Port: string,
+        }
+        const data = JSON.parse(xhr.response) as InitResponse
+        const addr = data.Addr
+        const port = data.Port
+        const websocket = new WebSocket(`ws://${addr}:${port}/register`)
 
         websocket.onmessage = (e) => {
           if (typeof e.data === 'string') {
-            let response: AnyAction = JSON.parse(e.data)
+            const response: AnyAction = JSON.parse(e.data)
             this.actionLog.push(response)
           }
         }
@@ -70,11 +76,11 @@ class Session {
     /* sync on every action */
     this.middleware = () => (
       next: Dispatch
-    ) => action => {
-        if (this.websocket) {
-          this.websocket.send(JSON.stringify(action))
-        }
-        return next(action)
+    ) => (action) => {
+      if (this.websocket) {
+        this.websocket.send(JSON.stringify(action))
+      }
+      return next(action)
     }
 
     this.store = configureStore({}, this.devMode, this.middleware)
