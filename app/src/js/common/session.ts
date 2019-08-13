@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Store } from 'redux'
+import { AnyAction, Dispatch, Middleware, Store } from 'redux'
 import { StateWithHistory } from 'redux-undo'
 import * as THREE from 'three'
 import * as types from '../action/types'
@@ -27,8 +27,14 @@ class Session {
   public window?: Window
   /** Dev mode */
   public devMode: boolean
-  /** Connection status */
+  /** Connection status for saving */
   public status: ConnectionStatus
+  /** Websocket connection */
+  public websocket?: WebSocket
+  /** Timestamped action log */
+  public actionLog: AnyAction[]
+  /** Middleware to use */
+  public middleware: Middleware
 
   /**
    * no-op for state initialization
@@ -39,8 +45,41 @@ class Session {
     this.itemType = ''
     // TODO: make it configurable in the url
     this.devMode = true
-    this.store = configureStore({}, this.devMode)
+
+    //set up gateway
+    let xhr = new XMLHttpRequest()
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        let data = JSON.parse(xhr.response)
+        let addr = data['Addr']
+        let port = data['Port']
+        let websocket = new WebSocket(`ws://${addr}:${port}/register`);
+
+        websocket.onmessage = (e) => {
+          if (typeof e.data === 'string') {
+            let response: AnyAction = JSON.parse(e.data)
+            this.actionLog.push(response)
+          }
+        }
+        this.websocket = websocket
+      }
+    }
+    xhr.open('GET', './websocketInfo')
+    xhr.send()
+
+    /* sync on every action */
+    this.middleware = () => (
+      next: Dispatch
+    ) => action => {
+        if (this.websocket) {
+          this.websocket.send(JSON.stringify(action))
+        }
+        return next(action)
+    }
+
+    this.store = configureStore({}, this.devMode, this.middleware)
     this.status = ConnectionStatus.UNSAVED
+    this.actionLog = []
   }
 
   /**

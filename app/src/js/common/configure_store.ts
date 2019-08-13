@@ -1,4 +1,4 @@
-import { createStore, Reducer, Store } from 'redux'
+import { applyMiddleware, createStore, Middleware, Reducer, Store } from 'redux'
 import undoable, { includeAction, StateWithHistory } from 'redux-undo'
 import {
 // SAT specific actions
@@ -21,14 +21,15 @@ import { reducer } from './reducer'
  */
 export function configureStore (
     initialState: Partial<State>,
-    devMode: boolean = false): Store<StateWithHistory<State>> {
+    devMode: boolean = false,
+    middleware: Middleware): Store<StateWithHistory<State>> {
   const initialHistory = {
     past: Array<State>(),
     present: makeState(initialState),
     future: Array<State>()
   }
 
-  const undoableReduer: Reducer<StateWithHistory<State>> = undoable(reducer, {
+  const undoableReducer: Reducer<StateWithHistory<State>> = undoable(reducer, {
     limit: 20, // add a limit to history
     filter: includeAction([
       // undoable actions
@@ -42,5 +43,9 @@ export function configureStore (
     debug: devMode
   })
 
-  return createStore(undoableReduer, initialHistory)
+  return createStore(
+    undoableReducer,
+    initialHistory,
+    applyMiddleware(middleware)
+  )
 }
