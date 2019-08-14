@@ -31,6 +31,10 @@ func actionEchoer(conn *websocket.Conn) {
       Action: msg,
       Time: timeStamp,
     }
-    conn.WriteJSON(&actionResponse)
+    err := conn.WriteJSON(&actionResponse)
+    if err != nil {
+      log.Println("Websocket WrtieJSON Error", err)
+      conn.Close()
+    }
   }
 }
