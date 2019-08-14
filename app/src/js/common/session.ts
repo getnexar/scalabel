@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { AnyAction, Dispatch, Middleware, Store } from 'redux'
+import { Dispatch, Middleware, Store } from 'redux'
 import { StateWithHistory } from 'redux-undo'
 import * as THREE from 'three'
 import * as types from '../action/types'
@@ -32,7 +32,7 @@ class Session {
   /** Websocket connection */
   public websocket?: WebSocket
   /** Timestamped action log */
-  public actionLog: AnyAction[]
+  public actionLog: types.TimestampedAction[]
   /** Middleware to use */
   public middleware: Middleware
 
@@ -63,21 +63,21 @@ class Session {
 
         websocket.onmessage = (e) => {
           if (typeof e.data === 'string') {
-            const response: AnyAction = JSON.parse(e.data)
+            const response: types.TimestampedAction = JSON.parse(e.data)
             this.actionLog.push(response)
           }
         }
         this.websocket = websocket
       }
     }
-    xhr.open('GET', './websocketInfo')
+    xhr.open('GET', './gateway')
     xhr.send()
 
     /* sync on every action */
     this.middleware = () => (
       next: Dispatch
     ) => (action) => {
-      if (this.websocket) {
+      if (this.websocket && this.websocket.readyState === 1) {
         this.websocket.send(JSON.stringify(action))
       }
       return next(action)

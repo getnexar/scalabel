@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -1023,13 +1024,14 @@ func formValidation(w http.ResponseWriter, r *http.Request) error {
 }
 
 func gatewayHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Giving gateway info")
 	if r.Method != "GET" {
 		http.NotFound(w, r)
 		return
 	}
 	gate := GatewayInfo{
 		Addr: env.ModelGateHost,
-		Port: env.ModelGatePort,
+		Port: strconv.Itoa(env.Port),
 	}
 	gateJson, err := json.Marshal(gate)
 	if err != nil {
@@ -1039,7 +1041,25 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Error.Println(err)
 	}
+}
 
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Registering websocket")
+
+	upg := websocket.Upgrader{ReadBufferSize: 1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	conn, err := upg.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Register Server Error:", err)
+	}
+
+	log.Println("Register succeded; starting echoer")
+
+	go actionEchoer(conn)
 }
 
 // Handles the flag value of User Management System

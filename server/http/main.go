@@ -207,8 +207,12 @@ func main() {
 	http.HandleFunc("/label3d", WrapHandleFunc(Label3dHandler))
 	http.HandleFunc("/label3dv2", WrapHandleFunc(Label3dv2Handler))
 
-	//Get information of the gateway server
+	// Get information of the gateway server
 	http.HandleFunc("/dev/gateway", WrapHandleFunc(gatewayHandler))
+	http.HandleFunc("/gateway", WrapHandleFunc(gatewayHandler))
+
+	// Set up gateway server
+	http.HandleFunc("/register", WrapHandleFunc(registerHandler))
 
 	Info.Printf("Listening to Port %d", env.Port)
 	Info.Printf("Local URL: localhost:%d", env.Port)

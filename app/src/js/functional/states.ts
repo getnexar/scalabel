@@ -125,7 +125,6 @@ export function makeItem (params: {} = {}): ItemType {
  */
 export function makeSatConfig (params: Partial<ConfigType> = {}): ConfigType {
   return {
-    sessionId: uuid(),
     assignmentId: '', // id
     projectName: '',
     itemType: '',
@@ -141,7 +140,8 @@ export function makeSatConfig (params: Partial<ConfigType> = {}): ConfigType {
     taskId: '',
     workerId: '',
     startTime: 0,
-    ...params
+    ...params,
+    sessionId: uuid(),
   }
 }
 
@@ -186,6 +186,7 @@ export function makeLayout (params: {} = {}): LayoutType {
  */
 export function makeState (params: Partial<State> = {}): State {
   params.config = makeSatConfig(params.config)
+
   params.current = makeSatCurrent(params.current)
   const state = {
     config: makeSatConfig(),

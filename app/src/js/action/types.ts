@@ -46,6 +46,15 @@ interface BaseAction {
   sessionId: string
 }
 
+interface TimestampedBase {
+  /** the action */
+  action: BaseAction,
+  /** timestamp given by backend */
+  time: string
+}
+
+export type TimestampedAction = TimestampedBase
+
 export type InitSessionAction = BaseAction
 
 export interface NewItemAction extends BaseAction {
