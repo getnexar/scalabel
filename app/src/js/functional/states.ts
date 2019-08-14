@@ -141,7 +141,7 @@ export function makeSatConfig (params: Partial<ConfigType> = {}): ConfigType {
     workerId: '',
     startTime: 0,
     ...params,
-    sessionId: uuid(),
+    sessionId: uuid()
   }
 }
 
