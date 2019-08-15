@@ -185,7 +185,6 @@ export function makeLayout (params: {} = {}): LayoutType {
  */
 export function makeState (params: Partial<State> = {}): State {
   params.config = makeSatConfig(params.config)
-
   params.current = makeSatCurrent(params.current)
   const state = {
     config: makeSatConfig(),

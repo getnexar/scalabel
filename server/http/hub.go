@@ -50,7 +50,7 @@ func (h *Hub) run() {
         Time: timeStamp,
       }
       h.actionLog[h.numActions] = actionResponse
-      h.numActions += 1
+      h.numActions++
       for _, sess := range h.sessions {
           go actionReturner(sess, actionResponse, h)
       }
