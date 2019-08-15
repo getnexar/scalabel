@@ -1043,9 +1043,11 @@ func gatewayHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func registerHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Registering websocket")
+type RegisterMessage struct {
+	SessionId string `json:"sessionId"`
+}
 
+func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 	upg := websocket.Upgrader{ReadBufferSize: 1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
@@ -1057,9 +1059,28 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Register Server Error:", err)
 	}
 
-	log.Println("Register succeded; starting echoer")
+	var msg RegisterMessage
+	err = conn.ReadJSON(&msg)
+	if err != nil {
+		log.Println("Register App ReadJSON Error", err)
+		conn.Close()
+	}
 
-	go actionEchoer(conn)
+	var session *Session
+	if existingSession, ok := h.sessions[msg.SessionId]; ok {
+		session = existingSession
+	} else {
+		session = &Session{
+			sessionId: msg.SessionId,
+			conn:      conn,
+		}
+		h.registerSession <- session
+	}
+
+
+	log.Println("Registered websocket for session")
+
+	go actionReceiver(conn, session, h)
 }
 
 // Handles the flag value of User Management System

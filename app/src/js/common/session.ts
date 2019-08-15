@@ -60,6 +60,11 @@ class Session {
         const addr = data.Addr
         const port = data.Port
         const websocket = new WebSocket(`ws://${addr}:${port}/register`)
+        websocket.onopen = () => {
+          websocket.send(JSON.stringify({
+            sessionId: this.id
+          }))
+        }
 
         websocket.onmessage = (e) => {
           if (typeof e.data === 'string') {
