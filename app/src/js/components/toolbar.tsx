@@ -2,7 +2,9 @@ import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List/List'
 import ListItem from '@material-ui/core/ListItem'
 import React from 'react'
+import { changeLabelProps } from '../action/common'
 import { renderButtons, renderTemplate } from '../common/label'
+import Session from '../common/session'
 import { Attribute } from '../functional/types'
 import { genButton } from './general_button'
 import { Category } from './toolbar_category'
@@ -77,5 +79,17 @@ export class ToolBar extends React.Component<Props> {
     this.setState({
       checked: newChecked
     })
+    const attributes: {[key: number]: number} = {}
+    const state = Session.getState()
+    for (const checkedAttribute of newChecked) {
+      for (let i = 0; i < state.config.attributes.length; i++) {
+        if (state.config.attributes[i].name === checkedAttribute) {
+          attributes[i] = 1
+          break
+        }
+      }
+    }
+    Session.dispatch(changeLabelProps(state.current.item, state.current.label,
+      { attributes }))
   }
 }

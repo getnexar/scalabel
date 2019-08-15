@@ -123,7 +123,11 @@ export interface Attribute {
   /** Attribute name */
   name: string,
   /** Values of attribute */
-  values: string[]
+  values: string[],
+  /** Tag text */
+  tagText: string,
+  /** Tag suffixes */
+  tagSuffixes: string[]
 }
 
 /*

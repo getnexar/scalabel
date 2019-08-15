@@ -1,4 +1,6 @@
 import _ from 'lodash'
+import { sprintf } from 'sprintf-js'
+import Session from '../common/session'
 import { LabelType, ShapeType, State } from '../functional/types'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
@@ -112,6 +114,56 @@ export abstract class Label2D {
    * @param {DrawMode} mode
    */
   public abstract draw (canvas: Context2D, ratio: number, mode: DrawMode): void
+
+  /**
+   * Draw the label tag on viewing or control convas
+   * @param {Context2D} ctx
+   * @param {[number, number]} position
+   * @param {number} ratio
+   * @param {number[]} fillStyle
+   */
+  public drawTag (ctx: Context2D,
+                  ratio: number,
+                  position: [number, number],
+                  fillStyle: number[]
+                  ) {
+    const TAG_WIDTH = 25
+    const TAG_HEIGHT = 14
+    const [x, y] = position
+    const self = this
+    ctx.save()
+    const config = Session.getState().config
+    const category = self._label ?
+    config.categories[self._label.category[0]] : ''
+    const attributes = self._label ? self._label.attributes : {}
+    const words = category.split(' ')
+    let tw = TAG_WIDTH
+    // abbreviate tag as the first 3 chars of the last word
+    let abbr = words[words.length - 1].substring(0, 3)
+    for (const attributeId of Object.keys(attributes)) {
+      const attribute = config.attributes[Number(attributeId)]
+      if (attribute.toolType === 'switch') {
+        abbr += ',' + attribute.tagText
+        tw += 18
+      } else if (attribute.toolType === 'list') {
+        if (attribute &&
+          attributes[Number(attributeId)][0] > 0) {
+          abbr += ',' + attribute.tagText + ':' +
+              attribute.tagSuffixes[attributes[Number(attributeId)][0]]
+          tw += 36
+        }
+      }
+    }
+
+    ctx.fillStyle = sprintf('rgb(%d, %d, %d)',
+      fillStyle[0], fillStyle[1], fillStyle[2])
+    ctx.fillRect(x * ratio, (y - TAG_HEIGHT) * ratio,
+                 tw * ratio, TAG_HEIGHT * ratio)
+    ctx.fillStyle = 'rgb(0,0,0)'
+    ctx.font = sprintf('%dpx Verdana', 10 * ratio)
+    ctx.fillText(abbr, (x + 3) * ratio, (y - 3) * ratio)
+    ctx.restore()
+  }
 
   /**
    * Drag the handle to a new position

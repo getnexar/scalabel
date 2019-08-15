@@ -7,6 +7,8 @@ import { withStyles } from '@material-ui/core/styles'
 import RadioButtonCheckedIcon from '@material-ui/icons/RadioButtonChecked'
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked'
 import * as React from 'react'
+import { changeLabelProps } from '../action/common'
+import Session from '../common/session'
 import { categoryStyle } from '../styles/label'
 
 interface ClassType {
@@ -55,6 +57,9 @@ class MultipleSelect extends React.Component<Props> {
     };
   }) => {
     this.setState({ selectedValue: event.target.value })
+    const state = Session.getState()
+    Session.dispatch(changeLabelProps(state.current.item, state.current.label,
+      { category: [state.config.categories.indexOf(event.target.value)] }))
   }
 
   /**
