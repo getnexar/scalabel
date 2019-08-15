@@ -140,7 +140,7 @@ export function makeSatConfig (params: Partial<ConfigType> = {}): ConfigType {
     taskId: '',
     workerId: '',
     startTime: 0,
-    ...params,
+    ...params
   }
 }
 
