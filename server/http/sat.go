@@ -90,11 +90,6 @@ type Assignment struct {
 	IpInfo          map[string]interface{}  `json:"ipInfo" yaml:"ipInfo"`
 }
 
-type GatewayInfo struct {
-	Addr string `json:"Addr"`
-	Port string `json:"Port"`
-}
-
 // Page data sent from the frontend, used in sending dashboard contents
 type PageData struct {
 	Name string `json:"name"`
