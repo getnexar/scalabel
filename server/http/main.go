@@ -207,10 +207,6 @@ func main() {
 	http.HandleFunc("/label3d", WrapHandleFunc(Label3dHandler))
 	http.HandleFunc("/label3dv2", WrapHandleFunc(Label3dv2Handler))
 
-	// Get information of the gateway server
-	http.HandleFunc("/dev/gateway", WrapHandleFunc(gatewayHandler))
-	http.HandleFunc("/gateway", WrapHandleFunc(gatewayHandler))
-
 	// Set up gateway server and hub for syncing
 	hub := newhub()
 	go hub.run()

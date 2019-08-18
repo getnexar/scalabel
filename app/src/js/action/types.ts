@@ -39,21 +39,14 @@ export const CHANGE_RECT = 'CHANGE_RECT'
 export const MOVE_CAMERA = 'MOVE_CAMERA'
 export const MOVE_CAMERA_AND_TARGET = 'MOVE_CAMERA_AND_TARGET'
 
-interface BaseAction {
+export interface BaseAction {
   /** type of the action */
   type: string
   /** id of the session that initiates the action */
   sessionId: string
-}
-
-interface TimestampedBase {
-  /** the action */
-  action: BaseAction,
   /** timestamp given by backend */
-  time: string
+  time?: string
 }
-
-export type TimestampedAction = TimestampedBase
 
 export type InitSessionAction = BaseAction
 

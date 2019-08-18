@@ -77,17 +77,17 @@ func (task *Task) GetFields() map[string]interface{} {
 
 //implements Serializable
 type Assignment struct {
-	Id              string                 `json:"id" yaml:"id"`
-	Task            Task                   `json:"task" yaml:"task"`
-	WorkerId        string                 `json:"workerId" yaml:"workerId"`
-	Labels          []Label                `json:"labels" yaml:"labels"`
-	Tracks          []Label                `json:"tracks" yaml:"tracks"`
-	Events          []Event                `json:"events" yaml:"events"`
-	StartTime       int64                  `json:"startTime" yaml:"startTime"`
-	SubmitTime      int64                  `json:"submitTime" yaml:"submitTime"`
-	NumLabeledItems int                    `json:"numLabeledItems" yaml:"numLabeledItems"`
-	UserAgent       string                 `json:"userAgent" yaml:"userAgent"`
-	IpInfo          map[string]interface{} `json:"ipInfo" yaml:"ipInfo"`
+	Id              string                  `json:"id" yaml:"id"`
+	Task            Task                    `json:"task" yaml:"task"`
+	WorkerId        string                  `json:"workerId" yaml:"workerId"`
+	Labels          []Label                 `json:"labels" yaml:"labels"`
+	Tracks          TrackMap                `json:"tracks" yaml:"tracks"`
+	Events          []Event                 `json:"events" yaml:"events"`
+	StartTime       int64                   `json:"startTime" yaml:"startTime"`
+	SubmitTime      int64                   `json:"submitTime" yaml:"submitTime"`
+	NumLabeledItems int                     `json:"numLabeledItems" yaml:"numLabeledItems"`
+	UserAgent       string                  `json:"userAgent" yaml:"userAgent"`
+	IpInfo          map[string]interface{}  `json:"ipInfo" yaml:"ipInfo"`
 }
 
 type GatewayInfo struct {
@@ -1021,26 +1021,6 @@ func formValidation(w http.ResponseWriter, r *http.Request) error {
 	}
 	// TODO: check forms are actually uploaded
 	return nil
-}
-
-func gatewayHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Giving gateway info")
-	if r.Method != "GET" {
-		http.NotFound(w, r)
-		return
-	}
-	gate := GatewayInfo{
-		Addr: env.ModelGateHost,
-		Port: strconv.Itoa(env.Port),
-	}
-	gateJson, err := json.Marshal(gate)
-	if err != nil {
-		Error.Println(err)
-	}
-	_, err = w.Write(gateJson)
-	if err != nil {
-		Error.Println(err)
-	}
 }
 
 type RegisterMessage struct {
