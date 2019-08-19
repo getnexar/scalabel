@@ -29,6 +29,8 @@ export function initSession (containerName: string): void {
     if (xhr.readyState === 4) {
       const json = JSON.parse(xhr.response)
       initFromJson(json)
+      Session.registerWebsocket()
+
       ReactDOM.render(
                      <MuiThemeProvider theme={myTheme}>
                 <Window />

@@ -35,6 +35,8 @@ class Session {
   public actionLog: types.BaseAction[]
   /** Middleware to use */
   public middleware: Middleware
+  /** Whether websocket is registered */
+  public registered: boolean
 
   /**
    * no-op for state initialization
@@ -43,16 +45,25 @@ class Session {
     this.images = []
     this.pointClouds = []
     this.itemType = ''
+    this.actionLog = []
+    this.status = ConnectionStatus.UNSAVED
+    this.registered = false
     // TODO: make it configurable in the url
     this.devMode = true
 
-    // set up websocket
+    /* set up websocket */
     this.websocket = new WebSocket(`ws://${window.location.host}/register`)
-    this.websocket.onopen = () => {
-      this.websocket.send(JSON.stringify({
-        sessionId: this.id
-      }))
+
+    /* sync on every action */
+    this.middleware = () => (
+      next: Dispatch
+    ) => (action) => {
+      if (this.websocket.readyState === 1) {
+        this.websocket.send(JSON.stringify(action))
+      }
+      return next(action)
     }
+    this.store = configureStore({}, this.devMode, this.middleware)
 
     this.websocket.onmessage = (e) => {
       if (typeof e.data === 'string') {
@@ -60,21 +71,32 @@ class Session {
         this.actionLog.push(response)
       }
     }
+  }
 
-    /* sync on every action */
-    this.middleware = () => (
-      next: Dispatch
-    ) => (action) => {
-      if (this.websocket && this.websocket.readyState === 1) {
-        this.websocket.send(JSON.stringify(action))
-      }
-      return next(action)
+  /**
+   * Send the register message
+   * Only called after session ID is set
+   */
+  public registerWebsocket() {
+    /* if session is not yet open, this runs */
+    this.websocket.onopen = () => {
+      this.registered = true
+      this.websocket.send(JSON.stringify({
+        sessionId: this.id
+      }))
+    }
+    /* if session is already open, this runs
+       extra check ensures no duplicate registration */
+    if (this.websocket.readyState === 1 && !this.registered) {
+      this.registered = true
+      this.websocket.send(JSON.stringify({
+        sessionId: this.id
+      }))
     }
 
-    this.store = configureStore({}, this.devMode, this.middleware)
-    this.status = ConnectionStatus.UNSAVED
-    this.actionLog = []
+    return this.store.getState().present
   }
+
 
   /**
    * Get current state in store

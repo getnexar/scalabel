@@ -23,6 +23,7 @@ func actionReceiver(session *Session, h *Hub) {
       log.Println("Websocket ReadJSON Error", err)
       session.conn.Close()
       h.unregisterSession <- session
+      return
     }
     h.execAction <- &msg
   }
@@ -37,6 +38,7 @@ func actionReturner(session *Session, h *Hub) {
         log.Println("Websocket WriteJSON Error", err)
         session.conn.Close()
         h.unregisterSession <- session
+        return
       }
     }
   }

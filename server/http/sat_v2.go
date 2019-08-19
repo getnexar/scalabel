@@ -210,6 +210,9 @@ func postLoadAssignmentV2Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	loadedSat.Config.StartTime = recordTimestamp()
+	// temporary fix to ensure different sessions
+	// loaded from same assignment have different IDs
+	loadedSat.Config.SessionId = getUuidV4()
 	loadedSatJson, err := json.Marshal(loadedSat)
 	if err != nil {
 		Error.Println(err)
