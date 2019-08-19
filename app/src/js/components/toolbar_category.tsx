@@ -10,6 +10,7 @@ import * as React from 'react'
 import { changeCurrentCategory, changeLabelProps } from '../action/common'
 import Session from '../common/session'
 import { categoryStyle } from '../styles/label'
+import { Component } from './component'
 
 interface ClassType {
   /** root of the category selector */
@@ -37,13 +38,7 @@ interface Props {
  * This is a multipleSelect component that displays
  * all the categories as a list.
  */
-class MultipleSelect extends React.Component<Props> {
-  /**
-   * This is the state of MultipleSelect
-   */
-  public state = {
-    selectedValue: ''
-  }
+class MultipleSelect extends Component<Props> {
 
   /**
    * This is the handleChange function of MultipleSelect
@@ -56,14 +51,11 @@ class MultipleSelect extends React.Component<Props> {
       value: string;
     };
   }) => {
-    this.setState({ selectedValue: event.target.value })
-    let state = Session.getState()
+    const state = Session.getState()
     const categoryId = state.config.categories.indexOf(event.target.value)
     Session.dispatch(changeLabelProps(state.current.item, state.current.label,
       { category: [categoryId] }))
-    state = Session.getState()
     Session.dispatch(changeCurrentCategory(categoryId))
-    state = Session.getState()
   }
 
   /**

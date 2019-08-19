@@ -2,7 +2,7 @@ import * as React from 'react'
 import Session from '../common/session'
 import { State as StateType } from '../functional/types'
 
-interface State {
+export interface State {
   /** state of the session */
   session: StateType
 }

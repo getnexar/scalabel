@@ -12,8 +12,6 @@ interface ClassType {
   primary: string,
   /** switch color class */
   switchBase: string
-  /** checked state class */
-  checked: string
   /** track class */
   track: string
 }
@@ -24,8 +22,10 @@ interface ClassType {
 interface Props {
   /** onChange function */
   onChange: (switchName: string) => () => void
-  /** values passed to onChange function . */
-  value: string
+  /** name of the switch */
+  name: string
+  /** value of the switch */
+  value: number
   /** styles of SwitchButton. */
   classes: ClassType
 }
@@ -40,20 +40,20 @@ class SwitchButton extends React.Component<Props> {
    * SwitchButton render function
    */
   public render () {
-    const { onChange, value, classes } = this.props
+    const { onChange, name, value, classes } = this.props
 
     return (
       <ListItem dense={true}>
         <ListItemText classes={{ primary: classes.primary }}
-          primary={value} />
+          primary={name} />
         <ListItemSecondaryAction>
           <Switch
             classes={{
               switchBase: classes.switchBase,
-              checked: classes.checked,
               track: classes.track
             }}
-            onChange={onChange(value)}
+            checked={value > 0}
+            onChange={onChange(name)}
           />
         </ListItemSecondaryAction>
       </ListItem>

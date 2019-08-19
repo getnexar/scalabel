@@ -2,10 +2,11 @@ import Divider from '@material-ui/core/Divider'
 import List from '@material-ui/core/List/List'
 import ListItem from '@material-ui/core/ListItem'
 import React from 'react'
-import { changeLabelProps } from '../action/common'
+import { changeCurrentAttributes, changeLabelProps } from '../action/common'
 import { renderButtons, renderTemplate } from '../common/label'
 import Session from '../common/session'
 import { Attribute } from '../functional/types'
+import { Component } from './component'
 import { genButton } from './general_button'
 import { Category } from './toolbar_category'
 
@@ -24,13 +25,10 @@ interface Props {
  * This is ToolBar component that displays
  * all the attributes and categories for the 2D bounding box labeling tool
  */
-export class ToolBar extends React.Component<Props> {
+export class ToolBar extends Component<Props> {
   constructor (props: Readonly<Props>) {
     super(props)
     this.handleToggle = this.handleToggle.bind(this)
-    this.state = {
-      checked: []
-    }
   }
   /**
    * ToolBar render function
@@ -38,7 +36,8 @@ export class ToolBar extends React.Component<Props> {
    */
   public render () {
     const { categories, attributes, itemType, labelType } = this.props
-
+    // FIXME: multiple option support
+    const currentAttributes = Session.getState().current.attributes
     return (
       <div>
         <ListItem style={{ textAlign: 'center' }} >
@@ -46,9 +45,12 @@ export class ToolBar extends React.Component<Props> {
         </ListItem>
         <Divider variant='middle' />
         <List>
-          {attributes.map((element: Attribute) => (
+          {attributes.map((element: Attribute, index: number) => (
             renderTemplate(element.toolType, this.handleToggle,
-              element.name, element.values)
+              element.name, element.values,
+              Object.keys(currentAttributes).indexOf(String(index)) >= 0 ?
+              currentAttributes[index][0]
+              : 0)
           ))}
         </List>
         <div>
@@ -65,31 +67,30 @@ export class ToolBar extends React.Component<Props> {
    * @param {string} switchName
    */
   private readonly handleToggle = (switchName: string) => () => {
-    // @ts-ignore
-    const { checked } = this.state
-    const currentIndex = checked.indexOf(switchName)
-    const newChecked = [...checked]
-
-    if (currentIndex === -1) {
-      newChecked.push(switchName)
-    } else {
-      newChecked.splice(currentIndex, 1)
-    }
-
-    this.setState({
-      checked: newChecked
-    })
-    const attributes: {[key: number]: number} = {}
     const state = Session.getState()
-    for (const checkedAttribute of newChecked) {
-      for (let i = 0; i < state.config.attributes.length; i++) {
-        if (state.config.attributes[i].name === checkedAttribute) {
-          attributes[i] = 1
-          break
-        }
+    const allAttributes = state.config.attributes
+    let toggleIndex = -1
+    for (let i = 0; i < allAttributes.length; i++) {
+      if (allAttributes[i].name === switchName) {
+        toggleIndex = i
       }
     }
-    Session.dispatch(changeLabelProps(state.current.item, state.current.label,
-      { attributes }))
+    if (toggleIndex > -1) {
+      const currentAttributes = state.items[state.current.item].labels[
+        state.current.label].attributes
+      const attributes: {[key: number]: number[]} = {}
+      for (const keyStr of Object.keys(currentAttributes)) {
+        const key = Number(keyStr)
+        attributes[key] = currentAttributes[key]
+      }
+      if (Object.keys(attributes).indexOf(String(toggleIndex)) >= 0) {
+        delete attributes[toggleIndex]
+      } else {
+        attributes[toggleIndex] = [1]
+      }
+      Session.dispatch(changeLabelProps(state.current.item, state.current.label,
+        { attributes }))
+      Session.dispatch(changeCurrentAttributes(attributes))
+    }
   }
 }

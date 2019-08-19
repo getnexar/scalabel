@@ -10,25 +10,26 @@ import { SwitchBtn } from '../components/toolbar_switch'
  * @param {string} toolType
  * @param {function} handleToggle
  * @param {string} name
- * @param {string[]} values
+ * @param {string[]} options
+ * @param {number} value
  */
 export function renderTemplate (
   toolType: string, handleToggle: (switchName: string) => () => void,
-  name: string, values: string[]) {
+  name: string, options: string[], value: number) {
   if (toolType === 'switch') {
     return (
-      <SwitchBtn onChange={handleToggle} value={name} />
+      <SwitchBtn onChange={handleToggle} name={name} value={value} />
     )
   } else if (toolType === 'list') {
     return (
       <ListItem dense={true} style={{ textAlign: 'center' }} >
-        <ListButton name={name} values={values} />
+        <ListButton name={name} values={options} />
       </ListItem>
     )
   } else if (toolType === 'longList') {
     return (
       <ListItem dense={true} style={{ textAlign: 'center' }} >
-        <Category categories={values} headerText={name}/>
+        <Category categories={options} headerText={name}/>
       </ListItem>
     )
   }
