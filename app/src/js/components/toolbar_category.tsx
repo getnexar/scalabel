@@ -62,10 +62,8 @@ class MultipleSelect extends React.Component<Props> {
     Session.dispatch(changeLabelProps(state.current.item, state.current.label,
       { category: [categoryId] }))
     state = Session.getState()
-    console.log(state.items[state.current.item])
     Session.dispatch(changeCurrentCategory(categoryId))
     state = Session.getState()
-    console.log(state.items[state.current.item])
   }
 
   /**
