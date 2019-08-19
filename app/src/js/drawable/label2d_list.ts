@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { changeCurrentAttributes, changeCurrentCategory, selectLabel } from '../action/common'
 // import { sprintf } from 'sprintf-js'
 // import * as LabelTypes from '../common/label_types'
 import Session from '../common/session'
@@ -138,6 +139,15 @@ export class Label2DList {
     if (labelIndex >= 0) {
       this._selectedLabel = this._labelList[labelIndex]
       this._selectedLabel.setSelected(true, handleIndex)
+      const state = Session.getState()
+      const itemIndex = state.current.item
+      Session.dispatch(selectLabel(itemIndex, this._selectedLabel.labelId))
+      Session.dispatch(
+        changeCurrentCategory(
+          this._selectedLabel.category[0]))
+      Session.dispatch(
+        changeCurrentAttributes(
+          this._selectedLabel.attributes))
     }
   }
 

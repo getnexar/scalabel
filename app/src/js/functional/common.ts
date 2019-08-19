@@ -48,7 +48,8 @@ export function addLabel (state: State, action: types.AddLabelAction): State {
     (s, i) => makeIndexedShape(shapeIds[i], labelId, s))
   const order = state.current.maxOrder + 1
   label = updateObject(label, {id: labelId, item: itemIndex, order,
-    shapes: label.shapes.concat(shapeIds)})
+    shapes: label.shapes.concat(shapeIds), category: [state.current.category],
+    attributes: state.current.attributes ? state.current.attributes : {}})
   let item = state.items[itemIndex]
   const labels = updateObject(
       item.labels,
@@ -114,7 +115,8 @@ export function changeLabel (
   const items = updateListItem(state.items, itemIndex, item)
   const selectedLabelId = (action.sessionId === state.config.sessionId) ?
     labelId : state.current.label
-  const current = updateObject(state.current, { label: selectedLabelId })
+  const current = updateObject(state.current, { label: selectedLabelId,
+    category: label.category[0], attributes: label.attributes })
   return { ...state, items, current }
 }
 
@@ -134,6 +136,53 @@ export function newItem (state: State, action: types.NewItemAction): State {
     ...state,
     items
   }
+}
+
+/**
+ * Update the current category
+ * @param {State} state
+ * @param {types.SelectLabelAction} action
+ * @return {State}
+ */
+export function selectLabel (state: State,
+                             action:
+  types.SelectLabelAction):
+  State {
+  let current
+  if (state.current.item === action.itemIndex) {
+    current = updateObject(state.current, { label: action.labelId })
+  } else {
+    current = state.current
+  }
+  return { ...state, current }
+}
+
+/**
+ * Update the current category
+ * @param {State} state
+ * @param {types.ChangeCurrentCategoryAction} action
+ * @return {State}
+ */
+export function changeCurrentCategory (state: State,
+                                       action:
+                                       types.ChangeCurrentCategoryAction):
+                                       State {
+  const current = updateObject(state.current, { category: action.category })
+  return { ...state, current }
+}
+
+/**
+ * Update the current attributes
+ * @param {State} state
+ * @param {types.ChangeCurrentAttributesAction} action
+ * @return {State}
+ */
+export function changeCurrentAttributes (state: State,
+                                         action:
+                                         types.ChangeCurrentAttributesAction):
+  State {
+  const current = updateObject(state.current, { attributes: action.attributes })
+  return { ...state, current }
 }
 
 /**

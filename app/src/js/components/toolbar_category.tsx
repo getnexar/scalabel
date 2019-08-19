@@ -7,7 +7,7 @@ import { withStyles } from '@material-ui/core/styles'
 import RadioButtonCheckedIcon from '@material-ui/icons/RadioButtonChecked'
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked'
 import * as React from 'react'
-import { changeLabelProps } from '../action/common'
+import { changeCurrentCategory, changeLabelProps } from '../action/common'
 import Session from '../common/session'
 import { categoryStyle } from '../styles/label'
 
@@ -57,9 +57,15 @@ class MultipleSelect extends React.Component<Props> {
     };
   }) => {
     this.setState({ selectedValue: event.target.value })
-    const state = Session.getState()
+    let state = Session.getState()
+    const categoryId = state.config.categories.indexOf(event.target.value)
     Session.dispatch(changeLabelProps(state.current.item, state.current.label,
-      { category: [state.config.categories.indexOf(event.target.value)] }))
+      { category: [categoryId] }))
+    state = Session.getState()
+    console.log(state.items[state.current.item])
+    Session.dispatch(changeCurrentCategory(categoryId))
+    state = Session.getState()
+    console.log(state.items[state.current.item])
   }
 
   /**
@@ -67,6 +73,9 @@ class MultipleSelect extends React.Component<Props> {
    */
   public renderCategory (
     categories: string[], classes: ClassType, headerText: string) {
+    const state = Session.getState()
+    const currentCategoryId = state.current.category
+    const currentCategory = state.config.categories[currentCategoryId]
     return (
       <div>
         <FormControl className={classes.formControl}>
@@ -77,7 +86,7 @@ class MultipleSelect extends React.Component<Props> {
               <FormControlLabel
                 key={index}
                 control={<Radio
-                  checked={this.state.selectedValue === name}
+                  checked={currentCategory === name}
                   onChange={this.handleChange}
                   key={'kk'}
                   value={name}

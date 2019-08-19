@@ -198,6 +198,8 @@ export interface CurrentType {
   shape: number
   /** selected category */
   category: number
+  /** selected attributes */
+  attributes: {[key: number]: number[]}
   /** selected label type */
   labelType: number
   /** Max label ID */

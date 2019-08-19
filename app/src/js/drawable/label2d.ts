@@ -74,6 +74,22 @@ export abstract class Label2D {
     return this._index
   }
 
+  /** get category */
+  public get category (): number[] {
+    if (this._label) {
+      return this._label.category
+    }
+    return []
+  }
+
+  /** get attributes */
+  public get attributes (): {[key: number]: number[]} {
+    if (this._label) {
+      return this._label.attributes
+    }
+    return {}
+  }
+
   /** get labelId */
   public get labelId (): number {
     return this._labelId
@@ -127,8 +143,8 @@ export abstract class Label2D {
                   position: [number, number],
                   fillStyle: number[]
                   ) {
-    const TAG_WIDTH = 25
-    const TAG_HEIGHT = 14
+    const TAG_WIDTH = 50
+    const TAG_HEIGHT = 28
     const [x, y] = position
     const self = this
     ctx.save()
@@ -144,24 +160,24 @@ export abstract class Label2D {
       const attribute = config.attributes[Number(attributeId)]
       if (attribute.toolType === 'switch') {
         abbr += ',' + attribute.tagText
-        tw += 18
+        tw += 36
       } else if (attribute.toolType === 'list') {
         if (attribute &&
           attributes[Number(attributeId)][0] > 0) {
           abbr += ',' + attribute.tagText + ':' +
               attribute.tagSuffixes[attributes[Number(attributeId)][0]]
-          tw += 36
+          tw += 72
         }
       }
     }
 
     ctx.fillStyle = sprintf('rgb(%d, %d, %d)',
       fillStyle[0], fillStyle[1], fillStyle[2])
-    ctx.fillRect(x * ratio, (y - TAG_HEIGHT) * ratio,
-                 tw * ratio, TAG_HEIGHT * ratio)
+    ctx.fillRect(x * ratio, y * ratio - TAG_HEIGHT,
+                 tw, TAG_HEIGHT)
     ctx.fillStyle = 'rgb(0,0,0)'
-    ctx.font = sprintf('%dpx Verdana', 10 * ratio)
-    ctx.fillText(abbr, (x + 3) * ratio, (y - 3) * ratio)
+    ctx.font = sprintf('%dpx Verdana', 20)
+    ctx.fillText(abbr, (x * ratio + 6), (y * ratio - 6))
     ctx.restore()
   }
 
@@ -200,6 +216,7 @@ export abstract class Label2D {
     this._labelId = this._label.id
     this._color = getColorById(this._labelId)
     this.setSelected(labelId === state.current.label, 0)
+    console.log(this._label, item.labels)
     this.updateShapes(this._label.shapes.map((i) => item.shapes[i].shape))
   }
 }

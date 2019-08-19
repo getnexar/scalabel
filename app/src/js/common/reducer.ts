@@ -33,6 +33,14 @@ export const reducer: Reducer<State> = (
       return common.loadItem(state, action as types.LoadItemAction)
     case types.UPDATE_ALL:
       return common.updateAll(state)
+    case types.SELECT_LABEL:
+      return common.selectLabel(state, action as types.SelectLabelAction)
+    case types.CHANGE_CURRENT_CATEGORY:
+      return common.changeCurrentCategory(state,
+        action as types.ChangeCurrentCategoryAction)
+    case types.CHANGE_CURRENT_ATTRIBUTES:
+      return common.changeCurrentAttributes(state,
+        action as types.ChangeCurrentAttributesAction)
     case types.IMAGE_ZOOM:
       return image.zoomImage(state, action as types.ImageZoomAction)
     case types.ADD_LABEL:

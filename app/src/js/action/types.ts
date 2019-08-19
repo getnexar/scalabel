@@ -13,6 +13,9 @@ export const NEW_ITEM = 'NEW_ITEM' // no delete item
 export const GO_TO_ITEM = 'GO_TO_ITEM'
 export const LOAD_ITEM = 'LOAD_ITEM'
 export const UPDATE_ALL = 'UPDATE_ALL'
+export const SELECT_LABEL = 'SELECT_LABEL'
+export const CHANGE_CURRENT_CATEGORY = 'CHANGE_CURRENT_CATEGORY'
+export const CHANGE_CURRENT_ATTRIBUTES = 'CHANGE_CURRENT_ATTRIBUTES'
 
 export const IMAGE_ZOOM = 'IMAGE_ZOOM'
 
@@ -87,6 +90,13 @@ export interface AddLabelAction extends BaseAction {
   shapes: ShapeType[]
 }
 
+export interface SelectLabelAction extends BaseAction {
+  /** item of the selected label */
+  itemIndex: number
+  /** selected label ID */
+  labelId: number
+}
+
 export interface ChangeShapeAction extends BaseAction {
   /** item of the shape */
   itemIndex: number
@@ -130,12 +140,25 @@ export interface MoveCameraAndTargetAction extends BaseAction {
   newTarget?: Vector3Type
 }
 
+export interface ChangeCurrentCategoryAction extends BaseAction {
+  /** New category ID */
+  category: number
+}
+
+export interface ChangeCurrentAttributesAction extends BaseAction {
+  /** New attributes */
+  attributes: {[key: number]: number[]}
+}
+
 export type ActionType =
     InitSessionAction
     | NewItemAction
     | GoToItemAction
     | LoadItemAction
     | UpdateAllAction
+    | ChangeCurrentCategoryAction
+    | ChangeCurrentAttributesAction
+    | SelectLabelAction
     | ImageZoomAction
     | AddLabelAction
     | ChangeShapeAction

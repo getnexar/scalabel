@@ -157,6 +157,7 @@ export function makeSatCurrent (
     label: -1,
     shape: -1,
     category: 0,
+    attributes: {},
     labelType:  0,
     maxLabelId: -1,
     maxShapeId: -1,
