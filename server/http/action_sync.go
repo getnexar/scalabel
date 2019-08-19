@@ -1,7 +1,6 @@
 package main
 
 import (
-  "github.com/gorilla/websocket"
 	"log"
 )
 
@@ -16,24 +15,29 @@ type ActionResponse struct {
   Time   string    `json:"time" yaml:"time"`
 }
 
-func actionReceiver(conn *websocket.Conn, session *Session, h *Hub) {
+func actionReceiver(session *Session, h *Hub) {
   var msg ActionMsg
   for {
-    err := conn.ReadJSON(&msg)
+    err := session.conn.ReadJSON(&msg)
     if err != nil {
       log.Println("Websocket ReadJSON Error", err)
-      conn.Close()
+      session.conn.Close()
       h.unregisterSession <- session
     }
     h.execAction <- &msg
   }
 }
 
-func actionReturner(session *Session, actionResponse *ActionResponse, h *Hub) {
-  err := session.conn.WriteJSON(&actionResponse)
-  if err != nil {
-    log.Println("Websocket WriteJSON Error", err)
-    session.conn.Close()
-    h.unregisterSession <- session
+func actionReturner(session *Session, h *Hub) {
+  for {
+    select {
+    case actionResponse := <-session.send:
+      err := session.conn.WriteJSON(&actionResponse)
+      if err != nil {
+        log.Println("Websocket WriteJSON Error", err)
+        session.conn.Close()
+        h.unregisterSession <- session
+      }
+    }
   }
 }

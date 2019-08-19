@@ -9,6 +9,7 @@ import (
 type Session struct {
   sessionId string
   conn      *websocket.Conn
+  send      chan *ActionResponse
 }
 
 type Hub struct {
@@ -52,7 +53,7 @@ func (h *Hub) run() {
       h.actionLog[h.numActions] = actionResponse
       h.numActions++
       for _, sess := range h.sessions {
-          go actionReturner(sess, actionResponse, h)
+        sess.send <- actionResponse
       }
 		}
 

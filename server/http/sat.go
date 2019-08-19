@@ -1048,6 +1048,7 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 		session = &Session{
 			sessionId: msg.SessionId,
 			conn:      conn,
+			send:      make(chan *ActionResponse),
 		}
 		h.registerSession <- session
 	}
@@ -1055,7 +1056,8 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Registered websocket for session")
 
-	go actionReceiver(conn, session, h)
+	go actionReceiver(session, h)
+	go actionReturner(session, h)
 }
 
 // Handles the flag value of User Management System
