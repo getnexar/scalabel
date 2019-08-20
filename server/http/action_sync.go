@@ -20,7 +20,7 @@ func actionReceiver(session *Session, h *Hub) {
 		session.conn.Close()
 		h.unregisterSession <- session
 	}()
-	
+
   var msg ActionMsg
   for {
     err := session.conn.ReadJSON(&msg)
@@ -39,6 +39,7 @@ func actionReturner(session *Session, h *Hub) {
 	}()
 
   for actionResponse := range session.send {
+		actionResponse := actionResponse
     err := session.conn.WriteJSON(&actionResponse)
     if err != nil {
       log.Println("Websocket WriteJSON Error", err)
