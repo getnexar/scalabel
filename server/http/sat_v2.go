@@ -56,9 +56,9 @@ type TaskStatus struct {
 
 //Contains data for single item
 type ItemData struct {
-	Id           int              `json:"id" yaml:"id"`
-	Index        int              `json:"index" yaml:"index"`
-	Url          string           `json:"url" yaml:"url"`
+	Id           int               `json:"id" yaml:"id"`
+	Index        int               `json:"index" yaml:"index"`
+	Url          string            `json:"url" yaml:"url"`
 	Labels       map[int]LabelData `json:"labels" yaml:"labels"`
 	Shapes       map[int]ShapeData `json:"shapes" yaml:"shapes"`
 }

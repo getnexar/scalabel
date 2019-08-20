@@ -46,6 +46,7 @@ func (h *Hub) run() {
     case action := <-h.execAction:
       timeStamp := time.Now().String()
       log.Printf("Got this message: %v at %s\n", action, timeStamp)
+
       actionResponse := &ActionResponse {
         Type: action.Type,
         SessionId: action.SessionId,
