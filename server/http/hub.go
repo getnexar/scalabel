@@ -47,7 +47,9 @@ func (h *Hub) run() {
       timeStamp := time.Now().String()
       log.Printf("Got this message: %v at %s\n", action, timeStamp)
       actionResponse := &ActionResponse {
-        Action: *action,
+        Type: action.Type,
+        SessionId: action.SessionId,
+        Args: action.Args,
         Time: timeStamp,
       }
       h.actionLog[h.numActions] = actionResponse

@@ -5,14 +5,16 @@ import (
 )
 
 type ActionMsg struct {
-  Type      string     `json:"type" yaml:"type"`
-  SessionId string     `json:"sessionId" yaml:"sessionId"`
+  Type      string      `json:"type" yaml:"type"`
+  SessionId string      `json:"sessionId" yaml:"sessionId"`
   Args      interface{}
 }
 
 type ActionResponse struct {
-  Action ActionMsg `json:"action" yaml:"action"`
-  Time   string    `json:"time" yaml:"time"`
+  Type      string      `json:"type" yaml:"type"`
+  SessionId string      `json:"sessionId" yaml:"sessionId"`
+  Time      string      `json:"time" yaml:"time"`
+  Args      interface{}
 }
 
 func actionReceiver(session *Session, h *Hub) {

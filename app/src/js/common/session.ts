@@ -58,7 +58,7 @@ class Session {
     this.middleware = () => (
       next: Dispatch
     ) => (action) => {
-      if (this.websocket.readyState === 1) {
+      if (this.websocket.readyState === 1 && this.registered) {
         this.websocket.send(JSON.stringify(action))
       }
       return next(action)
@@ -67,7 +67,8 @@ class Session {
 
     this.websocket.onmessage = (e) => {
       if (typeof e.data === 'string') {
-        const response: types.BaseAction = JSON.parse(e.data)
+
+        const response: types.ActionType = JSON.parse(e.data)
         this.actionLog.push(response)
       }
     }
@@ -78,14 +79,14 @@ class Session {
    * Only called after session ID is set
    */
   public registerWebsocket () {
-    /* if session is not yet open, this runs */
+    /* if websocket is not yet open, this runs */
     this.websocket.onopen = () => {
       this.registered = true
       this.websocket.send(JSON.stringify({
         sessionId: this.id
       }))
     }
-    /* if session is already open, this runs
+    /* if websocket is already open, this runs
        extra check ensures no duplicate registration */
     if (this.websocket.readyState === 1 && !this.registered) {
       this.registered = true
@@ -93,8 +94,6 @@ class Session {
         sessionId: this.id
       }))
     }
-
-    return this.store.getState().present
   }
 
   /**
