@@ -16,13 +16,16 @@ type ActionResponse struct {
 }
 
 func actionReceiver(session *Session, h *Hub) {
+	defer func() {
+		session.conn.Close()
+		h.unregisterSession <- session
+	}()
+	
   var msg ActionMsg
   for {
     err := session.conn.ReadJSON(&msg)
     if err != nil {
       log.Println("Websocket ReadJSON Error", err)
-      session.conn.Close()
-      h.unregisterSession <- session
       return
     }
     h.execAction <- &msg
@@ -30,16 +33,16 @@ func actionReceiver(session *Session, h *Hub) {
 }
 
 func actionReturner(session *Session, h *Hub) {
-  for {
-    select {
-    case actionResponse := <-session.send:
-      err := session.conn.WriteJSON(&actionResponse)
-      if err != nil {
-        log.Println("Websocket WriteJSON Error", err)
-        session.conn.Close()
-        h.unregisterSession <- session
-        return
-      }
+	defer func() {
+		session.conn.Close()
+		h.unregisterSession <- session
+	}()
+
+  for actionResponse := range session.send {
+    err := session.conn.WriteJSON(&actionResponse)
+    if err != nil {
+      log.Println("Websocket WriteJSON Error", err)
+      return
     }
   }
 }

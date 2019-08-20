@@ -77,7 +77,7 @@ class Session {
    * Send the register message
    * Only called after session ID is set
    */
-  public registerWebsocket() {
+  public registerWebsocket () {
     /* if session is not yet open, this runs */
     this.websocket.onopen = () => {
       this.registered = true
@@ -96,7 +96,6 @@ class Session {
 
     return this.store.getState().present
   }
-
 
   /**
    * Get current state in store
