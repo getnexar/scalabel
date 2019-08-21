@@ -37,9 +37,9 @@ func (h *Hub) run() {
 	for {
 		select {
 		case session := <-h.registerSession:
-			if existingTask, ok := h.sessionsByTask[session.taskId]; !ok {
+			if _, ok := h.sessionsByTask[session.taskId]; !ok {
 				h.sessionsByTask[session.taskId] = make(map[string]*Session)
-				h.actionLogByTask[session.taskId] = make([]*ActionResponse)
+				h.actionLogByTask[session.taskId] = make([]*ActionResponse, 0)
 			}
 			h.sessionsByTask[session.taskId][session.sessionId] = session
 			h.sessions[session.sessionId] = session
@@ -64,7 +64,7 @@ func (h *Hub) run() {
 				Time: timeStamp,
 			}
 			taskId := h.sessions[action.SessionId].taskId
-			h.actionLogByTask[taskId].append(actionResponse)
+			h.actionLogByTask[taskId] = append(h.actionLogByTask[taskId], actionResponse)
 			for _, session := range h.sessionsByTask[taskId] {
 				session.send <- actionResponse
 			}

@@ -1044,7 +1044,7 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 
 	var session *Session
 	// need to check task too now
-	if existingSession, ok := h.session[msg.SessionId]; ok {
+	if existingSession, ok := h.sessions[msg.SessionId]; ok {
 		session = existingSession
 	} else {
 		session = &Session{
