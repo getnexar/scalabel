@@ -67,7 +67,6 @@ class Session {
 
     this.websocket.onmessage = (e) => {
       if (typeof e.data === 'string') {
-
         const response: types.ActionType = JSON.parse(e.data)
         this.actionLog.push(response)
       }

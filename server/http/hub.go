@@ -1,24 +1,24 @@
 package main
 
 import (
-  "github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 	"log"
-  "time"
+	"time"
 )
 
 type Session struct {
-  sessionId string
-  conn      *websocket.Conn
-  send      chan *ActionResponse
+	sessionId string
+	conn      *websocket.Conn
+	send      chan *ActionResponse
 }
 
 type Hub struct {
 	registerSession   chan *Session
 	unregisterSession chan *Session
-  execAction        chan *ActionMsg
+	execAction        chan *ActionMsg
 	sessions          map[string]*Session
-  actionLog         map[int]*ActionResponse
-  numActions        int
+	actionLog         map[int]*ActionResponse
+	numActions        int
 }
 
 func newhub() *Hub {
@@ -26,9 +26,9 @@ func newhub() *Hub {
 		sessions:          make(map[string]*Session),
 		registerSession:   make(chan *Session),
 		unregisterSession: make(chan *Session),
-    execAction:        make(chan *ActionMsg),
-    actionLog:         make(map[int]*ActionResponse),
-    numActions:        0,
+		execAction:        make(chan *ActionMsg),
+		actionLog:         make(map[int]*ActionResponse),
+		numActions:        0,
 	}
 }
 
@@ -43,21 +43,21 @@ func (h *Hub) run() {
 			if ok {
 				delete(h.sessions, sessID)
 			}
-    case action := <-h.execAction:
-      timeStamp := time.Now().String()
-      log.Printf("Got this message: %v at %s\n", action, timeStamp)
+		case action := <-h.execAction:
+			timeStamp := time.Now().String()
+			log.Printf("Got this message: %v at %s\n", action, timeStamp)
 
-      actionResponse := &ActionResponse {
-        Type: action.Type,
-        SessionId: action.SessionId,
-        Args: action.Args,
-        Time: timeStamp,
-      }
-      h.actionLog[h.numActions] = actionResponse
-      h.numActions++
-      for _, sess := range h.sessions {
-        sess.send <- actionResponse
-      }
+			actionResponse := &ActionResponse {
+				Type: action.Type,
+				SessionId: action.SessionId,
+				Args: action.Args,
+				Time: timeStamp,
+			}
+			h.actionLog[h.numActions] = actionResponse
+			h.numActions++
+			for _, sess := range h.sessions {
+				sess.send <- actionResponse
+			}
 		}
 
 	}
