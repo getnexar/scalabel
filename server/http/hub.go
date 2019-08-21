@@ -8,6 +8,7 @@ import (
 
 type Session struct {
 	sessionId string
+	taskId		string
 	conn      *websocket.Conn
 	send      chan *ActionResponse
 }
@@ -16,32 +17,41 @@ type Hub struct {
 	registerSession   chan *Session
 	unregisterSession chan *Session
 	execAction        chan *ActionMsg
-	sessions          map[string]*Session
-	actionLog         map[int]*ActionResponse
-	numActions        int
+	sessions					map[string]*Session
+	sessionsByTask		map[string]map[string]*Session
+	actionLogByTask 	map[string][]*ActionResponse
 }
 
 func newhub() *Hub {
 	return &Hub{
-		sessions:          make(map[string]*Session),
 		registerSession:   make(chan *Session),
 		unregisterSession: make(chan *Session),
 		execAction:        make(chan *ActionMsg),
-		actionLog:         make(map[int]*ActionResponse),
-		numActions:        0,
+		sessions:					 make(map[string]*Session),
+		sessionsByTask:		 make(map[string]map[string]*Session),
+		actionLogByTask:   make(map[string][]*ActionResponse),
 	}
 }
 
 func (h *Hub) run() {
 	for {
 		select {
-		case sess := <-h.registerSession:
-			h.sessions[sess.sessionId] = sess
-		case sess := <-h.unregisterSession:
-			sessID := sess.sessionId
-			_, ok := h.sessions[sessID]
-			if ok {
-				delete(h.sessions, sessID)
+		case session := <-h.registerSession:
+			if existingTask, ok := h.sessionsByTask[session.taskId]; !ok {
+				h.sessionsByTask[session.taskId] = make(map[string]*Session)
+				h.actionLogByTask[session.taskId] = make([]*ActionResponse)
+			}
+			h.sessionsByTask[session.taskId][session.sessionId] = session
+			h.sessions[session.sessionId] = session
+		case session := <-h.unregisterSession:
+			if _, ok := h.sessions[session.sessionId]; ok {
+				delete(h.sessions, session.sessionId)
+			}
+			if _, ok := h.sessionsByTask[session.taskId][session.sessionId]; ok {
+				delete(h.sessionsByTask[session.taskId], session.sessionId)
+			}
+			if len(h.sessionsByTask[session.taskId]) == 0 {
+				delete(h.sessionsByTask, session.taskId)
 			}
 		case action := <-h.execAction:
 			timeStamp := time.Now().String()
@@ -53,10 +63,10 @@ func (h *Hub) run() {
 				Args: action.Args,
 				Time: timeStamp,
 			}
-			h.actionLog[h.numActions] = actionResponse
-			h.numActions++
-			for _, sess := range h.sessions {
-				sess.send <- actionResponse
+			taskId := h.sessions[action.SessionId].taskId
+			h.actionLogByTask[taskId].append(actionResponse)
+			for _, session := range h.sessionsByTask[taskId] {
+				session.send <- actionResponse
 			}
 		}
 

@@ -82,7 +82,8 @@ class Session {
     this.websocket.onopen = () => {
       this.registered = true
       this.websocket.send(JSON.stringify({
-        sessionId: this.id
+        sessionId: this.id,
+				taskId: this.getState().task.config.taskId
       }))
     }
     /* if websocket is already open, this runs

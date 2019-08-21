@@ -1020,6 +1020,7 @@ func formValidation(w http.ResponseWriter, r *http.Request) error {
 
 type RegisterMessage struct {
 	SessionId string `json:"sessionId"`
+	TaskId		string `json:"taskId"`
 }
 
 func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
@@ -1042,11 +1043,13 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	var session *Session
-	if existingSession, ok := h.sessions[msg.SessionId]; ok {
+	// need to check task too now
+	if existingSession, ok := h.session[msg.SessionId]; ok {
 		session = existingSession
 	} else {
 		session = &Session{
 			sessionId: msg.SessionId,
+			taskId:		 msg.TaskId,
 			conn:      conn,
 			send:      make(chan *ActionResponse),
 		}
