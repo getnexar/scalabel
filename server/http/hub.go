@@ -8,7 +8,7 @@ import (
 
 type Session struct {
 	sessionId string
-	taskId		string
+	taskId    string
 	conn      *websocket.Conn
 	send      chan *ActionResponse
 }
@@ -17,9 +17,9 @@ type Hub struct {
 	registerSession   chan *Session
 	unregisterSession chan *Session
 	execAction        chan *ActionMsg
-	sessions					map[string]*Session
-	sessionsByTask		map[string]map[string]*Session
-	actionsByTask 	map[string][]*ActionResponse
+	sessions          map[string]*Session
+	sessionsByTask    map[string]map[string]*Session
+	actionsByTask     map[string][]*ActionResponse
 }
 
 func newhub() *Hub {
@@ -27,9 +27,9 @@ func newhub() *Hub {
 		registerSession:   make(chan *Session),
 		unregisterSession: make(chan *Session),
 		execAction:        make(chan *ActionMsg),
-		sessions:					 make(map[string]*Session),
-		sessionsByTask:		 make(map[string]map[string]*Session),
-		actionsByTask:   make(map[string][]*ActionResponse),
+		sessions:          make(map[string]*Session),
+		sessionsByTask:    make(map[string]map[string]*Session),
+		actionsByTask:     make(map[string][]*ActionResponse),
 	}
 }
 
@@ -60,10 +60,10 @@ func (h *Hub) run() {
 			log.Printf("Got this message: %v at %s\n", action, timeStamp)
 
 			actionResponse := &ActionResponse {
-				Type: action.Type,
+				Type:      action.Type,
 				SessionId: action.SessionId,
-				Args: action.Args,
-				Time: timeStamp,
+				Args:      action.Args,
+				Time:      timeStamp,
 			}
 			taskId := h.sessions[action.SessionId].taskId
 			h.actionsByTask[taskId] =

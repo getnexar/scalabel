@@ -1020,7 +1020,7 @@ func formValidation(w http.ResponseWriter, r *http.Request) error {
 
 type RegisterMessage struct {
 	SessionId string `json:"sessionId"`
-	TaskId		string `json:"taskId"`
+	TaskId    string `json:"taskId"`
 }
 
 func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
