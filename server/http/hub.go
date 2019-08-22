@@ -19,7 +19,7 @@ type Hub struct {
 	execAction        chan *ActionMsg
 	sessions					map[string]*Session
 	sessionsByTask		map[string]map[string]*Session
-	actionLogByTask 	map[string][]*ActionResponse
+	actionsByTask 	map[string][]*ActionResponse
 }
 
 func newhub() *Hub {
@@ -29,7 +29,7 @@ func newhub() *Hub {
 		execAction:        make(chan *ActionMsg),
 		sessions:					 make(map[string]*Session),
 		sessionsByTask:		 make(map[string]map[string]*Session),
-		actionLogByTask:   make(map[string][]*ActionResponse),
+		actionsByTask:   make(map[string][]*ActionResponse),
 	}
 }
 
@@ -39,19 +39,21 @@ func (h *Hub) run() {
 		case session := <-h.registerSession:
 			if _, ok := h.sessionsByTask[session.taskId]; !ok {
 				h.sessionsByTask[session.taskId] = make(map[string]*Session)
-				h.actionLogByTask[session.taskId] = make([]*ActionResponse, 0)
+				h.actionsByTask[session.taskId] = make([]*ActionResponse, 0)
 			}
 			h.sessionsByTask[session.taskId][session.sessionId] = session
 			h.sessions[session.sessionId] = session
 		case session := <-h.unregisterSession:
-			if _, ok := h.sessions[session.sessionId]; ok {
-				delete(h.sessions, session.sessionId)
+			sessId := session.sessionId
+			taskId := session.taskId
+			if _, ok := h.sessions[sessId]; ok {
+				delete(h.sessions, sessId)
 			}
-			if _, ok := h.sessionsByTask[session.taskId][session.sessionId]; ok {
-				delete(h.sessionsByTask[session.taskId], session.sessionId)
+			if _, ok := h.sessionsByTask[taskId][sessId]; ok {
+				delete(h.sessionsByTask[taskId], sessId)
 			}
-			if len(h.sessionsByTask[session.taskId]) == 0 {
-				delete(h.sessionsByTask, session.taskId)
+			if len(h.sessionsByTask[taskId]) == 0 {
+				delete(h.sessionsByTask, taskId)
 			}
 		case action := <-h.execAction:
 			timeStamp := time.Now().String()
@@ -64,7 +66,7 @@ func (h *Hub) run() {
 				Time: timeStamp,
 			}
 			taskId := h.sessions[action.SessionId].taskId
-			h.actionLogByTask[taskId] = append(h.actionLogByTask[taskId], actionResponse)
+			h.actionsByTask[taskId] = append(h.actionsByTask[taskId], actionResponse)
 			for _, session := range h.sessionsByTask[taskId] {
 				session.send <- actionResponse
 			}
