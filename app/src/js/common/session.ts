@@ -6,7 +6,6 @@ import * as types from '../action/types'
 import { Window } from '../components/window'
 import { State } from '../functional/types'
 import { configureStore } from './configure_store'
-
 export const enum ConnectionStatus {
   SAVED, SAVING, RECONNECTING, UNSAVED
 }
@@ -29,6 +28,8 @@ class Session {
   public devMode: boolean
   /** Connection status for saving */
   public status: ConnectionStatus
+  /** Function to update status display */
+  public updateStatusDisplay: (ConnectionStatus) => void
   /** Websocket connection */
   public websocket: WebSocket
   /** Timestamped action log */
@@ -51,26 +52,36 @@ class Session {
     // TODO: make it configurable in the url
     this.devMode = true
 
-    /* set up websocket */
     this.websocket = new WebSocket(`ws://${window.location.host}/register`)
-
     /* sync on every action */
     this.middleware = () => (
       next: Dispatch
     ) => (action) => {
-      if (this.websocket.readyState === 1 && this.registered) {
-        this.websocket.send(JSON.stringify(action))
-      }
+      this.sendAction(action)
       return next(action)
     }
     this.store = configureStore({}, this.devMode, this.middleware)
+    this.updateStatusDisplay = (newStatus: ConnectionStatus) => {}
+  }
 
-    this.websocket.onmessage = (e) => {
-      if (typeof e.data === 'string') {
-        const response: types.ActionType = JSON.parse(e.data)
-        this.actionLog.push(response)
-      }
+  /**
+   * Send the action to the backend
+   */
+  public sendAction (action: types.ActionType) {
+    if (this.websocket.readyState === 1 && this.registered) {
+      this.websocket.send(JSON.stringify(action))
     }
+  }
+
+  /**
+   * Send the registration message to the backend
+  */
+  public sendRegistration () {
+    this.registered = true
+    this.websocket.send(JSON.stringify({
+      sessionId: this.id,
+      taskId:    this.getState().task.config.taskId
+    }))
   }
 
   /**
@@ -78,21 +89,29 @@ class Session {
    * Only called after session ID is set
    */
   public registerWebsocket () {
+    console.log("Called register")
+    this.websocket.onmessage = (e) => {
+        if (typeof e.data === 'string') {
+            const response: types.ActionType = JSON.parse(e.data)
+            this.actionLog.push(response)
+        }
+    }
     /* if websocket is not yet open, this runs */
     this.websocket.onopen = () => {
-      this.registered = true
-      this.websocket.send(JSON.stringify({
-        sessionId: this.id,
-        taskId:    this.getState().task.config.taskId
-      }))
+      this.sendRegistration()
+      this.updateStatusDisplay(ConnectionStatus.UNSAVED)
     }
     /* if websocket is already open, this runs
-       extra check ensures no duplicate registration */
+       registered flag ensures no duplicate registration */
     if (this.websocket.readyState === 1 && !this.registered) {
-      this.registered = true
-      this.websocket.send(JSON.stringify({
-        sessionId: this.id
-      }))
+      this.sendRegistration()
+    }
+    this.websocket.onclose = () => {
+      console.log("CLOSING")
+      this.registered = false
+      this.updateStatusDisplay(ConnectionStatus.RECONNECTING)
+      this.websocket = new WebSocket(`ws://${window.location.host}/register`)
+      this.registerWebsocket()
     }
   }
 

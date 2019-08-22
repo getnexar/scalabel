@@ -53,18 +53,15 @@ interface Props {
 /**
  * Save the current state to the server
  */
-function save (callerComponent: TitleBar) {
-  Session.status = ConnectionStatus.SAVING
-  callerComponent.forceUpdate()
+function save () {
+  Session.updateStatusDisplay(ConnectionStatus.SAVING)
   const state = Session.getState()
   const xhr = new XMLHttpRequest()
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
-      Session.status = ConnectionStatus.SAVED
-      callerComponent.forceUpdate()
+      Session.updateStatusDisplay(ConnectionStatus.SAVED)
       setTimeout(() => {
-        Session.status = ConnectionStatus.UNSAVED
-        callerComponent.forceUpdate()
+        Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
       }, 5000)
       if (JSON.parse(xhr.response) !== 0) {
         alert('Save failed.')
@@ -92,6 +89,10 @@ class TitleBar extends Component<Props> {
    */
   constructor (props: Props) {
     super(props)
+    Session.updateStatusDisplay = (newStatus: ConnectionStatus) => {
+      Session.status = newStatus
+      this.forceUpdate()
+    }
   }
 
   /**
@@ -112,8 +113,8 @@ class TitleBar extends Component<Props> {
         title: 'Assistant View', onClick: toggleAssistantView,
         icon: fa.faColumns
       },
-      { title: 'Save', onClick: () => { save(this) }, icon: fa.faSave },
-      { title: 'Submit', onClick: () => { save(this) }, icon: fa.faCheck }
+      { title: 'Save', onClick: () => { save() }, icon: fa.faSave },
+      { title: 'Submit', onClick: () => { save() }, icon: fa.faCheck }
     ]
     const buttons = buttonInfo.map((b) => {
       const onClick = _.get(b, 'onClick', undefined)
