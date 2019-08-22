@@ -29,7 +29,7 @@ class Session {
   /** Connection status for saving */
   public status: ConnectionStatus
   /** Function to update status display */
-  public updateStatusDisplay: (ConnectionStatus) => void
+  public updateStatusDisplay: (newStatus: ConnectionStatus) => ConnectionStatus
   /** Websocket connection */
   public websocket: WebSocket
   /** Timestamped action log */
@@ -61,7 +61,9 @@ class Session {
       return next(action)
     }
     this.store = configureStore({}, this.devMode, this.middleware)
-    this.updateStatusDisplay = (newStatus: ConnectionStatus) => {}
+    this.updateStatusDisplay = (newStatus: ConnectionStatus) => {
+      return newStatus
+    }
   }
 
   /**
@@ -75,7 +77,7 @@ class Session {
 
   /**
    * Send the registration message to the backend
-  */
+   */
   public sendRegistration () {
     this.registered = true
     this.websocket.send(JSON.stringify({
@@ -89,12 +91,11 @@ class Session {
    * Only called after session ID is set
    */
   public registerWebsocket () {
-    console.log("Called register")
     this.websocket.onmessage = (e) => {
-        if (typeof e.data === 'string') {
-            const response: types.ActionType = JSON.parse(e.data)
-            this.actionLog.push(response)
-        }
+      if (typeof e.data === 'string') {
+        const response: types.ActionType = JSON.parse(e.data)
+          this.actionLog.push(response)
+      }
     }
     /* if websocket is not yet open, this runs */
     this.websocket.onopen = () => {
@@ -107,7 +108,6 @@ class Session {
       this.sendRegistration()
     }
     this.websocket.onclose = () => {
-      console.log("CLOSING")
       this.registered = false
       this.updateStatusDisplay(ConnectionStatus.RECONNECTING)
       this.websocket = new WebSocket(`ws://${window.location.host}/register`)

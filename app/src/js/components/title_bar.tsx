@@ -92,6 +92,7 @@ class TitleBar extends Component<Props> {
     Session.updateStatusDisplay = (newStatus: ConnectionStatus) => {
       Session.status = newStatus
       this.forceUpdate()
+      return newStatus
     }
   }
 
