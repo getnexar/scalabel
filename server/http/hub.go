@@ -66,7 +66,8 @@ func (h *Hub) run() {
 				Time: timeStamp,
 			}
 			taskId := h.sessions[action.SessionId].taskId
-			h.actionsByTask[taskId] = append(h.actionsByTask[taskId], actionResponse)
+			h.actionsByTask[taskId] =
+				append(h.actionsByTask[taskId], actionResponse)
 			for _, session := range h.sessionsByTask[taskId] {
 				session.send <- actionResponse
 			}
