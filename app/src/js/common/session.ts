@@ -60,8 +60,11 @@ class Session {
     this.middleware = () => (
       next: Dispatch
     ) => (action) => {
-      this.actionQueue.push(action)
-      this.sendActions()
+      /* Do not send received actions back again */
+      if (this.id === action.sessionId) {
+        this.actionQueue.push(action)
+        this.sendActions()
+      }
       return next(action)
     }
     this.store = configureStore({}, this.devMode, this.middleware)
@@ -108,6 +111,11 @@ class Session {
         } else {
           const response: types.ActionType = JSON.parse(e.data)
           this.actionLog.push(response)
+          console.log(response)
+          //TODO: may have to rollback actions
+          if (response.sessionId !== this.id) {
+            this.dispatch(response)
+          }
         }
       }
     }

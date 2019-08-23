@@ -89,7 +89,13 @@ func actionReturner(session *Session) {
 				log.Println("Write Deadline Error", err)
 				return
 			}
-			err = session.conn.WriteJSON(actionResponse)
+			var formattedAction map[string]interface{} = make(map[string]interface{})
+			formattedAction["type"] = actionResponse.Type
+			formattedAction["sessionId"] = actionResponse.SessionId
+			for k, v := range actionResponse.Args {
+				formattedAction[k] = v
+			}
+			err = session.conn.WriteJSON(formattedAction)
 			if err != nil {
 				log.Println("Websocket WriteJSON Error", err)
 				return
