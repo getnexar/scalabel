@@ -75,8 +75,9 @@ class Session {
    */
   public sendActions () {
     if (this.websocket.readyState === 1 && this.registered) {
-      while (this.actionQueue.length > 0) {
-        this.websocket.send(JSON.stringify(this.actionQueue.shift()))
+      if (this.actionQueue.length > 0) {
+        this.websocket.send(JSON.stringify(this.actionQueue))
+        this.actionQueue = []
       }
     }
   }

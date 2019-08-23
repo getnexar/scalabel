@@ -16,7 +16,7 @@ type Session struct {
 type Hub struct {
 	registerSession   chan *Session
 	unregisterSession chan *Session
-	execAction        chan *ActionMsg
+	execAction        chan *ActionMessage
 	sessions          map[string]*Session
 	sessionsByTask    map[string]map[string]*Session
 	actionsByTask     map[string][]*ActionResponse
@@ -26,7 +26,7 @@ func newhub() *Hub {
 	return &Hub{
 		registerSession:   make(chan *Session),
 		unregisterSession: make(chan *Session),
-		execAction:        make(chan *ActionMsg),
+		execAction:        make(chan *ActionMessage),
 		sessions:          make(map[string]*Session),
 		sessionsByTask:    make(map[string]map[string]*Session),
 		actionsByTask:     make(map[string][]*ActionResponse),

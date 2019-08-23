@@ -13,7 +13,7 @@ const pongPeriod = 30 * time.Second
 // Must write within this time
 const writePeriod = 10 * time.Second
 
-type ActionMsg struct {
+type ActionMessage struct {
 	Type      string                 `json:"type" yaml:"type"`
 	SessionId string                 `json:"sessionId" yaml:"sessionId"`
 	Args      map[string]interface{} `json:"-" yaml:"-"`
@@ -39,22 +39,26 @@ func actionReceiver(session *Session, h *Hub) {
 	})
 
 	for {
-		var msg ActionMsg
-		err := session.conn.ReadJSON(&msg.Args)
+		messages := make([]map[string]interface{}, 0)
+		err := session.conn.ReadJSON(&messages)
 		if err != nil {
 			log.Println("Websocket ReadJSON Error", err)
 			return
 		}
 		//Process default action fields
-		if actionType, ok := msg.Args["type"].(string); ok {
-			msg.Type = actionType
+		for _, message := range messages {
+			var actionMessage ActionMessage
+			if actionType, ok := message["type"].(string); ok {
+				actionMessage.Type = actionType
+				delete(message, "type")
+			}
+			if sessionId, ok := message["sessionId"].(string); ok {
+				actionMessage.SessionId = sessionId
+				delete(message, "sessionId")
+			}
+			actionMessage.Args = message
+			h.execAction <- &actionMessage
 		}
-		if sessionId, ok := msg.Args["sessionId"].(string); ok {
-			msg.SessionId = sessionId
-		}
-		delete(msg.Args, "type")
-		delete(msg.Args, "sessionId")
-		h.execAction <- &msg
 	}
 }
 
