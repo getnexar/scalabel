@@ -10,26 +10,26 @@ type Session struct {
 	sessionId string
 	taskId    string
 	conn      *websocket.Conn
-	send      chan *ActionResponse
+	send      chan *TaskAction
 }
 
 type Hub struct {
 	registerSession   chan *Session
 	unregisterSession chan *Session
-	execAction        chan *ActionMessage
+	execAction        chan *TaskAction
 	sessions          map[string]*Session
 	sessionsByTask    map[string]map[string]*Session
-	actionsByTask     map[string][]*ActionResponse
+	actionsByTask     map[string][]*TaskAction
 }
 
 func newhub() *Hub {
 	return &Hub{
 		registerSession:   make(chan *Session),
 		unregisterSession: make(chan *Session),
-		execAction:        make(chan *ActionMessage),
+		execAction:        make(chan *TaskAction),
 		sessions:          make(map[string]*Session),
 		sessionsByTask:    make(map[string]map[string]*Session),
-		actionsByTask:     make(map[string][]*ActionResponse),
+		actionsByTask:     make(map[string][]*TaskAction),
 	}
 }
 
@@ -56,20 +56,15 @@ func (h *Hub) run() {
 				delete(h.sessionsByTask, taskId)
 			}
 		case action := <-h.execAction:
-			timeStamp := time.Now().String()
-			log.Printf("Got this message: %v at %s\n", action, timeStamp)
-
-			actionResponse := &ActionResponse {
-				Type:      action.Type,
-				SessionId: action.SessionId,
-				Args:      action.Args,
-				Time:      timeStamp,
-			}
-			taskId := h.sessions[action.SessionId].taskId
-			h.actionsByTask[taskId] =
-				append(h.actionsByTask[taskId], actionResponse)
-			for _, session := range h.sessionsByTask[taskId] {
-				session.send <- actionResponse
+			action.Time = time.Now().String()
+			log.Printf("Got this message: %v\n", action)
+			ok := action.applyToTaskState(TaskData{}); if ok {
+				taskId := h.sessions[action.SessionId].taskId
+				h.actionsByTask[taskId] =
+					append(h.actionsByTask[taskId], actionResponse)
+				for _, session := range h.sessionsByTask[taskId] {
+					session.send <- action
+				}
 			}
 		}
 	}

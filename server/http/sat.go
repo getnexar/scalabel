@@ -1051,7 +1051,7 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 			sessionId: msg.SessionId,
 			taskId:		 msg.TaskId,
 			conn:      conn,
-			send:      make(chan *ActionResponse),
+			send:      make(chan *TaskAction),
 		}
 		h.registerSession <- session
 	}

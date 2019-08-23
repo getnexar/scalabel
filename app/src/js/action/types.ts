@@ -123,16 +123,25 @@ export interface MoveCameraAndTargetAction extends BaseAction {
   newTarget?: Vector3Type
 }
 
+export type SessionType =
+  InitSessionAction
+  | LoadItemAction
+  | UpdateAllAction
+
+export type UserType =
+  GoToItemAction
+  | ImageZoomAction
+  | ToggleAssistantViewAction
+  | MoveCameraAndTargetAction
+
+export type TaskType =
+  AddLabelAction
+  | ChangeShapeAction
+  | ChangeLabelAction
+  | DeleteLabelAction
+  | TagImageAction
+
 export type ActionType =
-    InitSessionAction
-    | GoToItemAction
-    | LoadItemAction
-    | UpdateAllAction
-    | ImageZoomAction
-    | AddLabelAction
-    | ChangeShapeAction
-    | ChangeLabelAction
-    | DeleteLabelAction
-    | TagImageAction
-    | ToggleAssistantViewAction
-    | MoveCameraAndTargetAction
+  SessionType
+  | UserType
+  | TaskType

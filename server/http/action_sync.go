@@ -13,19 +13,6 @@ const pongPeriod = 30 * time.Second
 // Must write within this time
 const writePeriod = 10 * time.Second
 
-type ActionMessage struct {
-	Type      string                 `json:"type" yaml:"type"`
-	SessionId string                 `json:"sessionId" yaml:"sessionId"`
-	Args      map[string]interface{} `json:"-" yaml:"-"`
-}
-
-type ActionResponse struct {
-	Type      string                 `json:"type" yaml:"type"`
-	SessionId string                 `json:"sessionId" yaml:"sessionId"`
-	Args      map[string]interface{} `json:"args" yaml:"args"`
-	Time      string                 `json:"time" yaml:"time"`
-}
-
 func actionReceiver(session *Session, h *Hub) {
 	defer func() {
 		session.conn.Close()
@@ -47,25 +34,48 @@ func actionReceiver(session *Session, h *Hub) {
 	})
 
 	for {
-		messages := make([]map[string]interface{}, 0)
-		err := session.conn.ReadJSON(&messages)
+		messageType, bytes, err := session.conn.ReadMessage()
 		if err != nil {
-			log.Println("Websocket ReadJSON Error", err)
+			log.Println("Websocket Read Error", err)
 			return
 		}
-		//Process default action fields
+		messages := make([]GenericAction, 0)
+		err = json.Unmarshal(bytes, &messages)
+		if err != nil {
+			log.Println("Websocket ReadJSON Error", err)
+		}
 		for _, message := range messages {
-			var actionMessage ActionMessage
-			if actionType, ok := message["type"].(string); ok {
-				actionMessage.Type = actionType
-				delete(message, "type")
+			var actionMessage GenericAction
+			switch message.Type {
+			case addLabel:
+				actionMessage = &AddLabelAction{}
+			case goToItem:
+				actionMessage = &GoToItemAction{}
+			case changeLabelShape:
+				actionMessage = &ChangeLabelShapeAction{}
+			case loadItem:
+				actionMessage = &LoadItemAction{}
+			default:
+				log.Println("Action not implemented in go yet")
 			}
-			if sessionId, ok := message["sessionId"].(string); ok {
-				actionMessage.SessionId = sessionId
-				delete(message, "sessionId")
+			err = json.Unmarshal(bytes, &actionMessage)
+			if err != nil {
+				log.Println("Websocket ReadJSON Error", err)
+				return
 			}
-			actionMessage.Args = message
-			h.execAction <- &actionMessage
+			_, ok := userActions[action.Type]; if ok {
+				action.Time = time.Now().String()
+				log.Printf("Got this message: %v\n", action)
+				action.applyToUserState(UserData{})
+			}
+			_, ok := sessionActions[action.Type]; if ok {
+				action.Time = time.Now().String()
+				log.Printf("Got this message: %v\n", action)
+				action.applyToSessionState(SessionData{})
+			}
+			_, ok := taskActions[action.Type]; if ok {
+				h.execAction <- actionMessage
+			}
 		}
 	}
 }
