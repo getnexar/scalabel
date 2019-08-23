@@ -2,7 +2,7 @@ import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
 import EventListener, { withOptions } from 'react-event-listener'
 import { zoomImage } from '../action/image'
-import Session from '../common/session'
+import Session, { ConnectionStatus } from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
 import { decodeControlIndex, rgbToIndex } from '../drawable/util'
 import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
@@ -478,7 +478,8 @@ export class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onMouseDown (e: MouseEvent) {
-    if (!this.isWithinFrame(e) || e.button !== 0) {
+    if (!this.isWithinFrame(e) || e.button !== 0
+        || Session.status === ConnectionStatus.RECONNECTING) {
       return
     }
     // ctrl + click for dragging
@@ -509,7 +510,8 @@ export class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onMouseUp (e: MouseEvent) {
-    if (!this.isWithinFrame(e) || e.button !== 0) {
+    if (!this.isWithinFrame(e) || e.button !== 0
+        || Session.status === ConnectionStatus.RECONNECTING) {
       return
     }
     // get mouse position in image coordinates
@@ -538,7 +540,8 @@ export class ImageView extends Canvas2d<Props> {
    * @param {MouseEvent} e - event
    */
   private onMouseMove (e: MouseEvent) {
-    if (!this.isWithinFrame(e)) {
+    if (!this.isWithinFrame(e)
+        || Session.status === ConnectionStatus.RECONNECTING) {
       this.onMouseLeave(e)
       return
     }
