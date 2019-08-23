@@ -46,11 +46,11 @@ func (h *Hub) run() {
 		case session := <-h.unregisterSession:
 			sessId := session.sessionId
 			taskId := session.taskId
-			if _, ok := h.sessions[sessId]; ok {
-				delete(h.sessions, sessId)
-			}
+
 			if _, ok := h.sessionsByTask[taskId][sessId]; ok {
 				delete(h.sessionsByTask[taskId], sessId)
+				delete(h.sessions, sessId)
+				close(session.send)
 			}
 			if len(h.sessionsByTask[taskId]) == 0 {
 				delete(h.sessionsByTask, taskId)
@@ -72,6 +72,5 @@ func (h *Hub) run() {
 				session.send <- actionResponse
 			}
 		}
-
 	}
 }

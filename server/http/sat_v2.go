@@ -127,7 +127,7 @@ type SessionData struct {
 	SessionId        string       `json:"id" yaml:"id"`
 	DemoMode         bool         `json:"demoMode" yaml:"demoMode"`
 	StartTime        int64        `json:"startTime" yaml:"startTime"`
-	ItemStatuses    []ItemStatus `json:"items" yaml:"items"`
+	ItemStatuses    []ItemStatus  `json:"items" yaml:"items"`
 }
 
 //Item status
