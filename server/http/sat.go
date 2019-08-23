@@ -1060,7 +1060,7 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 	log.Println("Registered websocket for session")
 
 	go actionReceiver(session, h)
-	go actionReturner(session, h)
+	go actionReturner(session)
 
 	err = conn.WriteJSON(1)
 	if err != nil {

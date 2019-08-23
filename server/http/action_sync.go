@@ -32,9 +32,17 @@ func actionReceiver(session *Session, h *Hub) {
 		h.unregisterSession <- session
 	}()
 
-	session.conn.SetReadDeadline(time.Now().Add(pongPeriod))
+	err := session.conn.SetReadDeadline(time.Now().Add(pongPeriod))
+	if err != nil {
+		log.Println("Read Deadline Error", err)
+		return
+	}
 	session.conn.SetPongHandler(func(string) error {
-		session.conn.SetReadDeadline(time.Now().Add(pongPeriod))
+		err := session.conn.SetReadDeadline(time.Now().Add(pongPeriod))
+		if err != nil {
+			log.Println("Read Deadline Error", err)
+			return err
+		}
 		return nil
 	})
 
@@ -62,28 +70,37 @@ func actionReceiver(session *Session, h *Hub) {
 	}
 }
 
-func actionReturner(session *Session, h *Hub) {
+func actionReturner(session *Session) {
 	timer := time.NewTicker(pingPeriod)
 	defer func() {
+		timer.Stop()
 		session.conn.Close()
 	}()
 
 	for {
 		select {
 		case actionResponse, ok := <-session.send:
-			session.conn.SetWriteDeadline(time.Now().Add(writePeriod))
 			if !ok {
 				log.Println("Channel closed")
 				return
 			}
-			err := session.conn.WriteJSON(actionResponse)
+			err := session.conn.SetWriteDeadline(time.Now().Add(writePeriod))
+			if err != nil {
+				log.Println("Write Deadline Error", err)
+				return
+			}
+			err = session.conn.WriteJSON(actionResponse)
 			if err != nil {
 				log.Println("Websocket WriteJSON Error", err)
 				return
 			}
 		case <-timer.C:
-			session.conn.SetWriteDeadline(time.Now().Add(writePeriod))
-			err := session.conn.WriteMessage(websocket.PingMessage, nil)
+			err := session.conn.SetWriteDeadline(time.Now().Add(writePeriod))
+			if err != nil {
+				log.Println("Write Deadline Error", err)
+				return
+			}
+			err = session.conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
 				return
 			}
