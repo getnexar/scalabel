@@ -32,6 +32,8 @@ class Session {
   public updateStatusDisplay: (newStatus: ConnectionStatus) => ConnectionStatus
   /** Websocket connection */
   public websocket: WebSocket
+  /** Actions queued to send */
+  public actionQueue: types.BaseAction[]
   /** Timestamped action log */
   public actionLog: types.BaseAction[]
   /** Middleware to use */
@@ -46,6 +48,7 @@ class Session {
     this.images = []
     this.pointClouds = []
     this.itemType = ''
+    this.actionQueue = []
     this.actionLog = []
     this.status = ConnectionStatus.UNSAVED
     this.registered = false
@@ -57,7 +60,8 @@ class Session {
     this.middleware = () => (
       next: Dispatch
     ) => (action) => {
-      this.sendAction(action)
+      this.actionQueue.push(action)
+      this.sendActions()
       return next(action)
     }
     this.store = configureStore({}, this.devMode, this.middleware)
@@ -69,9 +73,11 @@ class Session {
   /**
    * Send the action to the backend
    */
-  public sendAction (action: types.ActionType) {
+  public sendActions () {
     if (this.websocket.readyState === 1 && this.registered) {
-      this.websocket.send(JSON.stringify(action))
+      while (this.actionQueue.length > 0) {
+        this.websocket.send(JSON.stringify(this.actionQueue.shift()))
+      }
     }
   }
 
@@ -84,6 +90,7 @@ class Session {
       sessionId: this.id,
       taskId:    this.getState().task.config.taskId
     }))
+    this.updateStatusDisplay(ConnectionStatus.UNSAVED)
   }
 
   /**
@@ -93,14 +100,19 @@ class Session {
   public registerWebsocket () {
     this.websocket.onmessage = (e) => {
       if (typeof e.data === 'string') {
-        const response: types.ActionType = JSON.parse(e.data)
+        if (JSON.parse(e.data) === 1) {
+          /* on receipt of ack from backend
+             send any queued actions */
+          this.sendActions()
+        } else {
+          const response: types.ActionType = JSON.parse(e.data)
           this.actionLog.push(response)
+        }
       }
     }
     /* if websocket is not yet open, this runs */
     this.websocket.onopen = () => {
       this.sendRegistration()
-      this.updateStatusDisplay(ConnectionStatus.UNSAVED)
     }
     /* if websocket is already open, this runs
        registered flag ensures no duplicate registration */

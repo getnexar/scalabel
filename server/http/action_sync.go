@@ -23,8 +23,8 @@ func actionReceiver(session *Session, h *Hub) {
 		h.unregisterSession <- session
 	}()
 
-	var msg ActionMsg
 	for {
+		var msg ActionMsg
 		err := session.conn.ReadJSON(&msg.Args)
 		if err != nil {
 			log.Println("Websocket ReadJSON Error", err)
@@ -38,8 +38,7 @@ func actionReceiver(session *Session, h *Hub) {
 			msg.SessionId = sessionId
 		}
 		delete(msg.Args, "type")
-		delete(msg.Args, "sessionid")
-
+		delete(msg.Args, "sessionId")
 		h.execAction <- &msg
 	}
 }

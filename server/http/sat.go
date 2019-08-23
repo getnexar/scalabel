@@ -1061,6 +1061,12 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 
 	go actionReceiver(session, h)
 	go actionReturner(session, h)
+
+	err = conn.WriteJSON(1)
+	if err != nil {
+		log.Println("Register App WriteJSON Error", err)
+		return
+	}
 }
 
 // Handles the flag value of User Management System
