@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/websocket"
+	"encoding/json"
 	"log"
 	"time"
 )
@@ -34,7 +35,7 @@ func actionReceiver(session *Session, h *Hub) {
 	})
 
 	for {
-		messageType, bytes, err := session.conn.ReadMessage()
+		_, bytes, err := session.conn.ReadMessage()
 		if err != nil {
 			log.Println("Websocket Read Error", err)
 			return
@@ -45,36 +46,54 @@ func actionReceiver(session *Session, h *Hub) {
 			log.Println("Websocket ReadJSON Error", err)
 		}
 		for _, message := range messages {
-			var actionMessage GenericAction
-			switch message.Type {
-			case addLabel:
-				actionMessage = &AddLabelAction{}
-			case goToItem:
-				actionMessage = &GoToItemAction{}
-			case changeLabelShape:
-				actionMessage = &ChangeLabelShapeAction{}
-			case loadItem:
-				actionMessage = &LoadItemAction{}
-			default:
-				log.Println("Action not implemented in go yet")
+			_, ok := userActions[message.Type]; if ok {
+				var actionMessage UserAction
+				switch message.Type {
+				case goToItem:
+					actionMessage = &GoToItemAction{}
+				default:
+					log.Println("Action not implemented in go yet")
+				}
+				err = json.Unmarshal(bytes, &actionMessage)
+				if err != nil {
+					log.Println("Websocket ReadJSON Error", err)
+					return
+				}
+				actionMessage.addTimestamp()
+				actionMessage.applyToUserState(UserData{})
 			}
-			err = json.Unmarshal(bytes, &actionMessage)
-			if err != nil {
-				log.Println("Websocket ReadJSON Error", err)
-				return
+			_, ok = sessionActions[message.Type]; if ok {
+				var actionMessage SessionAction
+				switch message.Type {
+				case loadItem:
+					actionMessage = &LoadItemAction{}
+				default:
+					log.Println("Action not implemented in go yet")
+				}
+				err = json.Unmarshal(bytes, &actionMessage)
+				if err != nil {
+					log.Println("Websocket ReadJSON Error", err)
+					return
+				}
+				actionMessage.addTimestamp()
+				actionMessage.applyToSessionState(SessionData{})
 			}
-			_, ok := userActions[action.Type]; if ok {
-				action.Time = time.Now().String()
-				log.Printf("Got this message: %v\n", action)
-				action.applyToUserState(UserData{})
-			}
-			_, ok := sessionActions[action.Type]; if ok {
-				action.Time = time.Now().String()
-				log.Printf("Got this message: %v\n", action)
-				action.applyToSessionState(SessionData{})
-			}
-			_, ok := taskActions[action.Type]; if ok {
-				h.execAction <- actionMessage
+			_, ok = taskActions[message.Type]; if ok {
+				var actionMessage TaskAction
+				switch message.Type {
+				case addLabel:
+					actionMessage = &AddLabelAction{}
+				case changeLabelShape:
+					actionMessage = &ChangeShapeAction{}
+				default:
+					log.Println("Action not implemented in go yet")
+				}
+				err = json.Unmarshal(bytes, &actionMessage)
+				if err != nil {
+					log.Println("Websocket ReadJSON Error", err)
+					return
+				}
+				h.execAction <- &actionMessage
 			}
 		}
 	}
@@ -99,13 +118,7 @@ func actionReturner(session *Session) {
 				log.Println("Write Deadline Error", err)
 				return
 			}
-			var formattedAction map[string]interface{} = make(map[string]interface{})
-			formattedAction["type"] = actionResponse.Type
-			formattedAction["sessionId"] = actionResponse.SessionId
-			for k, v := range actionResponse.Args {
-				formattedAction[k] = v
-			}
-			err = session.conn.WriteJSON(formattedAction)
+			err = session.conn.WriteJSON(actionResponse)
 			if err != nil {
 				log.Println("Websocket WriteJSON Error", err)
 				return

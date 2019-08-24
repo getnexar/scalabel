@@ -1,35 +1,50 @@
 package main
 
+import (
+	"log"
+  "time"
+)
+
 /*
-4- filter to broadcast/sync code based on TaskLevel
 5- apply action to correct state (for all levels)
   Would also save to correct file here
 */
 
 const addLabel = "ADD_LABEL"
 const changeLabelShape = "CHANGE_LABEL_SHAPE"
-const taskActions = make(map[string]struct{})
-taskActions[addLabel] = struct{}
-taskActions[changeLabelShape] = struct{}
+var taskActions = map[string]struct{}{
+  addLabel: {},
+  changeLabelShape: {},
+}
 
 const goToItem = "GO_TO_ITEM"
-const userActions = make(map[string]struct{})
-userActions[goToItem] = struct{}
+var userActions = map[string]struct{}{
+  goToItem: {},
+}
 
 const loadItem = "LOAD_ITEM"
-const sessionActions = make(map[string]struct{})
-userActions[loadItem] = struct{}
+var sessionActions = map[string]struct{}{
+  loadItem: {},
+}
+
+type BaseAction interface {
+  addTimestamp()
+  getSessionId() string
+}
 
 type SessionAction interface {
-  applyToSessionState(SessionData) boolean
+  BaseAction
+  applyToSessionState(SessionData) bool
 }
 
 type UserAction interface {
-  applyToUserState(UserData) boolean
+  BaseAction
+  applyToUserState(UserData) bool
 }
 
 type TaskAction interface {
-  applyToTaskState(TaskData) boolean
+  BaseAction
+  applyToTaskState(TaskData) bool
 }
 
 type GenericAction struct {
@@ -41,7 +56,7 @@ type GenericAction struct {
 type AddLabelAction struct {
   GenericAction
   ItemIndex int           `json:"itemIndex" yaml:"itemIndex"`
-  Label     LabelType     `json:"label" yaml:"label"`
+  Label     LabelData     `json:"label" yaml:"label"`
   Shapes    []interface{} `json:"shapes" yaml:"shapes"`
 }
 
@@ -63,18 +78,27 @@ type LoadItemAction struct {
   Config ViewerConfig `json:"config" yaml:"config"`
 }
 
-func (action AddLabelAction) applyToTaskState(state TaskData) boolean {
+func (action GenericAction) addTimestamp() {
+  action.Time = time.Now().String()
+  log.Printf("Timestamped this message: %v\n", action)
+}
+
+func (action GenericAction) getSessionId() string {
+  return action.SessionId
+}
+
+func (action AddLabelAction) applyToTaskState(state TaskData) bool {
     return true
 }
 
-func (action ChangeShapeAction) applyToTaskState(state TaskData) boolean {
+func (action ChangeShapeAction) applyToTaskState(state TaskData) bool {
     return true
 }
 
-func (action GoToItemAction) applyToUserState(state UserData) boolean {
+func (action GoToItemAction) applyToUserState(state UserData) bool {
     return true
 }
 
-func (action LoadItemAction) applyToUserState(state SessionData) boolean {
+func (action LoadItemAction) applyToSessionState(state SessionData) bool {
     return true
 }

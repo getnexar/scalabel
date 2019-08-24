@@ -2,8 +2,6 @@ package main
 
 import (
 	"github.com/gorilla/websocket"
-	"log"
-	"time"
 )
 
 type Session struct {
@@ -39,7 +37,7 @@ func (h *Hub) run() {
 		case session := <-h.registerSession:
 			if _, ok := h.sessionsByTask[session.taskId]; !ok {
 				h.sessionsByTask[session.taskId] = make(map[string]*Session)
-				h.actionsByTask[session.taskId] = make([]*ActionResponse, 0)
+				h.actionsByTask[session.taskId] = make([]*TaskAction, 0)
 			}
 			h.sessionsByTask[session.taskId][session.sessionId] = session
 			h.sessions[session.sessionId] = session
@@ -56,12 +54,12 @@ func (h *Hub) run() {
 				delete(h.sessionsByTask, taskId)
 			}
 		case action := <-h.execAction:
-			action.Time = time.Now().String()
-			log.Printf("Got this message: %v\n", action)
-			ok := action.applyToTaskState(TaskData{}); if ok {
-				taskId := h.sessions[action.SessionId].taskId
+			taskAction := *action
+			taskAction.addTimestamp()
+			ok := taskAction.applyToTaskState(TaskData{}); if ok {
+				taskId := h.sessions[taskAction.getSessionId()].taskId
 				h.actionsByTask[taskId] =
-					append(h.actionsByTask[taskId], actionResponse)
+					append(h.actionsByTask[taskId], action)
 				for _, session := range h.sessionsByTask[taskId] {
 					session.send <- action
 				}
