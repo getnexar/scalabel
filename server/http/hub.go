@@ -18,6 +18,7 @@ type Hub struct {
 	sessions          map[string]*Session
 	sessionsByTask    map[string]map[string]*Session
 	actionsByTask     map[string][]*TaskAction
+	statesByTask      map[string]TaskData
 }
 
 func newhub() *Hub {
@@ -28,6 +29,7 @@ func newhub() *Hub {
 		sessions:          make(map[string]*Session),
 		sessionsByTask:    make(map[string]map[string]*Session),
 		actionsByTask:     make(map[string][]*TaskAction),
+		statesByTask:      make(map[string]TaskData)
 	}
 }
 
@@ -38,6 +40,7 @@ func (h *Hub) run() {
 			if _, ok := h.sessionsByTask[session.taskId]; !ok {
 				h.sessionsByTask[session.taskId] = make(map[string]*Session)
 				h.actionsByTask[session.taskId] = make([]*TaskAction, 0)
+				h.statesByTask[session.taskId] = make(TaskData)
 			}
 			h.sessionsByTask[session.taskId][session.sessionId] = session
 			h.sessions[session.sessionId] = session
@@ -52,12 +55,16 @@ func (h *Hub) run() {
 			}
 			if len(h.sessionsByTask[taskId]) == 0 {
 				delete(h.sessionsByTask, taskId)
+				delete(h.statesByTask, taskId)
 			}
 		case action := <-h.execAction:
 			taskAction := *action
 			taskAction.addTimestamp()
-			ok := taskAction.applyToTaskState(TaskData{}); if ok {
-				taskId := h.sessions[taskAction.getSessionId()].taskId
+			taskId := h.sessions[taskAction.getSessionId()].taskId
+
+			h.statesByTask[taskId], err :=
+				taskAction.updateState(h.statesByTask[taskId])
+			if err == nil {
 				h.actionsByTask[taskId] =
 					append(h.actionsByTask[taskId], action)
 				for _, session := range h.sessionsByTask[taskId] {

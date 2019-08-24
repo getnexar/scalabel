@@ -111,8 +111,6 @@ class Session {
         } else {
           const response: types.ActionType = JSON.parse(e.data)
           this.actionLog.push(response)
-          console.log(response)
-          //TODO: may have to rollback actions
           if (response.sessionId !== this.id) {
             this.dispatch(response)
           }

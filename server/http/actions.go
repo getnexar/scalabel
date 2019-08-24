@@ -34,17 +34,17 @@ type BaseAction interface {
 
 type SessionAction interface {
   BaseAction
-  applyToSessionState(SessionData) bool
+  applyToSessionState(SessionData) (SessionData, error)
 }
 
 type UserAction interface {
   BaseAction
-  applyToUserState(UserData) bool
+  applyToUserState(UserData) (UserData, error)
 }
 
 type TaskAction interface {
   BaseAction
-  applyToTaskState(TaskData) bool
+  updateState(TaskData) (TaskData, error)
 }
 
 type GenericAction struct {
@@ -87,18 +87,18 @@ func (action GenericAction) getSessionId() string {
   return action.SessionId
 }
 
-func (action AddLabelAction) applyToTaskState(state TaskData) bool {
-    return true
+func (action AddLabelAction) updateState(state TaskData) (TaskData, error) {
+    return state, nil
 }
 
-func (action ChangeShapeAction) applyToTaskState(state TaskData) bool {
-    return true
+func (action ChangeShapeAction) updateState(state TaskData) (TaskData, error) {
+    return state, nil
 }
 
-func (action GoToItemAction) applyToUserState(state UserData) bool {
-    return true
+func (action GoToItemAction) applyToUserState(state UserData) (UserData, error) {
+    return state, nil
 }
 
-func (action LoadItemAction) applyToSessionState(state SessionData) bool {
-    return true
+func (action LoadItemAction) applyToSessionState(state SessionData) (SessionData, error) {
+    return state, nil
 }
