@@ -37,15 +37,23 @@ func actionReceiver(session *Session, h *Hub) {
 	for {
 		_, bytes, err := session.conn.ReadMessage()
 		if err != nil {
-			log.Println("Websocket Read Error", err)
+			log.Println("Websocket Read Bytes Error", err)
 			return
 		}
 		messages := make([]GenericAction, 0)
 		err = json.Unmarshal(bytes, &messages)
 		if err != nil {
-			log.Println("Websocket ReadJSON Error", err)
+			log.Println("Websocket Read Generic JSON Error", err)
 		}
-		for _, message := range messages {
+		rawMessages := make([]json.RawMessage, 0)
+		err = json.Unmarshal(bytes, &rawMessages)
+		if err != nil {
+			log.Println("Websocket Read Raw JSON Error", err)
+		}
+		if len(rawMessages) != len(messages) {
+			log.Println("Websocket Read Lengths Error", err)
+		}
+		for i, message := range messages {
 			_, ok := userActions[message.Type]; if ok {
 				var actionMessage UserAction
 				switch message.Type {
@@ -54,9 +62,9 @@ func actionReceiver(session *Session, h *Hub) {
 				default:
 					log.Println("Action not implemented in go yet")
 				}
-				err = json.Unmarshal(bytes, &actionMessage)
+				err = json.Unmarshal(rawMessages[i], &actionMessage)
 				if err != nil {
-					log.Println("Websocket ReadJSON Error", err)
+					log.Println("Websocket Read User Action JSON Error", err)
 					return
 				}
 				actionMessage.addTimestamp()
@@ -70,9 +78,9 @@ func actionReceiver(session *Session, h *Hub) {
 				default:
 					log.Println("Action not implemented in go yet")
 				}
-				err = json.Unmarshal(bytes, &actionMessage)
+				err = json.Unmarshal(rawMessages[i], &actionMessage)
 				if err != nil {
-					log.Println("Websocket ReadJSON Error", err)
+					log.Println("Websocket Read Session Action JSON Error", err)
 					return
 				}
 				actionMessage.addTimestamp()
@@ -88,9 +96,9 @@ func actionReceiver(session *Session, h *Hub) {
 				default:
 					log.Println("Action not implemented in go yet")
 				}
-				err = json.Unmarshal(bytes, &actionMessage)
+				err = json.Unmarshal(rawMessages[i], &actionMessage)
 				if err != nil {
-					log.Println("Websocket ReadJSON Error", err)
+					log.Println("Websocket Read Task Action JSON Error", err)
 					return
 				}
 				h.execAction <- &actionMessage
