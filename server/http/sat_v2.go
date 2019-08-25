@@ -79,11 +79,20 @@ type LabelData struct {
 }
 
 //Contains data for single shape
+//TODO: support non-rectangular shapes
 type ShapeData struct {
-	Id     int         `json:"id" yaml:"id"`
-	Label  []int       `json:"label" yaml:"label"`
-	Manual bool        `json:"manual" yaml:"manual"`
-	Shape  interface{} `json:"shape" yaml:"shape"`
+	Id     int       `json:"id" yaml:"id"`
+	Label  []int     `json:"label" yaml:"label"`
+	Manual bool      `json:"manual" yaml:"manual"`
+	Shape  ShapeRect `json:"shape" yaml:"shape"`
+}
+
+//Contains data for generic shape
+type ShapeRect struct {
+	X1 float32 `json:"x1" yaml:"x1"`
+	Y1 float32 `json:"y1" yaml:"y1"`
+	X2 float32 `json:"x2" yaml:"x2"`
+	Y2 float32 `json:"y2" yaml:"y2"`
 }
 
 //Data for tracks
