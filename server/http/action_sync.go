@@ -68,7 +68,7 @@ func actionReceiver(session *Session, h *Hub) {
 					return
 				}
 				actionMessage.addTimestamp()
-				actionMessage.applyToUserState(UserData{})
+				actionMessage.applyToUserState(&UserData{})
 			}
 			_, ok = sessionActions[message.Type]; if ok {
 				var actionMessage SessionAction
@@ -84,7 +84,7 @@ func actionReceiver(session *Session, h *Hub) {
 					return
 				}
 				actionMessage.addTimestamp()
-				actionMessage.applyToSessionState(SessionData{})
+				actionMessage.applyToSessionState(&SessionData{})
 			}
 			_, ok = taskActions[message.Type]; if ok {
 				var actionMessage TaskAction

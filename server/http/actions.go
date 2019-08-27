@@ -34,17 +34,17 @@ type BaseAction interface {
 
 type SessionAction interface {
   BaseAction
-  applyToSessionState(SessionData) (SessionData, error)
+  applyToSessionState(*SessionData) (*SessionData, error)
 }
 
 type UserAction interface {
   BaseAction
-  applyToUserState(UserData) (UserData, error)
+  applyToUserState(*UserData) (*UserData, error)
 }
 
 type TaskAction interface {
   BaseAction
-  updateState(TaskData) (TaskData, error)
+  updateState(*TaskData) (*TaskData, error)
 }
 
 type GenericAction struct {
@@ -64,7 +64,7 @@ type ChangeShapeAction struct {
   GenericAction
   ItemIndex int         `json:"itemIndex" yaml:"itemIndex"`
   ShapeId   int         `json:"shapeId" yaml:"shapeId"`
-  Props     interface{} `json:"props" yaml:"props"`
+  Props     ShapeRect   `json:"props" yaml:"props"`
 }
 
 type GoToItemAction struct {
@@ -87,98 +87,105 @@ func (action GenericAction) getSessionId() string {
   return action.SessionId
 }
 
-func (action AddLabelAction) updateState(state TaskData) (TaskData, error) {
-  // var itemIndex = action.ItemIndex
-  // var label = action.Label
-  // var shapes = action.Shapes
-  // var newShapeId = state.Status.MaxShapeId + 1
-  // var labelId = state.Status.MaxLabelId + 1
-	// var order = state.Status.MaxOrder + 1
-	// var item = state.Items[itemIndex]
-	//
-	// var shapeIds = make([]int, len(shapes))
-	// for i := range(shapeIds) {
-	// 	shapeIds[i] = i + newShapeId
-	// }
-	//
-	// var newStatus = &TaskStatus{
-	// 	MaxLabelId: labelId,
-	// 	MaxShapeId: shapeIds[len(shapeIds) - 1],
-	// 	MaxOrder: order,
-	// }
-	//
-	// var newShapes = make(map[int]ShapeData)
-	// for k, v := range item.Shapes {
-	// 	newShapes[k] = v
-	// }
-	// for i := range shapes {
-	// 	var newId = i + newShapeId
-	// 	var labelForShape []int
-	// 	labelForShape[0] = labelId
-	// 	var newShape = &ShapeData{
-	// 		Id: newId,
-	// 		Label: labelForShape,
-	// 		Manual: true,
-	// 		Shape: shapes[i],
-	// 	}
-	// 	newShapes[newId] = *newShape
-	// }
-	//
-	// var shapesForLabel = append(label.Shapes, shapeIds...)
-	//
-	// var newLabel = &LabelData{
-	// 	Id: labelId,
-	// 	Item: itemIndex,
-	// 	Type: label.Type,
-	// 	Category: label.Category,
-	// 	Attributes: label.Attributes,
-	// 	Parent: label.Parent,
-	// 	Children: label.Children,
-	// 	Shapes: shapesForLabel,
-	// 	SelectedShape: label.SelectedShape,
-	// 	State: label.State,
-	// 	Order: order,
-	// }
-	// var newLabels = make(map[int]LabelData)
-	// for k, v := range item.Labels {
-	// 	newLabels[k] = v
-	// }
-	// newLabels[labelId] = *newLabel
-	//
-	// var newItem = &ItemData{
-	// 	Id: item.Id,
-	// 	Index: item.Index,
-	// 	Url: item.Url,
-	// 	Labels: newLabels,
-	// 	Shapes: newShapes,
-	// }
-	// var newItems = make([]ItemData, len(state.Items))
-	// for i := range newItems {
-	// 	if i == itemIndex {
-	// 		newItems[i] = *newItem
-	// 	} else {
-	// 		newItems[i] = state.Items[i]
-	// 	}
-	// }
-	// var newState = &TaskData{
-	// 	Config: state.Config,
-	// 	Status: *newStatus,
-	// 	Items: newItems,
-	// 	Tracks: state.Tracks,
-	// }
-	//
-  // return *newState, nil
-	return TaskData{}, nil
+func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
+	newState := state
+
+	var newShapeId = state.Status.MaxShapeId + 1
+  var labelId = state.Status.MaxLabelId + 1
+	var order = state.Status.MaxOrder + 1
+	var shapeIds = make([]int, len(action.Shapes))
+	for i := range(shapeIds) {
+		shapeIds[i] = i + newShapeId
+	}
+
+	var newStatus = TaskStatus{
+		MaxLabelId: labelId,
+		MaxShapeId: shapeIds[len(shapeIds) - 1],
+		MaxOrder: order,
+	}
+	newState.Status = newStatus
+
+	var item = state.Items[action.ItemIndex]
+	var newShapes = make(map[int]ShapeData)
+	for k, v := range item.Shapes {
+  	newShapes[k] = v
+	}
+	for i := range action.Shapes {
+		var newId = i + newShapeId
+		newShapes[newId] = ShapeData{
+			Id: newId,
+			Label: []int{labelId},
+			Manual: true,
+			Shape: action.Shapes[i],
+		}
+	}
+
+	var shapesForLabel = append(action.Label.Shapes, shapeIds...)
+
+	newLabel := action.Label
+	newLabel.Id = labelId
+	newLabel.Item = action.ItemIndex
+	newLabel.Shapes = shapesForLabel
+	newLabel.Order = order
+
+	var newLabels = make(map[int]LabelData)
+	for k, v := range item.Labels {
+		newLabels[k] = v
+	}
+	newLabels[labelId] = newLabel
+
+	newItem := item
+	newItem.Labels = newLabels
+	newItem.Shapes = newShapes
+
+	var newItems = make([]ItemData, len(state.Items))
+	copy(newItems, state.Items)
+	newItems[action.ItemIndex] = newItem
+	newState.Items = newItems
+
+  return newState, nil
 }
 
-func (action ChangeShapeAction) updateState(state TaskData) (TaskData, error) {
+func (action ChangeShapeAction) updateState(state *TaskData) (*TaskData, error) {
+	newState := state
+
+  var shapeId = action.ShapeId
+  var item = state.Items[action.ItemIndex]
+  var indexedShape = item.Shapes[shapeId]
+
+	newShape := indexedShape.Shape
+	newShape.X1 = action.Props.X1
+	newShape.X2 = action.Props.X2
+	newShape.Y1 = action.Props.Y1
+	newShape.Y2 = action.Props.Y2
+
+	newIndexedShape := indexedShape
+	newIndexedShape.Shape = newShape
+
+	//this is repeated code
+	var newShapes = make(map[int]ShapeData)
+	for k, v := range item.Shapes {
+  	newShapes[k] = v
+	}
+	newShapes[shapeId] = newIndexedShape
+
+	//this block may be abstractable (update item)
+	newItem := item
+	newItem.Shapes = newShapes
+
+	//this block maybe abstractable (add item)
+	var newItems = make([]ItemData, len(state.Items))
+	copy(newItems, state.Items)
+	newItems[action.ItemIndex] = newItem
+	newState.Items = newItems
+
+	return state, nil
+}
+
+func (action GoToItemAction) applyToUserState(state *UserData) (*UserData, error) {
   return state, nil
 }
 
-func (action GoToItemAction) applyToUserState(state UserData) (UserData, error) {
-  return state, nil
-}
-
-func (action LoadItemAction) applyToSessionState(state SessionData) (SessionData, error) {
+func (action LoadItemAction) applyToSessionState(state *SessionData) (*SessionData, error) {
   return state, nil
 }

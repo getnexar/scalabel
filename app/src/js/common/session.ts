@@ -79,6 +79,7 @@ class Session {
   public sendActions () {
     if (this.websocket.readyState === 1 && this.registered) {
       if (this.actionQueue.length > 0) {
+        console.log(this.actionQueue)
         this.websocket.send(JSON.stringify(this.actionQueue))
         this.actionQueue = []
       }
