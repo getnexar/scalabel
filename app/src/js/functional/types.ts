@@ -20,7 +20,7 @@ export interface LabelType {
   shapes: number[]
   /** Selected shape of the label */
   selectedShape: number
-  /** State */
+  /** state */
   state: number
   /** order of the label among all the labels */
   order: number
@@ -44,15 +44,6 @@ export interface RectType {
   y2: number
 }
 
-export interface PolygonType {
-  /** controlPoint x coordinate   */
-  controlPointX: number []
-  /** controlPoint y coordinate  */
-  controlPointY: number []
-  /** controlPoint Type */
-  controlPointType: number []
-}
-
 export interface Vector3Type {
   /** The x-coordinate */
   x: number
@@ -71,13 +62,15 @@ export interface CubeType {
   orientation: Vector3Type
 }
 
-export type ShapeType = RectType | CubeType | PolygonType
+export type ShapeType = RectType | CubeType
 
 export interface IndexedShapeType {
   /** ID of the shape */
   id: number
   /** Label ID of the shape */
   label: [number]
+  /** Whether the shape is created manually */
+  manual: boolean
   /** Shape data */
   shape: ShapeType
 }
@@ -114,16 +107,10 @@ export interface ItemType {
   index: number
   /** The URL of the item */
   url: string
-  /** Whether or not the item is active */
-  active: boolean
-  /** Whether or not the item is loaded */
-  loaded: boolean
   /** Labels of the item */
   labels: { [key: number]: LabelType } // list of label
   /** shapes of the labels on this item */
   shapes: { [key: number]: IndexedShapeType }
-  /** Configurations of the viewer */
-  viewerConfig: ViewerConfigType
 }
 
 export interface Attribute {
@@ -141,17 +128,6 @@ export interface Attribute {
   of smaller SatProps.
  */
 export interface ConfigType {
-  /**
-   * a unique id for each session. When the same assignment/task is opened
-   * twice, they will have different session ids.
-   * It is uuid of the session
-   */
-  sessionId: string
-  /**
-   * Assignment ID. The same assignment can be given to multiple sesssions
-   * for collaboration
-   */
-  assignmentId: string
   /** Project name */
   projectName: string
   /** Item type */
@@ -166,20 +142,16 @@ export interface ConfigType {
   pageTitle: string
   /** Instruction page URL */
   instructionPage: string
-  /** Whether or not in demo mode */
-  demoMode: boolean
   /** Bundle file */
   bundleFile: string
   /** Categories */
   categories: string[]
   /** Attributes */
   attributes: Attribute[]
-  /** Task ID */
+  /** task id */
   taskId: string
-  /** Worker ID */
-  workerId: string
-  /** Start time */
-  startTime: number
+  /** the time of last project submission */
+  submitTime: number
 }
 
 export interface LayoutType {
@@ -191,10 +163,27 @@ export interface LayoutType {
   assistantViewRatio: number
 }
 
-/*
-  The current state of Sat.
- */
-export interface CurrentType {
+export interface TaskStatus {
+  /** Max label ID */
+  maxLabelId: number
+  /** Max shape ID */
+  maxShapeId: number
+  /** max order number */
+  maxOrder: number
+}
+
+export interface TaskType {
+  /** Configurations */
+  config: ConfigType
+  /** The current state */
+  status: TaskStatus
+  /** Items */
+  items: ItemType[]
+  /** tracks */
+  tracks: { [key: number]: Track }
+}
+
+export interface Select {
   /** Currently viewed item index */
   item: number
   /** Currently selected label ID */
@@ -205,23 +194,53 @@ export interface CurrentType {
   category: number
   /** selected label type */
   labelType: number
-  /** Max label ID */
-  maxLabelId: number
-  /** Max shape ID */
-  maxShapeId: number
-  /** max order number */
-  maxOrder: number
+}
+
+/**
+ * User information that may persist across sessions
+ */
+export interface UserType {
+  /** user id. the worker can be a guest or registered user */
+  id: string
+  /** the selection of the current user */
+  select: Select
+  /** interface layout */
+  layout: LayoutType
+  /** Configurations of the viewer */
+  viewerConfig: ViewerConfigType
+}
+
+export interface ItemStatus {
+  /** whether this item is loaded in this session */
+  loaded: boolean
+}
+
+/**
+ * Information for this particular session
+ */
+export interface SessionType {
+  /**
+   * a unique id for each session. When the same assignment/task is opened
+   * twice, they will have different session ids.
+   * It is uuid of the session
+   */
+  id: string
+  /** Whether or not in demo mode */
+  demoMode: boolean
+  /** Start time */
+  startTime: number
+  /** item statuses */
+  items: ItemStatus[]
 }
 
 export interface State {
-  /** Configurations */
-  config: ConfigType
-  /** The current state */
-  current: CurrentType
-  /** Items */
-  items: ItemType[]
-  /** tracks */
-  tracks: { [key: number]: Track }
-  /** Layout */
-  layout: LayoutType
+  /**
+   * task config and labels. It is irrevant who makes the labels and other
+   * content in task
+   */
+  task: TaskType
+  /** user information that can be persistent across sessions */
+  user: UserType
+  /** info particular to this session */
+  session: SessionType
 }
