@@ -1,17 +1,12 @@
 import * as labels from '../common/label_types'
 import {
   ConfigType, CubeType,
-  ImageViewerConfigType, IndexedShapeType,
-  ItemStatus, ItemType, LabelType, LayoutType,
-  PointCloudViewerConfigType,
+  CurrentType, ImageViewerConfigType, IndexedShapeType,
+  ItemType, LabelType, LayoutType, PointCloudViewerConfigType,
+  PolygonType,
   RectType,
-  Select,
-  SessionType,
   ShapeType,
-  State,
-  TaskStatus,
-  TaskType,
-  UserType
+  State
 } from './types'
 
 /**
@@ -52,6 +47,20 @@ export function makeRect (params: Partial<RectType> = {}): RectType {
 }
 
 /**
+ * Initialize a polygon shape
+ * @param {{}} params
+ * @return {PolygonType}
+ */
+export function makePolygon (params: Partial<PolygonType> = {}): PolygonType {
+  return {
+    controlPointX: [],
+    controlPointY: [],
+    controlPointType: [],
+    ...params
+  }
+}
+
+/**
  * Initialize a 3d box shape
  * @param {{}} params
  * @return {CubeType}
@@ -72,10 +81,9 @@ export function makeCube (params: {} = {}): CubeType {
  * @param {ShapeType} shape
  */
 export function makeIndexedShape (
-    id: number, label: number, manual: boolean,
-    shape: ShapeType): IndexedShapeType {
+    id: number, label: number, shape: ShapeType): IndexedShapeType {
   return {
-    id, label: [label], manual, shape: { ...shape }
+    id, label: [label], shape: { ...shape }
   }
 }
 
@@ -115,8 +123,11 @@ export function makeItem (params: {} = {}): ItemType {
     id: -1,
     index: 0,
     url: '',
+    active: false,
+    loaded: false,
     labels: {},
     shapes: {},
+    viewerConfig: null,
     ...params
   }
 }
@@ -126,8 +137,10 @@ export function makeItem (params: {} = {}): ItemType {
  * @param {{}} params
  * @return {ConfigType}
  */
-export function makeTaskConfig (params: Partial<ConfigType> = {}): ConfigType {
+export function makeSatConfig (params: Partial<ConfigType> = {}): ConfigType {
   return {
+    sessionId: '',
+    assignmentId: '', // id
     projectName: '',
     itemType: '',
     labelTypes: [],
@@ -135,11 +148,33 @@ export function makeTaskConfig (params: Partial<ConfigType> = {}): ConfigType {
     handlerUrl: '',
     pageTitle: '',
     instructionPage: '', // instruction url
+    demoMode: false,
     bundleFile: '',
     categories: [],
     attributes: [],
     taskId: '',
-    submitTime: 0,
+    workerId: '',
+    startTime: 0,
+    ...params
+  }
+}
+
+/**
+ * Initialize a Sat current state
+ * @param {{}} params
+ * @return {CurrentType}
+ */
+export function makeSatCurrent (
+    params: Partial<CurrentType> = {}): CurrentType {
+  return {
+    item: -1,
+    label: -1,
+    shape: -1,
+    category: 0,
+    labelType:  0,
+    maxLabelId: -1,
+    maxShapeId: -1,
+    maxOrder: -1,
     ...params
   }
 }
@@ -149,98 +184,11 @@ export function makeTaskConfig (params: Partial<ConfigType> = {}): ConfigType {
  * @param {{}} params
  * @return {LayoutType}
  */
-function makeLayout (params: {} = {}): LayoutType {
+export function makeLayout (params: {} = {}): LayoutType {
   return {
     toolbarWidth: 200,
     assistantView: false,
     assistantViewRatio: 0.3,
-    ...params
-  }
-}
-
-/**
- * Initialize a user selection sate
- * @param {{}} params
- * @return {Selection}
- */
-function makeSelect (params: Partial<Select>= {}): Select {
-  return {
-    item: -1,
-    label: -1,
-    shape: -1,
-    category: 0,
-    labelType: 0,
-    ...params
-  }
-}
-
-/**
- * Initialize a user sate
- * @param {{}} params
- * @return {UserType}
- */
-function makeUser (params: Partial<UserType>= {}): UserType {
-  return {
-    id: '',
-    select: makeSelect(),
-    layout: makeLayout(),
-    viewerConfig: makeImageViewerConfig(),
-    ...params
-  }
-}
-
-/**
- * Initialize a item status sate
- * @param {{}} params
- * @return {ItemStatus}
- */
-export function makeItemStatus (params: Partial<ItemStatus>= {}): ItemStatus {
-  return {
-    loaded: false,
-    ...params
-  }
-}
-
-/**
- * Initialize a session sate
- * @param {{}} params
- * @return {Session}
- */
-function makeSession (params: Partial<SessionType>= {}): SessionType {
-  return {
-    id: '',
-    demoMode: false,
-    startTime: 0,
-    items: [],
-    ...params
-  }
-}
-
-/**
- * Initialize a task status state
- * @param {{}} params
- * @return {TaskStatus}
- */
-function makeTaskStatus (params: Partial<TaskStatus> = {}): TaskStatus {
-  return {
-    maxLabelId: -1,
-    maxShapeId: -1,
-    maxOrder: -1,
-    ...params
-  }
-}
-
-/**
- * Initialize a task sate
- * @param {{}} params
- * @return {TaskType}
- */
-function makeTask (params: Partial<TaskType> = {}): TaskType {
-  return {
-    config: makeTaskConfig(),
-    status: makeTaskStatus(),
-    items: [],
-    tracks: {},
     ...params
   }
 }
@@ -251,9 +199,15 @@ function makeTask (params: Partial<TaskType> = {}): TaskType {
  * @return {State}
  */
 export function makeState (params: Partial<State> = {}): State {
-  return {
-    task: makeTask(params.task),
-    user: makeUser(params.user),
-    session: makeSession(params.session)
+  params.config = makeSatConfig(params.config)
+  params.current = makeSatCurrent(params.current)
+  const state = {
+    config: makeSatConfig(),
+    current: makeSatCurrent(),
+    items: [], // Map from item index to item, ordered
+    tracks: {},
+    layout: makeLayout(),
+    ...params
   }
+  return state
 }
