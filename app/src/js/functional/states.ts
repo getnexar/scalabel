@@ -5,6 +5,7 @@ import {
   ItemStatus, ItemType, LabelType, LayoutType,
   PointCloudViewerConfigType,
   RectType,
+  PolygonType,
   Select,
   SessionType,
   ShapeType,
@@ -47,6 +48,20 @@ export function makeRect (params: Partial<RectType> = {}): RectType {
     y1: -1,
     x2: -1,
     y2: -1,
+    ...params
+  }
+}
+
+/**
+ * Initialize a polygon shape
+ * @param {{}} params
+ * @return {PolygonType}
+ */
+export function makePolygon (params: Partial<PolygonType> = {}): PolygonType {
+  return {
+    controlPointX: [],
+    controlPointY: [],
+    controlPointType: [],
     ...params
   }
 }

@@ -44,6 +44,15 @@ export interface RectType {
   y2: number
 }
 
+export interface PolygonType {
+  /** controlPoint x coordinate   */
+  controlPointX: number []
+  /** controlPoint y coordinate  */
+  controlPointY: number []
+  /** controlPoint Type */
+  controlPointType: number []
+}
+
 export interface Vector3Type {
   /** The x-coordinate */
   x: number
@@ -62,7 +71,7 @@ export interface CubeType {
   orientation: Vector3Type
 }
 
-export type ShapeType = RectType | CubeType
+export type ShapeType = RectType | CubeType | PolygonType
 
 export interface IndexedShapeType {
   /** ID of the shape */
