@@ -14,6 +14,33 @@ const pongPeriod = 30 * time.Second
 // Must write within this time
 const writePeriod = 10 * time.Second
 
+func readMessage(message GenericAction, rawMessage json.RawMessage) (
+	BaseAction, error) {
+	var actionMessage BaseAction
+	switch message.Type {
+	case goToItem:
+		actionMessage = &GoToItemAction{}
+	case loadItem:
+		actionMessage = &LoadItemAction{}
+	case addLabel:
+		actionMessage = &AddLabelAction{}
+	case changeLabelShape:
+		actionMessage = &ChangeShapeAction{}
+	default:
+		log.Println("Action not implemented in go yet")
+	}
+	err := json.Unmarshal(rawMessage, &actionMessage)
+	if err != nil {
+		log.Println("Websocket Read Action JSON Error", err)
+		return nil, err
+	}
+	// taskActions should be timestamped in the hub
+	_, ok := taskActions[message.Type]; if !ok {
+		actionMessage.addTimestamp()
+	}
+	return actionMessage, nil
+}
+
 func actionReceiver(session *Session, h *Hub) {
 	defer func() {
 		session.conn.Close()
@@ -54,60 +81,24 @@ func actionReceiver(session *Session, h *Hub) {
 			log.Println("Websocket Read Lengths Error", err)
 		}
 		for i, message := range messages {
+			actionMessage, err := readMessage(message, rawMessages[i])
+			if err != nil {
+				return
+			}
 			_, ok := userActions[message.Type]; if ok {
-				var actionMessage UserAction
-				switch message.Type {
-				case goToItem:
-					actionMessage = &GoToItemAction{}
-				default:
-					log.Println("Action not implemented in go yet")
-				}
-				err = json.Unmarshal(rawMessages[i], &actionMessage)
-				if err != nil {
-					log.Println("Websocket Read User Action JSON Error", err)
-					return
-				}
-				actionMessage.addTimestamp()
-				_, err = actionMessage.applyToUserState(&UserData{})
-				if err != nil {
-					log.Println("Failed to commit user action to state", err)
+				userAction, ok1 := actionMessage.(UserAction); if ok1 {
+					userAction.applyToUserState(&UserData{})
 				}
 			}
 			_, ok = sessionActions[message.Type]; if ok {
-				var actionMessage SessionAction
-				switch message.Type {
-				case loadItem:
-					actionMessage = &LoadItemAction{}
-				default:
-					log.Println("Action not implemented in go yet")
-				}
-				err = json.Unmarshal(rawMessages[i], &actionMessage)
-				if err != nil {
-					log.Println("Websocket Read Session Action JSON Error", err)
-					return
-				}
-				actionMessage.addTimestamp()
-				_, err = actionMessage.applyToSessionState(&SessionData{})
-				if err != nil {
-					log.Println("Failed to commit session action to state", err)
+				sessionAction, ok1 := actionMessage.(SessionAction); if ok1 {
+					sessionAction.applyToSessionState(&SessionData{})
 				}
 			}
 			_, ok = taskActions[message.Type]; if ok {
-				var actionMessage TaskAction
-				switch message.Type {
-				case addLabel:
-					actionMessage = &AddLabelAction{}
-				case changeLabelShape:
-					actionMessage = &ChangeShapeAction{}
-				default:
-					log.Println("Action not implemented in go yet")
+				taskAction, ok1 := actionMessage.(TaskAction); if ok1 {
+					h.execAction <- &taskAction
 				}
-				err = json.Unmarshal(rawMessages[i], &actionMessage)
-				if err != nil {
-					log.Println("Websocket Read Task Action JSON Error", err)
-					return
-				}
-				h.execAction <- &actionMessage
 			}
 		}
 	}

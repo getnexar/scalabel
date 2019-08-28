@@ -72,7 +72,7 @@ func readTaskData() (*TaskData, error) {
 
 // Update state by adding a new label and shape to the item
 func addShapeToState(startState *TaskData, itemIndex int, labelId int) (
-  *TaskData, ShapeRect, error) {
+  *TaskData, ShapeRect) {
   addLabel := LabelData{
     Id: labelId,
     Item: itemIndex,
@@ -86,8 +86,8 @@ func addShapeToState(startState *TaskData, itemIndex int, labelId int) (
     Label: addLabel,
     Shapes: addShapes,
   }
-  addState, err := addAction.updateState(startState)
-  return addState, addShape, err
+  addState := addAction.updateState(startState)
+  return addState, addShape
 }
 
 // Tests that the add label and change shape actions work
@@ -107,11 +107,7 @@ func TestAddChangeShapeActions(t *testing.T) {
 
   // Add the first shape
   labelId1 := 0
-  addState, shape1, err := addShapeToState(initialState,
-    itemIndex, labelId1)
-  if err != nil {
-    t.Fatal("Adding label to state failed", err)
-  }
+  addState, shape1 := addShapeToState(initialState, itemIndex, labelId1)
   numShapes++
   addItem := addState.Items[itemIndex]
   err = checkShapeCorrect(addItem, numShapes, labelId1, labelId1, shape1)
@@ -126,10 +122,7 @@ func TestAddChangeShapeActions(t *testing.T) {
     ShapeId: 0,
     Props: shape2,
   }
-  changeState, err := changeAction.updateState(addState)
-  if err != nil {
-    t.Fatal("Changing shape in state failed", err)
-  }
+  changeState := changeAction.updateState(addState)
   changeShape := changeState.Items[itemIndex].Shapes[0].Shape
   err = checkRectsEqual(changeShape, shape2)
   if err != nil {
@@ -138,11 +131,7 @@ func TestAddChangeShapeActions(t *testing.T) {
 
   // Add another shape
   labelId2 := labelId1 + 1
-  addState2, shape3, err := addShapeToState(changeState,
-    itemIndex, labelId2)
-  if err != nil {
-    t.Fatal("Adding another label to state failed", err)
-  }
+  addState2, shape3 := addShapeToState(changeState, itemIndex, labelId2)
   numShapes++
   addItem2 := addState2.Items[itemIndex]
   err = checkShapeCorrect(addItem2, numShapes, labelId2, labelId2, shape3)

@@ -61,16 +61,11 @@ func (h *Hub) run() {
 			taskAction := *action
 			taskAction.addTimestamp()
 			taskId := h.sessions[taskAction.getSessionId()].taskId
-
-			updatedState, err :=
-				taskAction.updateState(h.statesByTask[taskId])
-			if err == nil {
-				h.statesByTask[taskId] = updatedState
-				h.actionsByTask[taskId] =
-					append(h.actionsByTask[taskId], action)
-				for _, session := range h.sessionsByTask[taskId] {
-					session.send <- &taskAction
-				}
+			h.statesByTask[taskId] = taskAction.updateState(h.statesByTask[taskId])
+			h.actionsByTask[taskId] =
+				append(h.actionsByTask[taskId], action)
+			for _, session := range h.sessionsByTask[taskId] {
+				session.send <- &taskAction
 			}
 		}
 	}

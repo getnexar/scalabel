@@ -34,17 +34,17 @@ type BaseAction interface {
 
 type SessionAction interface {
   BaseAction
-  applyToSessionState(*SessionData) (*SessionData, error)
+  applyToSessionState(*SessionData) (*SessionData)
 }
 
 type UserAction interface {
   BaseAction
-  applyToUserState(*UserData) (*UserData, error)
+  applyToUserState(*UserData) (*UserData)
 }
 
 type TaskAction interface {
   BaseAction
-  updateState(*TaskData) (*TaskData, error)
+  updateState(*TaskData) (*TaskData)
 }
 
 type GenericAction struct {
@@ -87,7 +87,7 @@ func (action GenericAction) getSessionId() string {
   return action.SessionId
 }
 
-func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
+func (action AddLabelAction) updateState(state *TaskData) *TaskData {
 	newState := *state
 
 	var newShapeId = state.Status.MaxShapeId + 1
@@ -143,11 +143,10 @@ func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
 	newItems[action.ItemIndex] = newItem
 	newState.Items = newItems
 
-  return &newState, nil
+  return &newState
 }
 
-func (action ChangeShapeAction) updateState(state *TaskData) (
-	*TaskData, error) {
+func (action ChangeShapeAction) updateState(state *TaskData) *TaskData {
 	newState := *state
 
   var shapeId = action.ShapeId
@@ -171,15 +170,13 @@ func (action ChangeShapeAction) updateState(state *TaskData) (
 	newItems[action.ItemIndex] = newItem
 	newState.Items = newItems
 
-	return &newState, nil
+	return &newState
 }
 
-func (action GoToItemAction) applyToUserState(state *UserData) (
-	*UserData, error) {
-  return state, nil
+func (action GoToItemAction) applyToUserState(state *UserData) *UserData {
+  return state
 }
 
-func (action LoadItemAction) applyToSessionState(state *SessionData) (
-	*SessionData, error) {
-  return state, nil
+func (action LoadItemAction) applyToSessionState(state *SessionData) *SessionData {
+  return state
 }
