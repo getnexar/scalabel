@@ -5,6 +5,7 @@ import * as labels from '../../js/common/label_types'
 import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
 import { PolygonType } from '../../js/functional/types'
+import { Vector2D } from '../../js/math/vector2d';
 import { testJson } from '../test_objects'
 
 test('Add, change and delete polygon labels', () => {
@@ -12,12 +13,18 @@ test('Add, change and delete polygon labels', () => {
   initStore(testJson)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
-  Session.dispatch(polygon2d.addPolygon2dLabel(
-    itemIndex, [0], [0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 0, 0]))
-  Session.dispatch(polygon2d.addPolygon2dLabel(
-    itemIndex, [0], [0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 0, 0]))
-  Session.dispatch(polygon2d.addPolygon2dLabel(
-    itemIndex, [0], [0, 1, 1, 0], [0, 0, 1, 1], [0, 0, 0, 0]))
+  Session.dispatch(polygon2d.addPolygon2dLabel(itemIndex, [0],
+    [new Vector2D(0, 0), new Vector2D(1, 0),
+      new Vector2D(1, 1), new Vector2D(0, 1)],
+      [0, 0, 0, 0]))
+  Session.dispatch(polygon2d.addPolygon2dLabel(itemIndex, [0],
+    [new Vector2D(0, 0), new Vector2D(1, 0),
+      new Vector2D(1, 1), new Vector2D(0, 1)],
+      [0, 0, 0, 0]))
+  Session.dispatch(polygon2d.addPolygon2dLabel(itemIndex, [0],
+    [new Vector2D(0, 0), new Vector2D(1, 0),
+      new Vector2D(1, 1), new Vector2D(0, 1)],
+      [0, 0, 0, 0]))
   let state = Session.getState()
   expect(_.size(state.task.items[0].labels)).toBe(3)
   expect(_.size(state.task.items[0].shapes)).toBe(3)
@@ -42,42 +49,45 @@ test('Add, change and delete polygon labels', () => {
     index += 1
   })
 
-  expect(shape.controlPointX[0]).toBe(0)
-  expect(shape.controlPointX[1]).toBe(1)
-  expect(shape.controlPointX[2]).toBe(1)
-  expect(shape.controlPointX[3]).toBe(0)
+  expect(shape.points[0].x).toBe(0)
+  expect(shape.points[1].x).toBe(1)
+  expect(shape.points[2].x).toBe(1)
+  expect(shape.points[3].x).toBe(0)
 
-  expect(shape.controlPointY[0]).toBe(0)
-  expect(shape.controlPointY[1]).toBe(0)
-  expect(shape.controlPointY[2]).toBe(1)
-  expect(shape.controlPointY[3]).toBe(1)
+  expect(shape.points[0].y).toBe(0)
+  expect(shape.points[1].y).toBe(0)
+  expect(shape.points[2].y).toBe(1)
+  expect(shape.points[3].y).toBe(1)
 
-  expect(shape.controlPointType[0]).toBe(0)
-  expect(shape.controlPointType[1]).toBe(0)
-  expect(shape.controlPointType[2]).toBe(0)
-  expect(shape.controlPointType[3]).toBe(0)
+  expect(shape.types[0]).toBe(0)
+  expect(shape.types[1]).toBe(0)
+  expect(shape.types[2]).toBe(0)
+  expect(shape.types[3]).toBe(0)
 
   Session.dispatch(
     action.changeLabelShape(
-      itemIndex, indexedShape.id, { controlPointY: [2, 1, 1, 2] }))
+      itemIndex, indexedShape.id, { points:
+      [new Vector2D(2, 0), new Vector2D(2, 2),
+        new Vector2D(0, 2), new Vector2D(0, 0)] }))
+
   state = Session.getState()
   label = state.task.items[0].labels[label.id]
   shape = state.task.items[0].shapes[label.shapes[0]].shape as PolygonType
 
-  expect(shape.controlPointX[0]).toBe(0)
-  expect(shape.controlPointX[1]).toBe(1)
-  expect(shape.controlPointX[2]).toBe(1)
-  expect(shape.controlPointX[3]).toBe(0)
+  expect(shape.points[0].x).toBe(2)
+  expect(shape.points[1].x).toBe(2)
+  expect(shape.points[2].x).toBe(0)
+  expect(shape.points[3].x).toBe(0)
 
-  expect(shape.controlPointY[0]).toBe(2)
-  expect(shape.controlPointY[1]).toBe(1)
-  expect(shape.controlPointY[2]).toBe(1)
-  expect(shape.controlPointY[3]).toBe(2)
+  expect(shape.points[0].y).toBe(0)
+  expect(shape.points[1].y).toBe(2)
+  expect(shape.points[2].y).toBe(2)
+  expect(shape.points[3].y).toBe(0)
 
-  expect(shape.controlPointType[0]).toBe(0)
-  expect(shape.controlPointType[1]).toBe(0)
-  expect(shape.controlPointType[2]).toBe(0)
-  expect(shape.controlPointType[3]).toBe(0)
+  expect(shape.types[0]).toBe(0)
+  expect(shape.types[1]).toBe(0)
+  expect(shape.types[2]).toBe(0)
+  expect(shape.types[3]).toBe(0)
 
   Session.dispatch(action.deleteLabel(itemIndex, label.id))
   state = Session.getState()

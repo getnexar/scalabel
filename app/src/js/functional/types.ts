@@ -46,11 +46,16 @@ export interface RectType {
 
 export interface PolygonType {
   /** controlPoint x coordinate   */
-  controlPointX: number []
+  points: Vector2Type []
   /** controlPoint y coordinate  */
-  controlPointY: number []
-  /** controlPoint Type */
-  controlPointType: number []
+  types: number []
+}
+
+export interface Vector2Type {
+  /** The x-coordinate */
+  x: number
+  /** The y-coordinate */
+  y: number
 }
 
 export interface Vector3Type {

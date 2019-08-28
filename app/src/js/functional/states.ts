@@ -59,9 +59,8 @@ export function makeRect (params: Partial<RectType> = {}): RectType {
  */
 export function makePolygon (params: Partial<PolygonType> = {}): PolygonType {
   return {
-    controlPointX: [],
-    controlPointY: [],
-    controlPointType: [],
+    points: [],
+    types: [],
     ...params
   }
 }

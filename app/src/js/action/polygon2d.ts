@@ -1,5 +1,6 @@
 import * as labels from '../common/label_types'
 import { makeLabel, makePolygon } from '../functional/states'
+import { Vector2D } from '../math/vector2d'
 import * as actions from './common'
 import { AddLabelAction } from './types'
 
@@ -14,11 +15,11 @@ import { AddLabelAction } from './types'
  * @return {AddLabelAction}
  */
 export function addPolygon2dLabel (
-  itemIndex: number, category: number[], controlPointX: number[],
-  controlPointY: number[], controlPointType: number[]): AddLabelAction {
+  itemIndex: number, category: number[], points: Vector2D[],
+  types: number[]): AddLabelAction {
   // create the rect object
-  const polygon = makePolygon({controlPointX, controlPointY, controlPointType})
+  const polygon = makePolygon({ points, types })
   const label = makeLabel({ type: labels.POLYGON_2D, category })
-  expect(polygon.controlPointX[0]).toBe(0)
+  // expect(polygon.controlPointX[0]).toBe(0)
   return actions.addLabel(itemIndex, label, [polygon])
 }
