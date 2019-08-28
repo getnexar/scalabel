@@ -68,7 +68,10 @@ func actionReceiver(session *Session, h *Hub) {
 					return
 				}
 				actionMessage.addTimestamp()
-				actionMessage.applyToUserState(&UserData{})
+				_, err = actionMessage.applyToUserState(&UserData{})
+				if err != nil {
+					log.Println("Failed to commit user action to state", err)
+				}
 			}
 			_, ok = sessionActions[message.Type]; if ok {
 				var actionMessage SessionAction
@@ -84,7 +87,10 @@ func actionReceiver(session *Session, h *Hub) {
 					return
 				}
 				actionMessage.addTimestamp()
-				actionMessage.applyToSessionState(&SessionData{})
+				_, err = actionMessage.applyToSessionState(&SessionData{})
+				if err != nil {
+					log.Println("Failed to commit session action to state", err)
+				}
 			}
 			_, ok = taskActions[message.Type]; if ok {
 				var actionMessage TaskAction

@@ -88,7 +88,7 @@ func (action GenericAction) getSessionId() string {
 }
 
 func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
-	newState := state
+	newState := *state
 
 	var newShapeId = state.Status.MaxShapeId + 1
   var labelId = state.Status.MaxLabelId + 1
@@ -143,11 +143,12 @@ func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
 	newItems[action.ItemIndex] = newItem
 	newState.Items = newItems
 
-  return newState, nil
+  return &newState, nil
 }
 
-func (action ChangeShapeAction) updateState(state *TaskData) (*TaskData, error) {
-	newState := state
+func (action ChangeShapeAction) updateState(state *TaskData) (
+	*TaskData, error) {
+	newState := *state
 
   var shapeId = action.ShapeId
   var item = state.Items[action.ItemIndex]
@@ -162,30 +163,29 @@ func (action ChangeShapeAction) updateState(state *TaskData) (*TaskData, error) 
 	newIndexedShape := indexedShape
 	newIndexedShape.Shape = newShape
 
-	//this is repeated code
 	var newShapes = make(map[int]ShapeData)
 	for k, v := range item.Shapes {
   	newShapes[k] = v
 	}
 	newShapes[shapeId] = newIndexedShape
 
-	//this block may be abstractable (update item)
 	newItem := item
 	newItem.Shapes = newShapes
 
-	//this block maybe abstractable (add item)
 	var newItems = make([]ItemData, len(state.Items))
 	copy(newItems, state.Items)
 	newItems[action.ItemIndex] = newItem
 	newState.Items = newItems
 
-	return state, nil
+	return &newState, nil
 }
 
-func (action GoToItemAction) applyToUserState(state *UserData) (*UserData, error) {
+func (action GoToItemAction) applyToUserState(state *UserData) (
+	*UserData, error) {
   return state, nil
 }
 
-func (action LoadItemAction) applyToSessionState(state *SessionData) (*SessionData, error) {
+func (action LoadItemAction) applyToSessionState(state *SessionData) (
+	*SessionData, error) {
   return state, nil
 }

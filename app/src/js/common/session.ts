@@ -57,13 +57,14 @@ class Session {
 
     this.websocket = new WebSocket(`ws://${window.location.host}/register`)
     /* sync on every action */
+    const self = this
     this.middleware = () => (
       next: Dispatch
     ) => (action) => {
       /* Do not send received actions back again */
-      if (this.id === action.sessionId) {
-        this.actionQueue.push(action)
-        this.sendActions()
+      if (self.id === action.sessionId) {
+        self.actionQueue.push(action)
+        self.sendActions()
       }
       return next(action)
     }
@@ -79,7 +80,6 @@ class Session {
   public sendActions () {
     if (this.websocket.readyState === 1 && this.registered) {
       if (this.actionQueue.length > 0) {
-        console.log(this.actionQueue)
         this.websocket.send(JSON.stringify(this.actionQueue))
         this.actionQueue = []
       }
@@ -103,24 +103,24 @@ class Session {
    * Only called after session ID is set
    */
   public registerWebsocket () {
+    const self = this
     this.websocket.onmessage = (e) => {
-      if (typeof e.data === 'string') {
-        if (JSON.parse(e.data) === 1) {
-          /* on receipt of ack from backend
-             send any queued actions */
-          this.sendActions()
-        } else {
-          const response: types.ActionType = JSON.parse(e.data)
-          this.actionLog.push(response)
-          if (response.sessionId !== this.id) {
-            this.dispatch(response)
-          }
+      const response: types.ActionType | number = JSON.parse(e.data)
+      if (response === 1) {
+        /* on receipt of ack from backend
+           send any queued actions */
+        self.sendActions()
+      } else {
+        let responseAction = <types.ActionType> response
+        self.actionLog.push(responseAction)
+        if (responseAction.sessionId !== self.id) {
+          self.dispatch(responseAction)
         }
       }
     }
     /* if websocket is not yet open, this runs */
     this.websocket.onopen = () => {
-      this.sendRegistration()
+      self.sendRegistration()
     }
     /* if websocket is already open, this runs
        registered flag ensures no duplicate registration */
@@ -128,10 +128,10 @@ class Session {
       this.sendRegistration()
     }
     this.websocket.onclose = () => {
-      this.registered = false
-      this.updateStatusDisplay(ConnectionStatus.RECONNECTING)
-      this.websocket = new WebSocket(`ws://${window.location.host}/register`)
-      this.registerWebsocket()
+      self.registered = false
+      self.updateStatusDisplay(ConnectionStatus.RECONNECTING)
+      self.websocket = new WebSocket(`ws://${window.location.host}/register`)
+      self.registerWebsocket()
     }
   }
 
