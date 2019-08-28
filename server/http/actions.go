@@ -154,14 +154,8 @@ func (action ChangeShapeAction) updateState(state *TaskData) (
   var item = state.Items[action.ItemIndex]
   var indexedShape = item.Shapes[shapeId]
 
-	newShape := indexedShape.Shape
-	newShape.X1 = action.Props.X1
-	newShape.X2 = action.Props.X2
-	newShape.Y1 = action.Props.Y1
-	newShape.Y2 = action.Props.Y2
-
 	newIndexedShape := indexedShape
-	newIndexedShape.Shape = newShape
+	newIndexedShape.Shape = action.Props
 
 	var newShapes = make(map[int]ShapeData)
 	for k, v := range item.Shapes {

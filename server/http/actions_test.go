@@ -147,7 +147,7 @@ func TestAddChangeShapeActions(t *testing.T) {
   addItem2 := addState2.Items[itemIndex]
   err = checkShapeCorrect(addItem2, numShapes, labelId2, labelId2, shape3)
   if err != nil {
-    t.Fatal(fmt.Errorf("Second label not added correctly: %v %v %v ", shape2, shape3, err))
+    t.Fatal(fmt.Errorf("Second label not added correctly: %v ", err))
   }
 
   // Check immutability of state

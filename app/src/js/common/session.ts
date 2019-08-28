@@ -111,7 +111,7 @@ class Session {
            send any queued actions */
         self.sendActions()
       } else {
-        let responseAction = <types.ActionType> response
+        const responseAction = response as types.ActionType
         self.actionLog.push(responseAction)
         if (responseAction.sessionId !== self.id) {
           self.dispatch(responseAction)

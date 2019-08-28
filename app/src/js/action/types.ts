@@ -134,7 +134,7 @@ export type UserType =
   | ToggleAssistantViewAction
   | MoveCameraAndTargetAction
 
-//These must also be implemented in the go backend
+// These should also be implemented in the golang backend
 export type TaskType =
   AddLabelAction
   | ChangeShapeAction
