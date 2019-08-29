@@ -48,7 +48,7 @@ type LabelExportV2 struct {
 	Category    string                 `json:"category" yaml:"category"`
 	Attributes  map[string]interface{} `json:"attributes" yaml:"attributes"`
 	ManualShape bool                   `json:"manualShape" yaml:"manualShape"`
-	Box2d       interface{}            `json:"box2d" yaml:"box2d"`
+	Box2d       ShapeRect              `json:"box2d" yaml:"box2d"`
 	Poly2d      []Poly2d               `json:"poly2d" yaml:"poly2d"`
 	Box3d       interface{}            `json:"box3d" yaml:"box3d"`
 }
