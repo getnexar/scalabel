@@ -61,7 +61,8 @@ func (h *Hub) run() {
 			taskAction := *action
 			taskAction.addTimestamp()
 			taskId := h.sessions[taskAction.getSessionId()].taskId
-			h.statesByTask[taskId] = taskAction.updateState(h.statesByTask[taskId])
+			h.statesByTask[taskId] =
+				taskAction.updateState(h.statesByTask[taskId])
 			h.actionsByTask[taskId] =
 				append(h.actionsByTask[taskId], action)
 			for _, session := range h.sessionsByTask[taskId] {

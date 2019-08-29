@@ -177,6 +177,7 @@ func (action GoToItemAction) applyToUserState(state *UserData) *UserData {
   return state
 }
 
-func (action LoadItemAction) applyToSessionState(state *SessionData) *SessionData {
+func (action LoadItemAction) applyToSessionState(
+	state *SessionData) *SessionData {
   return state
 }
