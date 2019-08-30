@@ -5,26 +5,37 @@ import (
   "time"
 )
 
-/*
-5- apply action to correct state (for all levels)
-  Would also save to correct file here
-*/
-
 const addLabel = "ADD_LABEL"
 const changeLabelShape = "CHANGE_LABEL_SHAPE"
+const changeShape = "CHANGE_LABEL_PROPS"
+const deleteLabel = "DELETE_LABEL"
+const tagImage = "TAG_IMAGE"
 var taskActions = map[string]struct{}{
   addLabel: {},
   changeLabelShape: {},
+	changeShape: {},
+	deleteLabel: {},
+	tagImage: {},
 }
 
-const goToItem = "GO_TO_ITEM"
+const changeSelect = "CHANGE_SELECT"
+const imageZoom = "IMAGE_ZOOM"
+const toggleAssistantView = "TOGGLE_ASSISTANT_VIEW"
+const moveCameraAndTarget = "MOVE_CAMERA_AND_TARGET"
 var userActions = map[string]struct{}{
-  goToItem: {},
+  changeSelect: {},
+	imageZoom: {},
+	toggleAssistantView: {},
+	moveCameraAndTarget: {},
 }
 
 const loadItem = "LOAD_ITEM"
+const initSession = "INIT_SESSION"
+const updateAll = "UPDATE_ALL"
 var sessionActions = map[string]struct{}{
   loadItem: {},
+	initSession: {},
+	updateAll: {},
 }
 
 type BaseAction interface {
@@ -67,15 +78,47 @@ type ChangeShapeAction struct {
   Props     ShapeRect   `json:"props" yaml:"props"`
 }
 
-type GoToItemAction struct {
+type ChangeLabelAction struct {
+	GenericAction
+}
+
+type DeleteLabelAction struct {
+	GenericAction
+}
+
+type TagImageAction struct {
+	GenericAction
+}
+
+type ChangeSelectAction struct {
   GenericAction
   ItemIndex int `json:"itemIndex" yaml:"itemIndex"`
+}
+
+type ImageZoomAction struct {
+	GenericAction
+}
+
+type ToggleAssistantViewAction struct {
+	GenericAction
+}
+
+type MoveCameraAndTargetAction struct {
+	GenericAction
 }
 
 type LoadItemAction struct {
   GenericAction
   ItemIndex int               `json:"itemIndex" yaml:"itemIndex"`
   Config    ImageViewerConfig `json:"config" yaml:"config"`
+}
+
+type InitSessionAction struct {
+	GenericAction
+}
+
+type UpdateAllAction struct {
+	GenericAction
 }
 
 func (action GenericAction) addTimestamp() {
@@ -173,11 +216,52 @@ func (action ChangeShapeAction) updateState(state *TaskData) *TaskData {
 	return &newState
 }
 
-func (action GoToItemAction) applyToUserState(state *UserData) *UserData {
+func (action ChangeLabelAction) updateState(
+	state *TaskData) *TaskData {
+	return state
+}
+
+func (action DeleteLabelAction) updateState(
+	state *TaskData) *TaskData {
+	return state
+}
+
+func (action TagImageAction) updateState(
+	state *TaskData) *TaskData {
+	return state
+}
+
+func (action ChangeSelectAction) applyToUserState(
+	state *UserData) *UserData {
+  return state
+}
+
+func (action ImageZoomAction) applyToUserState(
+	state *UserData) *UserData {
+  return state
+}
+
+func (action ToggleAssistantViewAction) applyToUserState(
+	state *UserData) *UserData {
+  return state
+}
+
+func (action MoveCameraAndTargetAction) applyToUserState(
+	state *UserData) *UserData {
   return state
 }
 
 func (action LoadItemAction) applyToSessionState(
+	state *SessionData) *SessionData {
+  return state
+}
+
+func (action InitSessionAction) applyToSessionState(
+	state *SessionData) *SessionData {
+  return state
+}
+
+func (action UpdateAllAction) applyToSessionState(
 	state *SessionData) *SessionData {
   return state
 }

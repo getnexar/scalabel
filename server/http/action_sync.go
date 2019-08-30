@@ -18,16 +18,32 @@ func readMessage(message GenericAction, rawMessage json.RawMessage) (
 	BaseAction, error) {
 	var actionMessage BaseAction
 	switch message.Type {
-	case goToItem:
-		actionMessage = &GoToItemAction{}
-	case loadItem:
-		actionMessage = &LoadItemAction{}
 	case addLabel:
 		actionMessage = &AddLabelAction{}
 	case changeLabelShape:
 		actionMessage = &ChangeShapeAction{}
+	case changeShape:
+		actionMessage = &ChangeLabelAction{}
+	case deleteLabel:
+		actionMessage = &DeleteLabelAction{}
+	case tagImage:
+		actionMessage = &TagImageAction{}
+	case changeSelect:
+		actionMessage = &ChangeSelectAction{}
+	case imageZoom:
+		actionMessage = &ImageZoomAction{}
+	case toggleAssistantView:
+		actionMessage = &ToggleAssistantViewAction{}
+	case moveCameraAndTarget:
+		actionMessage = &MoveCameraAndTargetAction{}
+	case loadItem:
+		actionMessage = &LoadItemAction{}
+	case initSession:
+		actionMessage = &InitSessionAction{}
+	case updateAll:
+		actionMessage = &UpdateAllAction{}
 	default:
-		log.Println("Action not implemented in go yet")
+		log.Println("Action not implemented in go")
 	}
 	err := json.Unmarshal(rawMessage, &actionMessage)
 	if err != nil {
