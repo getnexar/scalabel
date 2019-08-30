@@ -6,6 +6,7 @@ import * as types from '../action/types'
 import { Window } from '../components/window'
 import { State } from '../functional/types'
 import { configureStore } from './configure_store'
+import { Synchronizer } from './synchronizer'
 export const enum ConnectionStatus {
   SAVED, SAVING, RECONNECTING, UNSAVED
 }
@@ -30,16 +31,12 @@ class Session {
   public status: ConnectionStatus
   /** Function to update status display */
   public updateStatusDisplay: (newStatus: ConnectionStatus) => ConnectionStatus
-  /** Websocket connection */
-  public websocket: WebSocket
-  /** Actions queued to send */
-  public actionQueue: types.BaseAction[]
-  /** Timestamped action log */
-  public actionLog: types.BaseAction[]
-  /** Middleware to use */
-  public middleware: Middleware
-  /** Whether websocket is registered */
-  public registered: boolean
+  /** Synchronizer created if sync enabled **/
+  public synchronizer?: Synchronizer
+  /** Middleware that does nothing */
+  public nullMiddleware: Middleware
+  /** Overwriteable function that adds side effects to state change */
+  public applyStatusEffects: () => void
 
   /**
    * no-op for state initialization
@@ -48,91 +45,35 @@ class Session {
     this.images = []
     this.pointClouds = []
     this.itemType = ''
-    this.actionQueue = []
-    this.actionLog = []
     this.status = ConnectionStatus.UNSAVED
-    this.registered = false
     // TODO: make it configurable in the url
     this.devMode = true
-
-    this.websocket = new WebSocket(`ws://${window.location.host}/register`)
-    /* sync on every action */
+    this.applyStatusEffects = () => {}
     const self = this
-    this.middleware = () => (
-      next: Dispatch
-    ) => (action) => {
-      /* Do not send received actions back again */
-      if (self.id === action.sessionId) {
-        self.actionQueue.push(action)
-        self.sendActions()
-      }
-      return next(action)
-    }
-    this.store = configureStore({}, this.devMode, this.middleware)
     this.updateStatusDisplay = (newStatus: ConnectionStatus) => {
+      self.status = newStatus
+      self.applyStatusEffects()
       return newStatus
     }
-  }
-
-  /**
-   * Send the action to the backend
-   */
-  public sendActions () {
-    if (this.websocket.readyState === 1 && this.registered) {
-      if (this.actionQueue.length > 0) {
-        this.websocket.send(JSON.stringify(this.actionQueue))
-        this.actionQueue = []
-      }
+    this.nullMiddleware = () => (
+      next: Dispatch
+    ) => (action) => {
+      return next(action)
     }
+    this.store = configureStore({}, this.devMode, this.nullMiddleware)
   }
 
   /**
-   * Send the registration message to the backend
+   * Starts  state synchronization
    */
-  public sendRegistration () {
-    this.registered = true
-    this.websocket.send(JSON.stringify({
-      sessionId: this.id,
-      taskId:    this.getState().task.config.taskId
-    }))
-    this.updateStatusDisplay(ConnectionStatus.UNSAVED)
-  }
-
-  /**
-   * Send the register message
-   * Only called after session ID is set
-   */
-  public registerWebsocket () {
+  public initSynchronizer () {
     const self = this
-    this.websocket.onmessage = (e) => {
-      const response: types.ActionType | number = JSON.parse(e.data)
-      if (response === 1) {
-        /* on receipt of ack from backend
-           send any queued actions */
-        self.sendActions()
-      } else {
-        const responseAction = response as types.ActionType
-        self.actionLog.push(responseAction)
-        if (responseAction.sessionId !== self.id) {
-          self.dispatch(responseAction)
-        }
-      }
-    }
-    /* if websocket is not yet open, this runs */
-    this.websocket.onopen = () => {
-      self.sendRegistration()
-    }
-    /* if websocket is already open, this runs
-       registered flag ensures no duplicate registration */
-    if (this.websocket.readyState === 1 && !this.registered) {
-      this.sendRegistration()
-    }
-    this.websocket.onclose = () => {
-      self.registered = false
-      self.updateStatusDisplay(ConnectionStatus.RECONNECTING)
-      self.websocket = new WebSocket(`ws://${window.location.host}/register`)
-      self.registerWebsocket()
-    }
+    this.synchronizer = new Synchronizer(
+      () => { return self.id },
+      this.getState().task.config.taskId,
+      this.updateStatusDisplay,
+      this.dispatch
+    )
   }
 
   /**
@@ -165,6 +106,29 @@ class Session {
   public subscribe (callback: () => void) {
     this.store.subscribe(callback)
   }
+
+  /**
+   * Get the middleware the session should apply to the store
+   */
+  public get middleware (): Middleware {
+    if (this.synchronizer != undefined) {
+      return this.synchronizer.middleware
+    } else {
+      return this.nullMiddleware
+    }
+  }
+
+  /**
+   * Applies a side effect, like updating a component,
+   * When the status is updated
+   */
+   public addStatusEffect(callback: () => void) {
+     var oldApplyEffects = this.applyStatusEffects
+     this.applyStatusEffects = () => {
+       oldApplyEffects()
+       callback()
+     }
+   }
 }
 
 export default new Session()

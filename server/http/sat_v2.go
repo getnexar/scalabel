@@ -15,10 +15,15 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+type LoadData struct {
+	State Sat  `json:"sat" yaml:"sat"`
+	Sync  bool `json:"sync" yaml:"sync"`
+}
+
 //Sat state
 type Sat struct {
-	Task TaskData       `json:"task" yaml:"task"`
-	User UserData       `json:"user" yaml:"user"`
+	Task    TaskData    `json:"task" yaml:"task"`
+	User    UserData    `json:"user" yaml:"user"`
 	Session SessionData `json:"session" yaml:"session"`
 }
 
@@ -252,7 +257,11 @@ func postLoadAssignmentV2Handler(w http.ResponseWriter, r *http.Request) {
 	// temporary fix to ensure different sessions
 	// loaded from same assignment have different IDs
 	loadedSat.Session.SessionId = getUuidV4()
-	loadedSatJson, err := json.Marshal(loadedSat)
+	loadData := LoadData{
+		State: loadedSat,
+		Sync: checkFlag(env.Sync),
+	}
+	loadedSatJson, err := json.Marshal(loadData)
 	if err != nil {
 		Error.Println(err)
 	}

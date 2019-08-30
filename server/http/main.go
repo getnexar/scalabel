@@ -36,6 +36,7 @@ type Env struct {
 	Database       string `yaml:"database"`
 	ModelGateHost  string `yaml:"modelGateHost"`
 	ModelGatePort  string `yaml:"modelGatePort"`
+	Sync           string `yaml:"autosync"`
 	UserManagement string `yaml:"userManagement"`
 	Region         string `yaml:"region"`
 	DomainName     string `yaml:"domainName"`
@@ -207,13 +208,16 @@ func main() {
 	http.HandleFunc("/label3d", WrapHandleFunc(Label3dHandler))
 	http.HandleFunc("/label3dv2", WrapHandleFunc(Label3dv2Handler))
 
-	// Set up gateway server and hub for syncing
-	hub := newhub()
-	go hub.run()
-	log.Printf("http server hub started")
-	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-		registerHandler(hub, w, r)
-	})
+	if checkFlag(env.Sync) {
+		// Set up gateway server and hub for syncing
+		hub := newhub()
+		go hub.run()
+		log.Printf("http server hub started")
+		http.HandleFunc("/register",
+			func(w http.ResponseWriter, r *http.Request) {
+			registerHandler(hub, w, r)
+		})
+	}
 
 	Info.Printf("Listening to Port %d", env.Port)
 	Info.Printf("Local URL: localhost:%d", env.Port)

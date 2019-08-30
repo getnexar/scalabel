@@ -247,8 +247,7 @@ func WrapHandler(handler http.Handler) HandleFunc {
 func WrapHandleFunc(fn HandleFunc) HandleFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// check if User Management System is On
-		flag := env.UserManagement == "on" ||
-			env.UserManagement == "On" || env.UserManagement == "ON"
+		flag := checkFlag(env.UserManagement)
 		refreshTokenCookie, _ := r.Cookie("refreshTokenScalabel")
 		idCookie, _ := r.Cookie("idScalabel")
 		if !flag { // if User Management System is off, continue
@@ -1074,8 +1073,7 @@ func loadHandler(w http.ResponseWriter, r *http.Request) {
 	Info.Printf("%s is requesting %s", r.RemoteAddr, r.URL)
 	Info.Printf("User Management System is %s", env.UserManagement)
 	// Check if WORKER_SYSTEM is On
-	if env.UserManagement == "on" ||
-		env.UserManagement == "On" || env.UserManagement == "ON" {
+	if checkFlag(env.UserManagement) {
 		// redirect to AWS authentication website
 		authUrl := fmt.Sprintf("https://%v.auth.%v.amazoncognito.com/",
 			env.DomainName, env.Region) +
@@ -1092,8 +1090,7 @@ func loadHandler(w http.ResponseWriter, r *http.Request) {
 // Handles the authenticatoin of access token
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if WORKER_SYSTEM is On
-	flag := env.UserManagement == "on" ||
-		env.UserManagement == "On" || env.UserManagement == "ON"
+	flag := checkFlag(env.UserManagement)
 	if !flag {
 		// redirect to create
 		createUrl := "/create"

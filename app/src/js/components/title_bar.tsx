@@ -59,12 +59,13 @@ function save () {
   const xhr = new XMLHttpRequest()
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
-      Session.updateStatusDisplay(ConnectionStatus.SAVED)
-      setTimeout(() => {
-        Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
-      }, 5000)
       if (JSON.parse(xhr.response) !== 0) {
         alert('Save failed.')
+      } else {
+        Session.updateStatusDisplay(ConnectionStatus.SAVED)
+        setTimeout(() => {
+          Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
+        }, 5000)
       }
     }
   }
@@ -89,11 +90,7 @@ class TitleBar extends Component<Props> {
    */
   constructor (props: Props) {
     super(props)
-    Session.updateStatusDisplay = (newStatus: ConnectionStatus) => {
-      Session.status = newStatus
-      this.forceUpdate()
-      return newStatus
-    }
+    Session.addStatusEffect(() => { this.forceUpdate() })
   }
 
   /**
