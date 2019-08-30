@@ -43,7 +43,7 @@ class Session {
     this.status = ConnectionStatus.UNSAVED
     // TODO: make it configurable in the url
     this.devMode = true
-    this.applyStatusEffects = () => {}
+    this.applyStatusEffects = () => { return }
     const self = this
     this.updateStatusDisplay = (newStatus: ConnectionStatus) => {
       self.status = newStatus
@@ -88,13 +88,13 @@ class Session {
    * Applies a side effect, like updating a component,
    * When the status is updated
    */
-   public addStatusEffect(callback: () => void) {
-     var oldApplyEffects = this.applyStatusEffects
-     this.applyStatusEffects = () => {
-       oldApplyEffects()
-       callback()
-     }
-   }
+  public addStatusEffect (callback: () => void) {
+    const oldApplyEffects = this.applyStatusEffects
+    this.applyStatusEffects = () => {
+      oldApplyEffects()
+      callback()
+    }
+  }
 }
 
 export default new Session()

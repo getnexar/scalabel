@@ -39,10 +39,10 @@ export function configureStore (
     debug: devMode
   })
 
-  if (middleware == null) {
+  if (middleware === null) {
     return createStore(
       undoableReducer,
-      initialHistory,
+      initialHistory
     )
   } else {
     return createStore(

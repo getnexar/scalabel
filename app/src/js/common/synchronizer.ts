@@ -59,7 +59,7 @@ export class Synchronizer {
     this.registered = true
     this.websocket.send(JSON.stringify({
       sessionId: Session.id,
-      taskId:    Session.getState().task.config.taskId,
+      taskId:    Session.getState().task.config.taskId
     }))
     Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
   }
