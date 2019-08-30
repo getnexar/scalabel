@@ -1,12 +1,11 @@
 import _ from 'lodash'
-import { Dispatch, Middleware, Store } from 'redux'
+import { Store } from 'redux'
 import { StateWithHistory } from 'redux-undo'
 import * as THREE from 'three'
 import * as types from '../action/types'
 import { Window } from '../components/window'
 import { State } from '../functional/types'
 import { configureStore } from './configure_store'
-import { Synchronizer } from './synchronizer'
 export const enum ConnectionStatus {
   SAVED, SAVING, RECONNECTING, UNSAVED
 }
@@ -31,10 +30,6 @@ class Session {
   public status: ConnectionStatus
   /** Function to update status display */
   public updateStatusDisplay: (newStatus: ConnectionStatus) => ConnectionStatus
-  /** Synchronizer created if sync enabled **/
-  public synchronizer?: Synchronizer
-  /** Middleware that does nothing */
-  public nullMiddleware: Middleware
   /** Overwriteable function that adds side effects to state change */
   public applyStatusEffects: () => void
 
@@ -55,25 +50,7 @@ class Session {
       self.applyStatusEffects()
       return newStatus
     }
-    this.nullMiddleware = () => (
-      next: Dispatch
-    ) => (action) => {
-      return next(action)
-    }
-    this.store = configureStore({}, this.devMode, this.nullMiddleware)
-  }
-
-  /**
-   * Starts  state synchronization
-   */
-  public initSynchronizer () {
-    const self = this
-    this.synchronizer = new Synchronizer(
-      () => { return self.id },
-      this.getState().task.config.taskId,
-      this.updateStatusDisplay,
-      this.dispatch
-    )
+    this.store = configureStore({}, this.devMode, null)
   }
 
   /**
@@ -105,17 +82,6 @@ class Session {
    */
   public subscribe (callback: () => void) {
     this.store.subscribe(callback)
-  }
-
-  /**
-   * Get the middleware the session should apply to the store
-   */
-  public get middleware (): Middleware {
-    if (this.synchronizer != undefined) {
-      return this.synchronizer.middleware
-    } else {
-      return this.nullMiddleware
-    }
   }
 
   /**

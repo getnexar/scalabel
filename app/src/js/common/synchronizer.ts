@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { Dispatch, Middleware } from 'redux'
 import * as types from '../action/types'
-import { ConnectionStatus } from './session'
+import Session, { ConnectionStatus } from './session'
 /**
  * Singleton session class
  */
@@ -16,31 +16,14 @@ export class Synchronizer {
   public middleware: Middleware
   /** Whether websocket is registered */
   public registered: boolean
-  /** Getter for session ID */
-  public getId: () => string
-  /** Task ID */
-  public taskId: string
-  /** Function to update session status display */
-  public updateStatusDisplay: (newStatus: ConnectionStatus) => ConnectionStatus
-  /** Function to dispatch for session */
-  public dispatch: (action: types.ActionType) => void
 
   /**
    * no-op for state initialization
    */
-  constructor (
-    getId: () => string,
-    taskId: string,
-    updateSessionStatus: (newStatus: ConnectionStatus) => ConnectionStatus,
-    sessionDispatch: (action: types.ActionType) => void
-  ) {
+  constructor () {
     this.actionQueue = []
     this.actionLog = []
-    this.getId = getId
-    this.taskId = taskId
     this.registered = false
-    this.updateStatusDisplay = updateSessionStatus
-    this.dispatch = sessionDispatch
     this.websocket = new WebSocket(`ws://${window.location.host}/register`)
     /* sync on every action */
     const self = this
@@ -48,7 +31,7 @@ export class Synchronizer {
       next: Dispatch
     ) => (action) => {
       /* Do not send received actions back again */
-      if (self.getId() === action.sessionId) {
+      if (Session.id === action.sessionId) {
         self.actionQueue.push(action)
         self.sendActions()
       }
@@ -75,10 +58,10 @@ export class Synchronizer {
   public sendRegistration () {
     this.registered = true
     this.websocket.send(JSON.stringify({
-      sessionId: this.getId(),
-      taskId:    this.taskId
+      sessionId: Session.id,
+      taskId:    Session.getState().task.config.taskId,
     }))
-    this.updateStatusDisplay(ConnectionStatus.UNSAVED)
+    Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
   }
 
   /**
@@ -96,8 +79,8 @@ export class Synchronizer {
       } else {
         const responseAction = response as types.ActionType
         self.actionLog.push(responseAction)
-        if (responseAction.sessionId !== self.getId()) {
-          self.dispatch(responseAction)
+        if (responseAction.sessionId !== Session.id) {
+          Session.dispatch(responseAction)
         }
       }
     }
@@ -112,7 +95,7 @@ export class Synchronizer {
     }
     this.websocket.onclose = () => {
       self.registered = false
-      self.updateStatusDisplay(ConnectionStatus.RECONNECTING)
+      Session.updateStatusDisplay(ConnectionStatus.RECONNECTING)
       self.websocket = new WebSocket(`ws://${window.location.host}/register`)
       self.registerWebsocket()
     }

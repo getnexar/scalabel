@@ -20,7 +20,7 @@ import { reducer } from './reducer'
 export function configureStore (
     initialState: Partial<State>,
     devMode: boolean = false,
-    middleware: Middleware): Store<StateWithHistory<State>> {
+    middleware: Middleware | null): Store<StateWithHistory<State>> {
   const initialHistory = {
     past: Array<State>(),
     present: makeState(initialState),
@@ -39,9 +39,16 @@ export function configureStore (
     debug: devMode
   })
 
-  return createStore(
-    undoableReducer,
-    initialHistory,
-    applyMiddleware(middleware)
-  )
+  if (middleware == null) {
+    return createStore(
+      undoableReducer,
+      initialHistory,
+    )
+  } else {
+    return createStore(
+      undoableReducer,
+      initialHistory,
+      applyMiddleware(middleware)
+    )
+  }
 }

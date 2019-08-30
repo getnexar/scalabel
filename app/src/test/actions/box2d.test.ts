@@ -9,7 +9,7 @@ import { testJson } from '../test_image_objects'
 
 test('Add, change and delete box2d labels', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   Session.dispatch(box2d.addBox2dLabel(itemIndex, [0], 1, 2, 3, 4))

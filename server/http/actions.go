@@ -74,8 +74,8 @@ type GoToItemAction struct {
 
 type LoadItemAction struct {
   GenericAction
-  ItemIndex int       `json:"itemIndex" yaml:"itemIndex"`
-  Config ViewerConfig `json:"config" yaml:"config"`
+  ItemIndex int               `json:"itemIndex" yaml:"itemIndex"`
+  Config    ImageViewerConfig `json:"config" yaml:"config"`
 }
 
 func (action GenericAction) addTimestamp() {

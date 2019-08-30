@@ -1,6 +1,7 @@
 import { MuiThemeProvider } from '@material-ui/core/styles'
 import _ from 'lodash'
 import React from 'react'
+import { Middleware } from 'redux'
 import ReactDOM from 'react-dom'
 import { sprintf } from 'sprintf-js'
 import * as THREE from 'three'
@@ -17,6 +18,7 @@ import { myTheme } from '../styles/theme'
 import { PLYLoader } from '../thirdparty/PLYLoader'
 import { configureStore } from './configure_store'
 import Session from './session'
+import { Synchronizer } from './synchronizer'
 
 /**
  * Request Session state from the server
@@ -28,10 +30,12 @@ export function initSession (containerName: string): void {
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
       const json = JSON.parse(xhr.response)
-      if (json.Sync) {
-        Session.initSynchronizer()
+      if (json.sync) {
+        const synchronizer = new Synchronizer()
+        initFromJson(json.state, synchronizer.middleware)
+      } else {
+        initFromJson(json.state, null)
       }
-      initFromJson(json.State)
       ReactDOM.render(
                      <MuiThemeProvider theme={myTheme}>
                 <Window />
@@ -62,8 +66,8 @@ export function initSession (containerName: string): void {
  * Initialize state store
  * @param {{}}} stateJson: json state from backend
  */
-export function initStore (stateJson: {}): void {
-  Session.store = configureStore(stateJson, Session.devMode, Session.middleware)
+export function initStore (stateJson: {}, middleware: Middleware | null): void {
+  Session.store = configureStore(stateJson, Session.devMode, middleware)
   Session.dispatch(initSessionAction())
   const state = Session.getState()
   Session.itemType = state.task.config.itemType
@@ -73,8 +77,8 @@ export function initStore (stateJson: {}): void {
  * Init general labeling session.
  * @param {{}}} stateJson: json state from backend
  */
-function initFromJson (stateJson: {}): void {
-  initStore(stateJson)
+function initFromJson (stateJson: {}, middleware: Middleware | null): void {
+  initStore(stateJson, middleware)
   loadData()
   Session.dispatch(updateAll())
 }

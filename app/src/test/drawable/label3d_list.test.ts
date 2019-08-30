@@ -56,7 +56,7 @@ function expectVector3TypesClose (v1: Vector3Type, v2: Vector3Type) {
 
 test('Draw 3d bbox', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label3dList = new Label3DList()
@@ -112,7 +112,7 @@ test('Draw 3d bbox', () => {
 
 test('Move 3d bbox', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label3dList = new Label3DList()
@@ -200,7 +200,7 @@ test('Move 3d bbox', () => {
 
 test('Scale 3d bbox', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label3dList = new Label3DList()
@@ -252,7 +252,7 @@ test('Scale 3d bbox', () => {
 
 test('Extrude 3d bbox', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label3dList = new Label3DList()
@@ -297,7 +297,7 @@ test('Extrude 3d bbox', () => {
 
 test('Rotate 3d bbox', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label3dList = new Label3DList()

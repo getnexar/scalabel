@@ -36,7 +36,7 @@ type Env struct {
 	Database       string `yaml:"database"`
 	ModelGateHost  string `yaml:"modelGateHost"`
 	ModelGatePort  string `yaml:"modelGatePort"`
-	Sync           string `yaml:"autosync"`
+	Sync           string `yaml:"sync"`
 	UserManagement string `yaml:"userManagement"`
 	Region         string `yaml:"region"`
 	DomainName     string `yaml:"domainName"`

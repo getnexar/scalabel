@@ -12,7 +12,7 @@ import { testJson } from '../test_image_objects'
 
 test('Draw 2d boxes to label2d list', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label2dList = new Label2DList()
@@ -110,7 +110,7 @@ test('Draw label2d list to canvas', () => {
   const controlContext = controlCanvas.getContext('2d')
 
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   const label2dList = new Label2DList()

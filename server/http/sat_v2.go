@@ -16,7 +16,7 @@ import (
 )
 
 type LoadData struct {
-	State Sat  `json:"sat" yaml:"sat"`
+	State Sat  `json:"state" yaml:"state"`
 	Sync  bool `json:"sync" yaml:"sync"`
 }
 

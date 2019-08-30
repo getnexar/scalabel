@@ -48,7 +48,7 @@ describe('Save button functionality', () => {
       session: {
         sessionTestKey: 'sessionTestValue'
       }
-    })
+    }, null)
     jest.clearAllMocks()
     // recreate for each test because of timeout side effects
     const { getByTestId } = render(
