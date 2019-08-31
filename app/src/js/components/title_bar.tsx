@@ -96,7 +96,11 @@ class TitleBar extends Component<Props> {
     }
   }
 
-  componentWillUnmount () {
+  /**
+   * Unmount
+   * Disables asynchronous callbacks
+   */
+  public componentWillUnmount () {
     Session.applyStatusEffects = () => { return }
   }
 
