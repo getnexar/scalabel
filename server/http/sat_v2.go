@@ -275,7 +275,8 @@ func GetAssignmentV2(projectName string, taskIndex string,
 
 /* Handles the loading of an assignment given
    its project name, task index, and worker ID. */
-func postLoadAssignmentV2Handler(h *Hub, w http.ResponseWriter, r *http.Request) {
+func postLoadAssignmentV2Handler(
+	h *Hub, w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		Error.Println(err)
@@ -317,11 +318,14 @@ func postLoadAssignmentV2Handler(h *Hub, w http.ResponseWriter, r *http.Request)
 		if _, ok := h.statesByTask[taskId]; ok {
 			loadedSat.Task = *h.statesByTask[taskId]
 		} else {
-			loadedTask, err := GetTaskData(projectName, taskIndex)
+			loadedTask, err1 := GetTaskData(projectName, taskIndex)
 			// If the separate task data does not exist, initialize it
-			if err != nil {
-				log.Println(err)
-				saveTask(loadedSat.Task)
+			if err1 != nil {
+				log.Println(err1)
+				err = saveTask(loadedSat.Task)
+				if err != nil {
+					log.Fatal(err)
+				}
 			} else {
 				loadedSat.Task = loadedTask
 			}

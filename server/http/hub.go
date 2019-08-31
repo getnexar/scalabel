@@ -44,7 +44,8 @@ func (h *Hub) run() {
 			if _, ok := h.sessionsByTask[session.taskId]; !ok {
 				h.sessionsByTask[session.taskId] = make(map[string]*Session)
 				h.actionsByTask[session.taskId] = make([]*TaskAction, 0)
-				loadedTask, err := GetTaskData(session.projectName, session.taskId)
+				loadedTask, err := GetTaskData(
+					session.projectName, session.taskId)
 				if err != nil {
 					log.Fatal(err)
 				}
