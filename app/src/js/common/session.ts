@@ -83,18 +83,6 @@ class Session {
   public subscribe (callback: () => void) {
     this.store.subscribe(callback)
   }
-
-  /**
-   * Applies a side effect, like updating a component,
-   * When the status is updated
-   */
-  public addStatusEffect (callback: () => void) {
-    const oldApplyEffects = this.applyStatusEffects
-    this.applyStatusEffects = () => {
-      oldApplyEffects()
-      callback()
-    }
-  }
 }
 
 export default new Session()

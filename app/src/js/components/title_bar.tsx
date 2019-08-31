@@ -61,6 +61,7 @@ function save () {
     if (xhr.readyState === 4) {
       if (JSON.parse(xhr.response) !== 0) {
         alert('Save failed.')
+        Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
       } else {
         Session.updateStatusDisplay(ConnectionStatus.SAVED)
         setTimeout(() => {
@@ -90,7 +91,13 @@ class TitleBar extends Component<Props> {
    */
   constructor (props: Props) {
     super(props)
-    Session.addStatusEffect(() => { this.forceUpdate() })
+    Session.applyStatusEffects = () => {
+      this.forceUpdate()
+    }
+  }
+
+  componentWillUnmount () {
+    Session.applyStatusEffects = () => { return }
   }
 
   /**
