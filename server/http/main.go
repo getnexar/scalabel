@@ -188,8 +188,6 @@ func main() {
 		WrapHandleFunc(downloadTaskUrlHandler))
 	http.HandleFunc("/postLoadAssignment",
 		WrapHandleFunc(postLoadAssignmentHandler))
-	http.HandleFunc("/postLoadAssignmentV2",
-		WrapHandleFunc(postLoadAssignmentV2Handler))
 	http.HandleFunc("/auth", authHandler)
 	http.HandleFunc("/load", loadHandler)
 	http.HandleFunc("/workerDashboard", WrapHandleFunc(workerDashboardHandler))
@@ -208,16 +206,21 @@ func main() {
 	http.HandleFunc("/label3d", WrapHandleFunc(Label3dHandler))
 	http.HandleFunc("/label3dv2", WrapHandleFunc(Label3dv2Handler))
 
+	hub := newhub()
 	if checkFlag(env.Sync) {
 		// Set up gateway server and hub for syncing
-		hub := newhub()
 		go hub.run()
 		log.Printf("http server hub started")
-		http.HandleFunc("/register",
-			func(w http.ResponseWriter, r *http.Request) {
-			registerHandler(hub, w, r)
-		})
 	}
+	http.HandleFunc("/register", WrapHandleFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			registerHandler(hub, w, r)
+		}))
+
+	http.HandleFunc("/postLoadAssignmentV2", WrapHandleFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			postLoadAssignmentV2Handler(hub, w, r)
+		}))
 
 	Info.Printf("Listening to Port %d", env.Port)
 	Info.Printf("Local URL: localhost:%d", env.Port)

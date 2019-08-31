@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -166,6 +167,11 @@ func (sat *Sat) GetKey() string {
 		sat.Task.Config.TaskId, sat.User.UserId,
 		strconv.FormatInt(sat.Task.Config.SubmitTime, 10))
 }
+func (task *TaskData) GetKey() string {
+	return path.Join(task.Config.ProjectName, "submissions",
+		task.Config.TaskId, "sync",
+		strconv.FormatInt(task.Config.SubmitTime, 10))
+}
 
 //GetFields returns sat as a map
 func (sat *Sat) GetFields() map[string]interface{} {
@@ -173,6 +179,16 @@ func (sat *Sat) GetFields() map[string]interface{} {
 		"task":    sat.Task,
 		"user":    sat.User,
 		"session": sat.Session,
+	}
+}
+
+//GetFields returns task as a map
+func (task *TaskData) GetFields() map[string]interface{} {
+	return map[string]interface{}{
+		"config": task.Config,
+		"status": task.Status,
+		"items":  task.Items,
+		"tracks": task.Tracks,
 	}
 }
 
@@ -215,6 +231,32 @@ func GetSat(projectName string, taskIndex string,
 	return sat, nil
 }
 
+//GetTask gets the most recent task submitted
+func GetTaskData(projectName string, taskIndex string) (TaskData, error) {
+	task := TaskData{}
+	submissionsPath := path.Join(projectName, "submissions",
+		taskIndex, "sync")
+	keys := storage.ListKeys(submissionsPath)
+	// if any submissions exist, get the most recent one
+	if len(keys) > 0 {
+		Info.Printf("Reading %s\n", keys[len(keys)-1])
+		fields, err := storage.Load(keys[len(keys)-1])
+		if err != nil {
+			return TaskData{}, err
+		}
+		loadedJson, err := json.Marshal(fields)
+		if err != nil {
+			return TaskData{}, err
+		}
+		if err := json.Unmarshal(loadedJson, &task); err != nil {
+			return TaskData{}, err
+		}
+	} else {
+		return TaskData{}, errors.New("No task data found")
+	}
+	return task, nil
+}
+
 //GetAssignmentV2 retrieves assignment
 func GetAssignmentV2(projectName string, taskIndex string,
 	workerId string) (Assignment, error) {
@@ -233,7 +275,7 @@ func GetAssignmentV2(projectName string, taskIndex string,
 
 /* Handles the loading of an assignment given
    its project name, task index, and worker ID. */
-func postLoadAssignmentV2Handler(w http.ResponseWriter, r *http.Request) {
+func postLoadAssignmentV2Handler(h *Hub, w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		Error.Println(err)
@@ -269,10 +311,28 @@ func postLoadAssignmentV2Handler(w http.ResponseWriter, r *http.Request) {
 	// temporary fix to ensure different sessions
 	// loaded from same assignment have different IDs
 	loadedSat.Session.SessionId = getUuidV4()
+
+	if checkFlag(env.Sync) {
+		taskId := loadedSat.Task.Config.TaskId
+		if _, ok := h.statesByTask[taskId]; ok {
+			loadedSat.Task = *h.statesByTask[taskId]
+		} else {
+			loadedTask, err := GetTaskData(projectName, taskIndex)
+			// If the separate task data does not exist, initialize it
+			if err != nil {
+				log.Println(err)
+				saveTask(loadedSat.Task)
+			} else {
+				loadedSat.Task = loadedTask
+			}
+		}
+	}
+
 	loadData := LoadData{
 		State: loadedSat,
 		Sync: checkFlag(env.Sync),
 	}
+
 	loadedSatJson, err := json.Marshal(loadData)
 	if err != nil {
 		Error.Println(err)
@@ -458,29 +518,41 @@ func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
 		writeNil(w)
 		return
 	}
-	if assignment.Session.DemoMode {
-		Error.Println(errors.New("can't save a demo project"))
+	err = saveSat(assignment)
+	if err != nil {
+		Error.Println(err)
 		writeNil(w)
 		return
 	}
 
-	assignment.Task.Config.SubmitTime = recordTimestamp()
-	err = storage.Save(assignment.GetKey(), assignment.GetFields())
+	response, err := json.Marshal(0)
 	if err != nil {
 		Error.Println(err)
 		writeNil(w)
-	} else {
-		response, err := json.Marshal(0)
-		if err != nil {
-			Error.Println(err)
-			writeNil(w)
-		} else {
-			_, err = w.Write(response)
-			if err != nil {
-				Error.Println(err)
-			}
-		}
+		return
 	}
+
+	_, err = w.Write(response)
+	if err != nil {
+		Error.Println(err)
+	}
+}
+
+// Saves a Sat Object
+func saveSat(assignment Sat) error {
+	if assignment.Session.DemoMode {
+		return errors.New("can't save a demo project")
+	}
+
+	assignment.Task.Config.SubmitTime = recordTimestamp()
+	err := storage.Save(assignment.GetKey(), assignment.GetFields())
+	return err
+}
+
+func saveTask(task TaskData) error {
+	task.Config.SubmitTime = recordTimestamp()
+	err := storage.Save(task.GetKey(), task.GetFields())
+	return err
 }
 
 // Handles the export of submitted assignments

@@ -58,8 +58,9 @@ export class Synchronizer {
   public sendRegistration () {
     this.registered = true
     this.websocket.send(JSON.stringify({
-      sessionId: Session.id,
-      taskId:    Session.getState().task.config.taskId
+      sessionId:   Session.id,
+      taskId:      Session.getState().task.config.taskId,
+      projectName: Session.getState().task.config.projectName
     }))
     Session.updateStatusDisplay(ConnectionStatus.UNSAVED)
   }

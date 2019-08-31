@@ -2,13 +2,17 @@ package main
 
 import (
 	"github.com/gorilla/websocket"
+	"log"
 )
 
+const saveFrequency = 5
+
 type Session struct {
-	sessionId string
-	taskId    string
-	conn      *websocket.Conn
-	send      chan *TaskAction
+	sessionId   string
+	taskId      string
+	projectName string
+	conn        *websocket.Conn
+	send        chan *TaskAction
 }
 
 type Hub struct {
@@ -40,14 +44,17 @@ func (h *Hub) run() {
 			if _, ok := h.sessionsByTask[session.taskId]; !ok {
 				h.sessionsByTask[session.taskId] = make(map[string]*Session)
 				h.actionsByTask[session.taskId] = make([]*TaskAction, 0)
-				h.statesByTask[session.taskId] = &TaskData{}
+				loadedTask, err := GetTaskData(session.projectName, session.taskId)
+				if err != nil {
+					log.Fatal(err)
+				}
+				h.statesByTask[session.taskId] = &loadedTask
 			}
 			h.sessionsByTask[session.taskId][session.sessionId] = session
 			h.sessions[session.sessionId] = session
 		case session := <-h.unregisterSession:
 			sessId := session.sessionId
 			taskId := session.taskId
-
 			if _, ok := h.sessionsByTask[taskId][sessId]; ok {
 				delete(h.sessionsByTask[taskId], sessId)
 				delete(h.sessions, sessId)
@@ -55,14 +62,24 @@ func (h *Hub) run() {
 			}
 			if len(h.sessionsByTask[taskId]) == 0 {
 				delete(h.sessionsByTask, taskId)
+				err := saveTask(*h.statesByTask[taskId])
+				if err != nil {
+					log.Fatal(err)
+				}
 				delete(h.statesByTask, taskId)
 			}
 		case action := <-h.execAction:
 			taskAction := *action
 			taskAction.addTimestamp()
 			taskId := h.sessions[taskAction.getSessionId()].taskId
-			// h.statesByTask[taskId] =
-			// 	taskAction.updateState(h.statesByTask[taskId])
+			h.statesByTask[taskId] =
+				taskAction.updateState(h.statesByTask[taskId])
+			if (len(h.actionsByTask[taskId]) % saveFrequency == 0) {
+				err := saveTask(*h.statesByTask[taskId])
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 			h.actionsByTask[taskId] =
 				append(h.actionsByTask[taskId], action)
 			for _, session := range h.sessionsByTask[taskId] {
