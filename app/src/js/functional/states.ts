@@ -30,8 +30,7 @@ export function makeLabel (params: Partial<LabelType> = {}): LabelType {
     parent: -1, // id
     children: [], // ids
     shapes: [],
-    selectedShape: -1,
-    state: -1,
+    track: -1,
     order: 0,
     ...params
   }
@@ -75,6 +74,7 @@ export function makeCube (params: {} = {}): CubeType {
     center: { x: 0, y: 0, z: 0 },
     size: { x: 1, y: 1, z: 1 },
     orientation: { x: 0, y: 0, z: 0 },
+    anchorIndex: 0,
     ...params
   }
 }
@@ -198,7 +198,8 @@ function makeUser (params: Partial<UserType>= {}): UserType {
     id: '',
     select: makeSelect(),
     layout: makeLayout(),
-    viewerConfig: makeImageViewerConfig(),
+    imageViewerConfig: makeImageViewerConfig(),
+    pointCloudViewerConfig: makePointCloudViewerConfig(),
     ...params
   }
 }

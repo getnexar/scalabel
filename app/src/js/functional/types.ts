@@ -18,10 +18,8 @@ export interface LabelType {
   children: number[]
   /** Shape ids of the label */
   shapes: number[]
-  /** Selected shape of the label */
-  selectedShape: number
-  /** state */
-  state: number
+  /** connected track */
+  track: number
   /** order of the label among all the labels */
   order: number
 }
@@ -74,6 +72,8 @@ export interface CubeType {
   size: Vector3Type
   /** orientation */
   orientation: Vector3Type
+  /** Anchor corner index for reshaping */
+  anchorIndex: number
 }
 
 export type ShapeType = RectType | CubeType | PolygonType
@@ -220,8 +220,10 @@ export interface UserType {
   select: Select
   /** interface layout */
   layout: LayoutType
-  /** Configurations of the viewer */
-  viewerConfig: ViewerConfigType
+  /** Viewer configuration for images */
+  imageViewerConfig: ImageViewerConfigType
+  /** Viewer configuration for point clouds */
+  pointCloudViewerConfig: PointCloudViewerConfigType
 }
 
 export interface ItemStatus {
