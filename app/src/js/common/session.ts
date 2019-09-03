@@ -33,9 +33,6 @@ class Session {
   /** Overwriteable function that adds side effects to state change */
   public applyStatusEffects: () => void
 
-  /**
-   * no-op for state initialization
-   */
   constructor () {
     this.images = []
     this.pointClouds = []

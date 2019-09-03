@@ -180,17 +180,23 @@ func (task *TaskData) GetFields() map[string]interface{} {
 }
 
 //Gets the most recently saved file among keys
-func ReadLatest(keys []string) ([]byte, error) {
-	Info.Printf("Reading %s\n", keys[len(keys)-1])
-	fields, err := storage.Load(keys[len(keys)-1])
-	if err != nil {
-		return []byte{}, err
+func ReadLatest(path string) (bool, []byte, error) {
+	keys := storage.ListKeys(path)
+	// if any submissions exist, get the most recent one
+	if len(keys) > 0 {
+		Info.Printf("Reading %s\n", keys[len(keys)-1])
+		fields, err := storage.Load(keys[len(keys)-1])
+		if err != nil {
+			return true, []byte{}, err
+		}
+		loadedJson, err := json.Marshal(fields)
+		if err != nil {
+			return true, []byte{}, err
+		}
+		return true, loadedJson, nil
+	} else {
+		return false, []byte{}, nil
 	}
-	loadedJson, err := json.Marshal(fields)
-	if err != nil {
-		return []byte{}, err
-	}
-	return loadedJson, nil
 }
 
 //Gets the most recently saved Sat Object
@@ -198,14 +204,12 @@ func LoadSat(projectName string, taskIndex string,
 	workerId string) (Sat, error) {
 	sat := Sat{}
 	submissionsPath := GetSatPath(projectName, taskIndex, workerId)
-	keys := storage.ListKeys(submissionsPath)
-	// if any submissions exist, get the most recent one
-	if len(keys) > 0 {
-		loadedSatJson, err := ReadLatest(keys)
-		if err != nil {
-			return Sat{}, err
-		}
-		if err := json.Unmarshal(loadedSatJson, &sat); err != nil {
+	success, loadedJson, err := ReadLatest(submissionsPath)
+	if err != nil {
+		return Sat{}, err
+	}
+	if success {
+		if err := json.Unmarshal(loadedJson, &sat); err != nil {
 			return Sat{}, err
 		}
 	} else {
@@ -229,14 +233,13 @@ func LoadSat(projectName string, taskIndex string,
 func LoadTaskData(projectName string, taskIndex string) (TaskData, error) {
 	task := TaskData{}
 	submissionsPath := GetTaskPath(projectName, taskIndex)
-	keys := storage.ListKeys(submissionsPath)
-	// if any submissions exist, get the most recent one
-	if len(keys) > 0 {
-		loadedTaskJson, err := ReadLatest(keys)
-		if err != nil {
-			return TaskData{}, err
-		}
-		if err := json.Unmarshal(loadedTaskJson, &task); err != nil {
+	success, loadedJson, err := ReadLatest(submissionsPath)
+
+	if err != nil {
+		return TaskData{}, err
+	}
+	if success {
+		if err := json.Unmarshal(loadedJson, &task); err != nil {
 			return TaskData{}, err
 		}
 	} else {
@@ -249,7 +252,7 @@ func LoadTaskData(projectName string, taskIndex string) (TaskData, error) {
 func GetAssignmentV2(projectName string, taskIndex string,
 	workerId string) (Assignment, error) {
 	assignment := Assignment{}
-	assignmentPath := path.Join(projectName, "assignments", taskIndex, workerId)
+	assignmentPath := GetAssignmentPath(projectName, taskIndex, workerId)
 	fields, err := storage.Load(assignmentPath)
 	if err != nil {
 		return Assignment{}, err
@@ -278,8 +281,7 @@ func postLoadAssignmentV2Handler(
 	taskIndex := Index2str(assignmentToLoad.Task.Index)
 	var loadedAssignment Assignment
 	var loadedSat Sat
-	if !storage.HasKey(path.Join(projectName, "assignments",
-		taskIndex, DefaultWorker)) {
+	if !storage.HasKey(GetAssignmentPath(projectName, taskIndex, DefaultWorker)) {
 		// if assignment does not exist, create it
 		loadedAssignment, err = CreateAssignment(projectName, taskIndex,
 			DefaultWorker)
@@ -301,15 +303,18 @@ func postLoadAssignmentV2Handler(
 	// loaded from same assignment have different IDs
 	loadedSat.Session.SessionId = getUuidV4()
 
+	// If sync is on, task data needs to be considered separately
 	if env.Sync {
 		taskId := loadedSat.Task.Config.TaskId
+		// If another session is running the same task, use its data to init
 		if _, ok := h.statesByTask[taskId]; ok {
 			loadedSat.Task = *h.statesByTask[taskId]
 		} else {
+			// If the task is not currently running, try to load the separate task data
 			loadedTask, err1 := LoadTaskData(projectName, taskIndex)
-			// If the separate task data does not exist, initialize it
+			// If the separate task data does not exist, initialize it from sat
 			if err1 != nil {
-				log.Println(err1)
+				Error.Println(err1)
 				err = saveTask(loadedSat.Task)
 				if err != nil {
 					log.Fatal(err)
@@ -320,6 +325,7 @@ func postLoadAssignmentV2Handler(
 		}
 	}
 
+	// tell frontend whether sync is on or off
 	loadData := LoadData{
 		State: loadedSat,
 		Sync: env.Sync,
@@ -340,7 +346,7 @@ func executeLabelingTemplateV2(w http.ResponseWriter, r *http.Request,
 	// get task name from the URL
 	projectName := r.URL.Query()["project_name"][0]
 	taskIndex, _ := strconv.ParseInt(r.URL.Query()["task_index"][0], 10, 32)
-	if !storage.HasKey(path.Join(projectName, "assignments",
+	if !storage.HasKey(GetAssignmentPath(projectName,
 		Index2str(int(taskIndex)), DefaultWorker)) {
 		// if assignment does not exist, create it
 		assignment, err := CreateAssignment(projectName,

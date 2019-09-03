@@ -212,11 +212,12 @@ func main() {
 		go hub.run()
 		log.Printf("http server hub started")
 	}
+	// Register should not be called if env.Sync is false
 	http.HandleFunc("/register", WrapHandleFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			registerHandler(hub, w, r)
 		}))
-
+	// Load will not use the hub if env.Sync is false
 	http.HandleFunc("/postLoadAssignmentV2", WrapHandleFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			postLoadAssignmentV2Handler(hub, w, r)

@@ -5,6 +5,7 @@ import (
   "time"
 )
 
+// Task actions
 const addLabel = "ADD_LABEL"
 const changeLabelShape = "CHANGE_LABEL_SHAPE"
 const changeShape = "CHANGE_LABEL_PROPS"
@@ -18,6 +19,7 @@ var taskActions = map[string]struct{}{
 	tagImage: {},
 }
 
+// User actions
 const changeSelect = "CHANGE_SELECT"
 const imageZoom = "IMAGE_ZOOM"
 const toggleAssistantView = "TOGGLE_ASSISTANT_VIEW"
@@ -29,6 +31,7 @@ var userActions = map[string]struct{}{
 	moveCameraAndTarget: {},
 }
 
+// Session actions
 const loadItem = "LOAD_ITEM"
 const initSession = "INIT_SESSION"
 const updateAll = "UPDATE_ALL"
@@ -38,11 +41,14 @@ var sessionActions = map[string]struct{}{
 	updateAll: {},
 }
 
+// Basic methods for all actions
 type BaseAction interface {
   addTimestamp()
   getSessionId() string
 }
 
+// Each action type must also be able to update the state
+// Corresponding to its data type
 type SessionAction interface {
   BaseAction
   applyToSessionState(*SessionData) (*SessionData)
@@ -58,12 +64,16 @@ type TaskAction interface {
   updateState(*TaskData) (*TaskData)
 }
 
+// Basic fields for all actions
 type GenericAction struct {
   Type      string `json:"type" yaml:"type"`
   SessionId string `json:"sessionId" yaml:"sessionId"`
   Time      string `json:"time" yaml:"time"`
 }
 
+// Specify full parameters for all actions
+// These should match the action definitions in the frontend
+//Task actions
 type AddLabelAction struct {
   GenericAction
   ItemIndex int         `json:"itemIndex" yaml:"itemIndex"`
@@ -90,6 +100,7 @@ type TagImageAction struct {
 	GenericAction
 }
 
+// User actions
 type ChangeSelectAction struct {
   GenericAction
   ItemIndex int `json:"itemIndex" yaml:"itemIndex"`
@@ -107,6 +118,7 @@ type MoveCameraAndTargetAction struct {
 	GenericAction
 }
 
+// Session actions
 type LoadItemAction struct {
   GenericAction
   ItemIndex int               `json:"itemIndex" yaml:"itemIndex"`
@@ -121,6 +133,7 @@ type UpdateAllAction struct {
 	GenericAction
 }
 
+// Define common functions for all actions
 func (action GenericAction) addTimestamp() {
   action.Time = time.Now().String()
   log.Printf("Timestamped this message: %v\n", action)
@@ -130,6 +143,13 @@ func (action GenericAction) getSessionId() string {
   return action.SessionId
 }
 
+// Specify implementations of all actions
+// By defining their update methods
+// These should be immutable
+// These should match the behavior of the frontend state changes
+
+
+// Task actions
 func (action AddLabelAction) updateState(state *TaskData) *TaskData {
 	newState := *state
 
@@ -231,6 +251,7 @@ func (action TagImageAction) updateState(
 	return state
 }
 
+// User actions (dummy for now)
 func (action ChangeSelectAction) applyToUserState(
 	state *UserData) *UserData {
   return state
@@ -251,6 +272,7 @@ func (action MoveCameraAndTargetAction) applyToUserState(
   return state
 }
 
+// Session actions (dummy for now)
 func (action LoadItemAction) applyToSessionState(
 	state *SessionData) *SessionData {
   return state

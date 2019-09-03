@@ -30,9 +30,12 @@ export function initSession (containerName: string): void {
   xhr.onreadystatechange = () => {
     if (xhr.readyState === 4) {
       const json = JSON.parse(xhr.response)
+      // Only enable synchronization if the backend says to
       if (json.sync) {
         const synchronizer = new Synchronizer()
         initFromJson(json.state, synchronizer.middleware)
+        // Don't start websocket until state is initialized
+        synchronizer.startWebsocket()
       } else {
         initFromJson(json.state, null)
       }
@@ -65,6 +68,7 @@ export function initSession (containerName: string): void {
 /**
  * Initialize state store
  * @param {{}}} stateJson: json state from backend
+ * @param midleware: optional middleware for redux
  */
 export function initStore (stateJson: {}, middleware: Middleware | null): void {
   Session.store = configureStore(stateJson, Session.devMode, middleware)
@@ -76,6 +80,7 @@ export function initStore (stateJson: {}, middleware: Middleware | null): void {
 /**
  * Init general labeling session.
  * @param {{}}} stateJson: json state from backend
+ * @param midleware: optional middleware for redux
  */
 function initFromJson (stateJson: {}, middleware: Middleware | null): void {
   initStore(stateJson, middleware)

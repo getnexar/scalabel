@@ -91,6 +91,7 @@ class TitleBar extends Component<Props> {
    */
   constructor (props: Props) {
     super(props)
+    // Update the StatusMessageBox when the Session status changes
     Session.applyStatusEffects = () => {
       this.forceUpdate()
     }
@@ -101,6 +102,7 @@ class TitleBar extends Component<Props> {
    * Disables asynchronous callbacks
    */
   public componentWillUnmount () {
+    // De-couple the titlebar and the session
     Session.applyStatusEffects = () => { return }
   }
 
