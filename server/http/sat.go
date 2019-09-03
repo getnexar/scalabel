@@ -1071,7 +1071,7 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 // during the redirection from index.html to /auth
 func loadHandler(w http.ResponseWriter, r *http.Request) {
 	Info.Printf("%s is requesting %s", r.RemoteAddr, r.URL)
-	Info.Printf("User Management System is %s", env.UserManagement)
+	Info.Printf("User Management System is %v", env.UserManagement)
 	// Check if WORKER_SYSTEM is On
 	if env.UserManagement {
 		// redirect to AWS authentication website

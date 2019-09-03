@@ -194,9 +194,8 @@ func ReadLatest(path string) (bool, []byte, error) {
 			return true, []byte{}, err
 		}
 		return true, loadedJson, nil
-	} else {
-		return false, []byte{}, nil
 	}
+	return false, []byte{}, nil
 }
 
 //Gets the most recently saved Sat Object
@@ -281,7 +280,8 @@ func postLoadAssignmentV2Handler(
 	taskIndex := Index2str(assignmentToLoad.Task.Index)
 	var loadedAssignment Assignment
 	var loadedSat Sat
-	if !storage.HasKey(GetAssignmentPath(projectName, taskIndex, DefaultWorker)) {
+	if !storage.HasKey(GetAssignmentPath(
+		projectName, taskIndex, DefaultWorker)) {
 		// if assignment does not exist, create it
 		loadedAssignment, err = CreateAssignment(projectName, taskIndex,
 			DefaultWorker)
@@ -310,7 +310,7 @@ func postLoadAssignmentV2Handler(
 		if _, ok := h.statesByTask[taskId]; ok {
 			loadedSat.Task = *h.statesByTask[taskId]
 		} else {
-			// If the task is not currently running, try to load the separate task data
+			// If the task is not being run, try to load the task data
 			loadedTask, err1 := LoadTaskData(projectName, taskIndex)
 			// If the separate task data does not exist, initialize it from sat
 			if err1 != nil {

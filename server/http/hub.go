@@ -65,14 +65,14 @@ func (h *Hub) run() {
 			taskId := session.taskId
 			// Make sure the session still exists
 			if _, ok := h.sessionsByTask[taskId][sessId]; ok {
-				// If it exists, delete the session's info and close its channels
+				// Delete the session's info and close its channels
 				delete(h.sessionsByTask[taskId], sessId)
 				delete(h.sessions, sessId)
 				close(session.send)
 			}
 			// Check if this is the last session for its task
 			if len(h.sessionsByTask[taskId]) == 0 {
-				// If it is, save the task data to disk, then delete it from the hub
+				// Save the task data to disk, then delete it from the hub
 				delete(h.sessionsByTask, taskId)
 				err := saveTask(*h.statesByTask[taskId])
 				if err != nil {
