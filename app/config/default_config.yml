@@ -5,6 +5,6 @@ src: "."
 database: "local"
 modelGateHost: "127.0.0.1"
 modelGatePort: "8001"
-userManagement: "off"
-sync: "off"
+userManagement: false
+sync: false
 ...

@@ -36,8 +36,8 @@ type Env struct {
 	Database       string `yaml:"database"`
 	ModelGateHost  string `yaml:"modelGateHost"`
 	ModelGatePort  string `yaml:"modelGatePort"`
-	Sync           string `yaml:"sync"`
-	UserManagement string `yaml:"userManagement"`
+	Sync           bool   `yaml:"sync"`
+	UserManagement bool   `yaml:"userManagement"`
 	Region         string `yaml:"region"`
 	DomainName     string `yaml:"domainName"`
 	ClientId       string `yaml:"clientId"`
@@ -207,7 +207,7 @@ func main() {
 	http.HandleFunc("/label3dv2", WrapHandleFunc(Label3dv2Handler))
 
 	hub := newhub()
-	if checkFlag(env.Sync) {
+	if env.Sync {
 		// Set up gateway server and hub for syncing
 		go hub.run()
 		log.Printf("http server hub started")

@@ -312,7 +312,7 @@ func postLoadAssignmentV2Handler(
 	// loaded from same assignment have different IDs
 	loadedSat.Session.SessionId = getUuidV4()
 
-	if checkFlag(env.Sync) {
+	if env.Sync {
 		taskId := loadedSat.Task.Config.TaskId
 		if _, ok := h.statesByTask[taskId]; ok {
 			loadedSat.Task = *h.statesByTask[taskId]
@@ -333,7 +333,7 @@ func postLoadAssignmentV2Handler(
 
 	loadData := LoadData{
 		State: loadedSat,
-		Sync: checkFlag(env.Sync),
+		Sync: env.Sync,
 	}
 
 	loadedSatJson, err := json.Marshal(loadData)

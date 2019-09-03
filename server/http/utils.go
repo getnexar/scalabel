@@ -513,8 +513,3 @@ func writeNil(w http.ResponseWriter) {
 		Error.Println(err)
 	}
 }
-
-// Check a config feature flag
-func checkFlag(flag string) bool {
-	return flag == "on" || flag == "ON" || flag == "On"
-}
