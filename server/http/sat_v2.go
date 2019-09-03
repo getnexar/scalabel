@@ -160,19 +160,7 @@ type ItemStatus struct {
 	Loaded bool `json:"loaded" yaml:"loaded"`
 }
 
-//GetKey gets key for single task and worker
-func (sat *Sat) GetKey() string {
-	return path.Join(sat.Task.Config.ProjectName, "submissions",
-		sat.Task.Config.TaskId, sat.User.UserId,
-		strconv.FormatInt(sat.Task.Config.SubmitTime, 10))
-}
-func (task *TaskData) GetKey() string {
-	return path.Join(task.Config.ProjectName, "submissions",
-		task.Config.TaskId, "sync",
-		strconv.FormatInt(task.Config.SubmitTime, 10))
-}
-
-//GetFields returns sat as a map
+//Returns sat as a map
 func (sat *Sat) GetFields() map[string]interface{} {
 	return map[string]interface{}{
 		"task":    sat.Task,
@@ -181,7 +169,7 @@ func (sat *Sat) GetFields() map[string]interface{} {
 	}
 }
 
-//GetFields returns task as a map
+//Returns task as a map
 func (task *TaskData) GetFields() map[string]interface{} {
 	return map[string]interface{}{
 		"config": task.Config,
@@ -191,21 +179,29 @@ func (task *TaskData) GetFields() map[string]interface{} {
 	}
 }
 
-//GetSat gets the most recent assignment given the needed fields.
-func GetSat(projectName string, taskIndex string,
+//Gets the most recently saved file among keys
+func ReadLatest(keys []string) ([]byte, error) {
+	Info.Printf("Reading %s\n", keys[len(keys)-1])
+	fields, err := storage.Load(keys[len(keys)-1])
+	if err != nil {
+		return []byte{}, err
+	}
+	loadedJson, err := json.Marshal(fields)
+	if err != nil {
+		return []byte{}, err
+	}
+	return loadedJson, nil
+}
+
+//Gets the most recently saved Sat Object
+func LoadSat(projectName string, taskIndex string,
 	workerId string) (Sat, error) {
 	sat := Sat{}
-	submissionsPath := path.Join(projectName, "submissions",
-		taskIndex, workerId)
+	submissionsPath := GetSatPath(projectName, taskIndex, workerId)
 	keys := storage.ListKeys(submissionsPath)
 	// if any submissions exist, get the most recent one
 	if len(keys) > 0 {
-		Info.Printf("Reading %s\n", keys[len(keys)-1])
-		fields, err := storage.Load(keys[len(keys)-1])
-		if err != nil {
-			return Sat{}, err
-		}
-		loadedSatJson, err := json.Marshal(fields)
+		loadedSatJson, err := ReadLatest(keys)
 		if err != nil {
 			return Sat{}, err
 		}
@@ -214,8 +210,7 @@ func GetSat(projectName string, taskIndex string,
 		}
 	} else {
 		var assignment Assignment
-		assignmentPath := path.Join(projectName, "assignments",
-			taskIndex, workerId)
+		assignmentPath := GetAssignmentPath(projectName, taskIndex, workerId)
 		Info.Printf("Reading %s\n", assignmentPath)
 		fields, err := storage.Load(assignmentPath)
 		if err != nil {
@@ -230,24 +225,18 @@ func GetSat(projectName string, taskIndex string,
 	return sat, nil
 }
 
-//GetTask gets the most recent task submitted
-func GetTaskData(projectName string, taskIndex string) (TaskData, error) {
+//Gets the most recently saved TaskData Object
+func LoadTaskData(projectName string, taskIndex string) (TaskData, error) {
 	task := TaskData{}
-	submissionsPath := path.Join(projectName, "submissions",
-		taskIndex, "sync")
+	submissionsPath := GetTaskPath(projectName, taskIndex)
 	keys := storage.ListKeys(submissionsPath)
 	// if any submissions exist, get the most recent one
 	if len(keys) > 0 {
-		Info.Printf("Reading %s\n", keys[len(keys)-1])
-		fields, err := storage.Load(keys[len(keys)-1])
+		loadedTaskJson, err := ReadLatest(keys)
 		if err != nil {
 			return TaskData{}, err
 		}
-		loadedJson, err := json.Marshal(fields)
-		if err != nil {
-			return TaskData{}, err
-		}
-		if err := json.Unmarshal(loadedJson, &task); err != nil {
+		if err := json.Unmarshal(loadedTaskJson, &task); err != nil {
 			return TaskData{}, err
 		}
 	} else {
@@ -300,7 +289,7 @@ func postLoadAssignmentV2Handler(
 		}
 		loadedSat = assignmentToSat(&loadedAssignment)
 	} else {
-		loadedSat, err = GetSat(projectName, taskIndex,
+		loadedSat, err = LoadSat(projectName, taskIndex,
 			DefaultWorker)
 		if err != nil {
 			Error.Println(err)
@@ -317,7 +306,7 @@ func postLoadAssignmentV2Handler(
 		if _, ok := h.statesByTask[taskId]; ok {
 			loadedSat.Task = *h.statesByTask[taskId]
 		} else {
-			loadedTask, err1 := GetTaskData(projectName, taskIndex)
+			loadedTask, err1 := LoadTaskData(projectName, taskIndex)
 			// If the separate task data does not exist, initialize it
 			if err1 != nil {
 				log.Println(err1)
@@ -505,6 +494,7 @@ func assignmentToSat(assignment *Assignment) Sat {
 }
 
 func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
+	// Read the data to save from the request
 	if r.Method != "POST" {
 		http.NotFound(w, r)
 		return
@@ -513,28 +503,29 @@ func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Error.Println(err)
 	}
-
-	assignment := Sat{}
-	err = json.Unmarshal(body, &assignment)
-	if err != nil {
-		Error.Println(err)
-		writeNil(w)
-		return
-	}
-	err = saveSat(assignment)
+	sat := Sat{}
+	err = json.Unmarshal(body, &sat)
 	if err != nil {
 		Error.Println(err)
 		writeNil(w)
 		return
 	}
 
+	// Save the data
+	err = saveSat(sat)
+	if err != nil {
+		Error.Println(err)
+		writeNil(w)
+		return
+	}
+
+	// Send back 0 for success
 	response, err := json.Marshal(0)
 	if err != nil {
 		Error.Println(err)
 		writeNil(w)
 		return
 	}
-
 	_, err = w.Write(response)
 	if err != nil {
 		Error.Println(err)
@@ -542,16 +533,17 @@ func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Saves a Sat Object
-func saveSat(assignment Sat) error {
-	if assignment.Session.DemoMode {
+func saveSat(sat Sat) error {
+	if sat.Session.DemoMode {
 		return errors.New("can't save a demo project")
 	}
 
-	assignment.Task.Config.SubmitTime = recordTimestamp()
-	err := storage.Save(assignment.GetKey(), assignment.GetFields())
+	sat.Task.Config.SubmitTime = recordTimestamp()
+	err := storage.Save(sat.GetKey(), sat.GetFields())
 	return err
 }
 
+// Saves a Task Object
 func saveTask(task TaskData) error {
 	task.Config.SubmitTime = recordTimestamp()
 	err := storage.Save(task.GetKey(), task.GetFields())
@@ -580,7 +572,7 @@ func postExportV2Handler(w http.ResponseWriter, r *http.Request) {
 	items := []ItemExportV2{}
 	sat := Sat{}
 	for _, task := range tasks {
-		sat, err = GetSat(projectName, Index2str(task.Index), DefaultWorker)
+		sat, err = LoadSat(projectName, Index2str(task.Index), DefaultWorker)
 		if err == nil {
 			for _, itemToLoad := range sat.Task.Items {
 				item := exportItemData(
