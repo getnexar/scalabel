@@ -3,11 +3,11 @@ import { Point2D } from './point2d'
 enum PointType {
   vertex,
   mid,
-  breizer
+  correct
 }
 
 /** points2D for polygon */
-export class PolygonPoint2D extends Point2D {
+export class EdgePoint2D extends Point2D {
 
   /** point type */
   private _type: PointType

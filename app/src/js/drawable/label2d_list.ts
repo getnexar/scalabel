@@ -124,12 +124,12 @@ export class Label2DList {
     this._mouseDown = true
 
     if (this._highlightedLabel !== null &&
-      (this._selectedLabel === null || this._selectedLabel.edit === false)) {
+      (this._selectedLabel === null || this._selectedLabel.editing === false)) {
       this._highlightedLabel.setHighlighted(false)
       this._highlightedLabel = null
     }
 
-    if (this._selectedLabel !== null && this._selectedLabel.edit === false) {
+    if (this._selectedLabel !== null && this._selectedLabel.editing === false) {
       this._selectedLabel.setSelected(false)
       this._selectedLabel = null
     }
@@ -140,7 +140,7 @@ export class Label2DList {
         this._selectedLabel.setSelected(true, handleIndex)
 
         if (handleIndex >= 0) { // can move to label
-          this._selectedLabel.edit = true
+          this._selectedLabel.editing = true
         }
       } else { // new label
         const state = this._state
@@ -149,7 +149,7 @@ export class Label2DList {
         label.initTemp(state, coord)
         this._selectedLabel = label
         this._labelList.push(label)
-        this._selectedLabel.edit = true // move to label
+        this._selectedLabel.editing = true // move to label
       }
     }
     this._selectedLabel.onMouseDown(coord)
@@ -178,9 +178,9 @@ export class Label2DList {
    */
   public onMouseMove (
       coord: Vector2D, canvasLimit: Size2D,
-      labelIndex: number, handleIndex: number): void { 
-        // can put edit in to mousemove
-    if (!this._selectedLabel || this._selectedLabel.edit === false ||
+      labelIndex: number, handleIndex: number): void {
+        // can put edit in to mouse move
+    if (!this._selectedLabel || this._selectedLabel.editing === false ||
         !this._selectedLabel.onMouseMove(coord, canvasLimit)) {
       if (labelIndex >= 0) {
         if (this._highlightedLabel === null) {

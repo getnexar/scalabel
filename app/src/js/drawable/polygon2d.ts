@@ -9,7 +9,7 @@ import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
 import { Edge2D } from './edge2d'
 import { DrawMode, Label2D } from './label2d'
-import { PolygonPoint2D } from './polygon_point2d'
+import { EdgePoint2D } from './edge_point2d'
 import { makePoint2DStyle, Point2D } from './point2d'
 import { Context2D } from './util'
 
@@ -33,7 +33,7 @@ enum Polygon2DState {
  */
 export class Polygon2D extends Label2D {
   /** array for vertices */
-  private _points: PolygonPoint2D[]
+  private _points: EdgePoint2D[]
   /** array for edges */
   private _edges: Edge2D[]
   /** polygon label state */
@@ -111,5 +111,5 @@ export class Polygon2D extends Label2D {
    *  transfer point to edges
    * @param _poly
    */
-  private _updateShapesValues (_poly: PolygonPoint2D[]): void {}
+  private _updateShapesValues (_poly: EdgePoint2D[]): void {}
 }

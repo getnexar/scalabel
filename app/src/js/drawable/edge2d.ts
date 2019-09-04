@@ -1,4 +1,4 @@
-import { PolygonPoint2D } from './polygon_point2d'
+import { EdgePoint2D } from './edge_point2d'
 import { Context2D } from './util'
 
 export interface Edge2DStyle {
@@ -31,17 +31,17 @@ enum EdgeType {
  */
 export class Edge2D {
   /** source of the edge */
-  private _src: PolygonPoint2D
+  private _src: EdgePoint2D
   /** destination of the edge */
-  private _dest: PolygonPoint2D
+  private _dest: EdgePoint2D
   /** type of the edge */
   private _type: EdgeType
   /** control points of the edge */
-  private _control_points: PolygonPoint2D[]
+  private _control_points: EdgePoint2D[]
 
-  constructor (src: PolygonPoint2D, dest: PolygonPoint2D,
+  constructor (src: EdgePoint2D, dest: EdgePoint2D,
                type: EdgeType = EdgeType.line,
-               _controlPoints: PolygonPoint2D[] = []) {
+               _controlPoints: EdgePoint2D[] = []) {
     this._src = src
     this._dest = dest
     this._type = type
