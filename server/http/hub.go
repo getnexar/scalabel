@@ -86,21 +86,26 @@ func (h *Hub) run() {
 			taskAction.addTimestamp()
 			taskId := h.sessions[taskAction.getSessionId()].taskId
 			// Dispatch the action to update the state in the hub
-			h.statesByTask[taskId] =
-				taskAction.updateState(h.statesByTask[taskId])
-			// Save task data to disk every few actions
-			if (len(h.actionsByTask[taskId]) % saveFrequency == 0) {
-				err := saveTask(*h.statesByTask[taskId])
-				if err != nil {
-					log.Fatal(err)
+			newState, err := taskAction.updateState(h.statesByTask[taskId])
+			if err != nil {
+				// If error occured, action was malformed, or out of sync with the state
+				Error.Println(err)
+			} else {
+				h.statesByTask[taskId] = newState
+				// Save task data to disk every few actions
+				if (len(h.actionsByTask[taskId]) % saveFrequency == 0) {
+					err := saveTask(*h.statesByTask[taskId])
+					if err != nil {
+						log.Fatal(err)
+					}
 				}
-			}
-			// Update action log
-			h.actionsByTask[taskId] =
-				append(h.actionsByTask[taskId], action)
-			// Broadcast action to all sessions for this task
-			for _, session := range h.sessionsByTask[taskId] {
-				session.send <- &taskAction
+				// Update action log
+				h.actionsByTask[taskId] =
+					append(h.actionsByTask[taskId], action)
+				// Broadcast action to all sessions for this task
+				for _, session := range h.sessionsByTask[taskId] {
+					session.send <- &taskAction
+				}
 			}
 		}
 	}

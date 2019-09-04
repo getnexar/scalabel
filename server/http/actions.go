@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"log"
+	"reflect"
   "time"
 )
 
@@ -61,7 +63,7 @@ type UserAction interface {
 
 type TaskAction interface {
   BaseAction
-  updateState(*TaskData) (*TaskData)
+  updateState(*TaskData) (*TaskData, error)
 }
 
 // Basic fields for all actions
@@ -179,8 +181,64 @@ func copyLabelMap(labels map[int]LabelData) map[int]LabelData {
 	return newLabels
 }
 
+func getItem(state *TaskData, itemIndex int) (ItemData, error) {
+	if itemIndex >= 0 && itemIndex < len(state.Items) {
+		return state.Items[itemIndex], nil
+	} else {
+		return ItemData{}, errors.New("No item at specified index")
+	}
+}
+
+func getShape(item ItemData, shapeId int) (ShapeData, error) {
+	if shape, ok := item.Shapes[shapeId]; ok {
+		return shape, nil
+	} else {
+		return ShapeData{}, errors.New("No shape with specified ID")
+	}
+}
+
+func getLabel(item ItemData, labelId int) (LabelData, error) {
+	if label, ok := item.Labels[labelId]; ok {
+		return label, nil
+	} else {
+		return LabelData{}, errors.New("No label with specified ID")
+	}
+}
+
+// Merges all non-default properties of mergeLable into startLabel
+func mergeLabels(startLabel LabelData, mergeLabel LabelData) (LabelData, error) {
+	mergeReflected := reflect.ValueOf(mergeLabel)
+	startReflected := reflect.ValueOf(startLabel)
+	for i := 0; i < mergeReflected.NumField(); i++ {
+		reflectValue := mergeReflected.Field(i)
+		value := reflectValue.Interface()
+		key := mergeReflected.Type().Field(i).Name
+		switch reflectValue.Kind() {
+		case reflect.Int:
+			if value.(int) >= 0 {
+				startReflected.Elem().FieldByName(key).Set(value)
+			}
+		case reflect.Array:
+			if len(value.([]int)) > 0 {
+				startReflected.Elem().FieldByName(key).Set(value)
+			}
+		case reflect.Map:
+			if len(value.(map[string][]int)) > 0 {
+				startReflected.Elem().FieldByName(key).Set(value)
+			}
+		case reflect.String:
+			if len(value.(string)) > 0 {
+				startReflected.Elem().FieldByName(key).Set(value)
+			}
+		default:
+			return startLabel, errors.New("Label to merge was malformed")
+		}
+	}
+	return startReflected, nil
+}
+
 // Task actions
-func (action AddLabelAction) updateState(state *TaskData) *TaskData {
+func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
 	newState := *state
 
 	var newShapeId = state.Status.MaxShapeId + 1
@@ -199,7 +257,11 @@ func (action AddLabelAction) updateState(state *TaskData) *TaskData {
 	}
 	newState.Status = newStatus
 
-	var item = state.Items[action.ItemIndex]
+	item, err := getItem(state, action.ItemIndex)
+	if err != nil {
+		return state, err
+	}
+
 	var newShapes = copyShapeMap(item.Shapes)
 	// Add the new shapes from the action
 	for i := range action.Shapes {
@@ -215,11 +277,16 @@ func (action AddLabelAction) updateState(state *TaskData) *TaskData {
 	var newLabels = copyLabelMap(item.Labels)
 	// Add the new label from the action
 	var shapesForLabel = append(action.Label.Shapes, shapeIds...)
-	newLabel := action.Label
-	newLabel.Id = labelId
-	newLabel.Item = action.ItemIndex
-	newLabel.Shapes = shapesForLabel
-	newLabel.Order = order
+	partialLabel := LabelData{
+		Id: labelId,
+		Item: action.ItemIndex,
+		Shapes: shapesForLabel,
+		Order: order,
+	}
+	newLabel, err := mergeLabels(action.Label, partialLabel)
+	if err != nil {
+		return state, err
+	}
 	newLabels[labelId] = newLabel
 
 	newItem := item
@@ -229,15 +296,21 @@ func (action AddLabelAction) updateState(state *TaskData) *TaskData {
 	var newItems = updateItems(state, newItem, action.ItemIndex)
 	newState.Items = newItems
 
-  return &newState
+  return &newState, nil
 }
 
-func (action ChangeShapeAction) updateState(state *TaskData) *TaskData {
+func (action ChangeShapeAction) updateState(state *TaskData) (*TaskData, error) {
 	newState := *state
 
   var shapeId = action.ShapeId
-  var item = state.Items[action.ItemIndex]
-  var indexedShape = item.Shapes[shapeId]
+	item, err := getItem(state, action.ItemIndex)
+	if err != nil {
+		return state, err
+	}
+  indexedShape, err := getShape(item, shapeId)
+	if err != nil {
+		return state, err
+	}
 
 	// Update the desired shape's properties
 	newIndexedShape := indexedShape
@@ -252,24 +325,28 @@ func (action ChangeShapeAction) updateState(state *TaskData) *TaskData {
 	var newItems = updateItems(state, newItem, action.ItemIndex)
 	newState.Items = newItems
 
-	return &newState
+	return &newState, nil
 }
 
 func (action ChangeLabelAction) updateState(
-	state *TaskData) *TaskData {
+	state *TaskData) (*TaskData, error) {
 	newState := *state
 
   var labelId = action.LabelId
   var props = action.Props
 
-  var item = state.Items[action.ItemIndex]
-  if _, ok := item.Labels[labelId]; !ok {
-		return &newState
+	item, err := getItem(state, action.ItemIndex)
+	if err != nil {
+		return state, err
 	}
-  newLabel := item.Labels[labelId]
-	// TODO: which props will be changed
-	newLabel.Category = props.Category
-	newLabel.Attributes = props.Attributes
+	newLabel, err := getLabel(item, labelId)
+	if err != nil {
+		return state, err
+	}
+	newLabel, err = mergeLabels(newLabel, props)
+	if err != nil {
+		return state, err
+	}
 
 	var newLabels = copyLabelMap(item.Labels)
 	newLabels[labelId] = newLabel
@@ -279,17 +356,22 @@ func (action ChangeLabelAction) updateState(
 	var newItems = updateItems(state, newItem, action.ItemIndex)
 	newState.Items = newItems
 
-	return &newState
+	return &newState, nil
 }
 
 func (action DeleteLabelAction) updateState(
-	state *TaskData) *TaskData {
+	state *TaskData) (*TaskData, error) {
 	newState := *state
 
 	var labelId = action.LabelId
-	var item = state.Items[action.ItemIndex]
-	var label = item.Labels[labelId]
-
+	item, err := getItem(state, action.ItemIndex)
+	if err != nil {
+		return state, err
+	}
+	label, err := getLabel(item, labelId)
+	if err != nil {
+		return state, err
+	}
 	var newLabels = copyLabelMap(item.Labels)
 	delete(newLabels, labelId)
 	var newShapes = copyShapeMap(item.Shapes)
@@ -304,12 +386,11 @@ func (action DeleteLabelAction) updateState(
 	var newItems = updateItems(state, newItem, action.ItemIndex)
 	newState.Items = newItems
 
-	return state
+	return state, nil
 }
 
-func (action TagImageAction) updateState(
-	state *TaskData) *TaskData {
-	return state
+func (action TagImageAction) updateState(state *TaskData) (*TaskData, error) {
+	return state, nil
 }
 
 // User actions (dummy for now)

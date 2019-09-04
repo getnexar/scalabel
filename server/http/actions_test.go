@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+//Helper functions for testing
 // Check if rectangles have the same coordinates
 func checkRectsEqual(rect1 ShapeRect, rect2 ShapeRect) error {
     if rect1.X1 == rect2.X1 && rect1.X2 == rect2.X2 &&
@@ -70,7 +71,7 @@ func readTaskData() (*TaskData, error) {
   return &taskState, nil
 }
 
-// Update state by adding a new label and shape to the item
+// Create a random new AddLabel action, and use it to update the state
 func addShapeToState(startState *TaskData, itemIndex int, labelId int) (
   *TaskData, ShapeRect) {
   addLabel := LabelData{
@@ -90,6 +91,34 @@ func addShapeToState(startState *TaskData, itemIndex int, labelId int) (
   return addState, addShape
 }
 
+//Have randomly created acitons (within some parameters)
+//Limit parameters to certain use cases
+//As well as make them collide (want some on the same tasks/labels for testing)
+
+// Runs the desired actions and checks the effects
+func updateTaskWithActions(initialState *TaskData, actionQueue []string) {
+  // Store states to check for immutability later
+  states = make([]TaskData, len(actionQueue))
+  // Store info about actions to check for immutability later
+  checkData = make([]CheckData, len(actionQueue))
+  // Run actions and check updated state
+  for i, actionType := range(actionQueue) {
+    var newState *TaskData
+    switch actionType {
+    case addLabel:
+      f
+    case changeLabelShape:
+      g
+    }
+    states[i] = newState
+    checkData[i] = checkData
+  }
+
+  // Check that states are all immutable
+
+}
+
+// Test action updates for task data
 // Tests that the add label and change shape actions work
 func TestAddChangeShapeActions(t *testing.T) {
   // Prepare initial state
@@ -104,6 +133,11 @@ func TestAddChangeShapeActions(t *testing.T) {
   if err != nil {
     t.Fatal(fmt.Errorf("Initial state not empty: %v", err))
   }
+
+  actionQueue := [addLabel, changeLabelShape, addLabel]string{}
+  updateTaskWithActions(actionQueue)
+
+
 
   // Add the first shape
   labelId1 := 0
