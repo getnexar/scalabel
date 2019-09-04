@@ -3,7 +3,7 @@ import { Point2D } from './point2d'
 enum PointType {
   vertex,
   mid,
-  correct
+  bezier
 }
 
 /** points2D for polygon */
