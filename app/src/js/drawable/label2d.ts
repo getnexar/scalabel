@@ -45,6 +45,8 @@ export abstract class Label2D {
   protected _mouseDown: boolean
   /** mouse coordinate when pressed down */
   protected _mouseDownCoord: Vector2D
+  /** whether the label is being editing */
+  protected _edit: boolean
 
   constructor () {
     this._index = -1
@@ -62,6 +64,7 @@ export abstract class Label2D {
     this._mouseDownCoord = new Vector2D()
     this._shouldCommit = true
     this._mouseDown = false
+    this._edit = false
   }
 
   /** Set whether the label is highlighted */
@@ -112,6 +115,16 @@ export abstract class Label2D {
   /** set the order of this label */
   public set order (o: number) {
     this._order = o
+  }
+
+  /** return the editing of this label */
+  public get edit (): boolean {
+    return this._edit
+  }
+
+  /** set the edit of this label */
+  public set edit (e: boolean) {
+    this._edit = e
   }
 
   /**

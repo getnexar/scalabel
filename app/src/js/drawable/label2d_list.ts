@@ -1,12 +1,13 @@
 import _ from 'lodash'
-// import { sprintf } from 'sprintf-js'
-// import * as LabelTypes from '../common/label_types'
+import { sprintf } from 'sprintf-js'
+import * as LabelTypes from '../common/label_types'
 import Session from '../common/session'
 import { State } from '../functional/types'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
 import { Box2D } from './box2d'
 import { DrawMode, Label2D } from './label2d'
+import { Polygon2D } from './polygon2d'
 import { Context2D } from './util'
 
 /**
@@ -14,12 +15,12 @@ import { Context2D } from './util'
  * @param {string} labelType: type of the new label
  */
 function makeDrawableLabel (_labelType: string): Label2D {
-  // if (labelType === LabelTypes.BOX_2D) {
-  //   return new Box2D()
-  // } else {
-  //   throw new Error(sprintf('Undefined label type %s', labelType))
-  // }
-  return new Box2D()
+  if (_labelType === LabelTypes.BOX_2D) {
+    return new Box2D()
+  } else if (_labelType === LabelTypes.POLYGON_2D) {
+    return new Polygon2D()
+  }
+  throw new Error(sprintf('Undefined label type %s', _labelType))
 }
 
 /**
@@ -121,27 +122,37 @@ export class Label2DList {
   public onMouseDown (
       coord: Vector2D, labelIndex: number, handleIndex: number): void {
     this._mouseDown = true
-    if (this._highlightedLabel !== null) {
+
+    if (this._highlightedLabel !== null &&
+      (this._selectedLabel === null || this._selectedLabel.edit === false)) {
       this._highlightedLabel.setHighlighted(false)
       this._highlightedLabel = null
     }
-    if (this._selectedLabel !== null) {
+
+    if (this._selectedLabel !== null && this._selectedLabel.edit === false) {
       this._selectedLabel.setSelected(false)
       this._selectedLabel = null
     }
-    if (labelIndex >= 0) {
-      this._selectedLabel = this._labelList[labelIndex]
-      this._selectedLabel.setSelected(true, handleIndex)
-      this._selectedLabel.onMouseDown(coord)
-    } else {
-      const state = this._state
-      const label = makeDrawableLabel(
+
+    if (this._selectedLabel === null) {
+      if (labelIndex >= 0) {
+        this._selectedLabel = this._labelList[labelIndex]
+        this._selectedLabel.setSelected(true, handleIndex)
+
+        if (handleIndex >= 0) { // can move to label
+          this._selectedLabel.edit = true
+        }
+      } else { // new label
+        const state = this._state
+        const label = makeDrawableLabel(
         state.task.config.labelTypes[state.user.select.labelType])
-      label.initTemp(state, coord)
-      this._selectedLabel = label
-      this._labelList.push(label)
-      label.onMouseDown(coord)
+        label.initTemp(state, coord)
+        this._selectedLabel = label
+        this._labelList.push(label)
+        this._selectedLabel.edit = true // move to label
+      }
     }
+    this._selectedLabel.onMouseDown(coord)
   }
 
   /**
@@ -167,8 +178,9 @@ export class Label2DList {
    */
   public onMouseMove (
       coord: Vector2D, canvasLimit: Size2D,
-      labelIndex: number, handleIndex: number): void {
-    if (!this._selectedLabel ||
+      labelIndex: number, handleIndex: number): void { 
+        // can put edit in to mousemove
+    if (!this._selectedLabel || this._selectedLabel.edit === false ||
         !this._selectedLabel.onMouseMove(coord, canvasLimit)) {
       if (labelIndex >= 0) {
         if (this._highlightedLabel === null) {

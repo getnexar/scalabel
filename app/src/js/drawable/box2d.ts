@@ -48,7 +48,7 @@ export class Box2D extends Label2D {
     return this._shapes
   }
 
-  /** Draw the label on viewing or control convas */
+  /** Draw the label on viewing or control canvas */
   public draw (context: Context2D, ratio: number, mode: DrawMode): void {
     const self = this
 
@@ -197,6 +197,7 @@ export class Box2D extends Label2D {
    */
   public onMouseUp (coord: Vector2D): boolean {
     this._mouseDown = false
+    this.edit = false
     if (this._selected) {
       const area = Math.abs(coord.x - this._mouseDownCoord.x) *
                    Math.abs(coord.y - this._mouseDownCoord.y)

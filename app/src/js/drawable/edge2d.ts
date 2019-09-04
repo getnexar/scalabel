@@ -1,4 +1,4 @@
-import { Vector2D } from '../math/vector2d'
+import { PolygonPoint2D } from './polygon_point2d'
 import { Context2D } from './util'
 
 export interface Edge2DStyle {
@@ -21,20 +21,31 @@ export function makeEdge2DStyle (
   }
 }
 
+enum EdgeType {
+  line,
+  curve
+}
+
 /**
  * Drawable 2D Edge
  */
 export class Edge2D {
-  private _src: Vector2D
-  private _dest: Vector2D
-  private _type: string
-  private _control_points: []
-  constructor (src: Vector2D, dest: Vector2D, type: string = '',
-               controlPoints: [] = []) {
+  /** source of the edge */
+  private _src: PolygonPoint2D
+  /** destination of the edge */
+  private _dest: PolygonPoint2D
+  /** type of the edge */
+  private _type: EdgeType
+  /** control points of the edge */
+  private _control_points: PolygonPoint2D[]
+
+  constructor (src: PolygonPoint2D, dest: PolygonPoint2D,
+               type: EdgeType = EdgeType.line,
+               _controlPoints: PolygonPoint2D[] = []) {
     this._src = src
     this._dest = dest
     this._type = type
-    this._control_points = []
+    this._control_points = _controlPoints
   }
 
   /**
@@ -44,14 +55,14 @@ export class Edge2D {
    * @param {RectStyle} style
    */
   public draw (
-    context: Context2D, ratio: number, style: Edge2DStyle): void {
+    context: Context2D, ratio: number, _style: Edge2DStyle): void {
     context.save()
     // convert to display resolution
-    const src_real = this._src.clone().scale(ratio)
-    const dest_real = this._dest.clone().scale(ratio)
+    const srcReal = this._src.clone().scale(ratio)
+    const destReal = this._dest.clone().scale(ratio)
 
-    context.moveTo(src_real.x, src_real.y)
-    context.lineTo(dest_real.x, dest_real.y)
+    context.moveTo(srcReal.x, srcReal.y)
+    context.lineTo(destReal.x, destReal.y)
     context.closePath()
     context.fill()
     context.stroke()
