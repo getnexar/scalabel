@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"log"
-	"reflect"
   "time"
 )
 
@@ -206,35 +205,38 @@ func getLabel(item ItemData, labelId int) (LabelData, error) {
 }
 
 // Merges all non-default properties of mergeLable into startLabel
-func mergeLabels(startLabel LabelData, mergeLabel LabelData) (LabelData, error) {
-	mergeReflected := reflect.ValueOf(mergeLabel)
-	startReflected := reflect.ValueOf(startLabel)
-	for i := 0; i < mergeReflected.NumField(); i++ {
-		reflectValue := mergeReflected.Field(i)
-		value := reflectValue.Interface()
-		key := mergeReflected.Type().Field(i).Name
-		switch reflectValue.Kind() {
-		case reflect.Int:
-			if value.(int) >= 0 {
-				startReflected.Elem().FieldByName(key).Set(value)
-			}
-		case reflect.Array:
-			if len(value.([]int)) > 0 {
-				startReflected.Elem().FieldByName(key).Set(value)
-			}
-		case reflect.Map:
-			if len(value.(map[string][]int)) > 0 {
-				startReflected.Elem().FieldByName(key).Set(value)
-			}
-		case reflect.String:
-			if len(value.(string)) > 0 {
-				startReflected.Elem().FieldByName(key).Set(value)
-			}
-		default:
-			return startLabel, errors.New("Label to merge was malformed")
-		}
+func mergeLabels(startLabel LabelData, mergeLabel LabelData) (LabelData) {
+	if mergeLabel.Id >= 0 {
+		startLabel.Id = mergeLabel.Id
 	}
-	return startReflected, nil
+	if mergeLabel.Item >= 0 {
+		startLabel.Item = mergeLabel.Item
+	}
+	if len(mergeLabel.Type) > 0 {
+		startLabel.Type = mergeLabel.Type
+	}
+	if len(mergeLabel.Category) > 0 {
+		startLabel.Category = mergeLabel.Category
+	}
+	if len(mergeLabel.Attributes) > 0 {
+		startLabel.Attributes = mergeLabel.Attributes
+	}
+	if mergeLabel.Parent >= 0 {
+		startLabel.Parent = mergeLabel.Parent
+	}
+	if len(mergeLabel.Children) > 0 {
+		startLabel.Children = mergeLabel.Children
+	}
+	if len(mergeLabel.Shapes) > 0 {
+		startLabel.Shapes = mergeLabel.Shapes
+	}
+	if mergeLabel.Track >= 0 {
+		startLabel.Track = mergeLabel.Track
+	}
+	if mergeLabel.Order >= 0 {
+		startLabel.Order = mergeLabel.Order
+	}
+	return startLabel
 }
 
 // Task actions
@@ -283,10 +285,7 @@ func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
 		Shapes: shapesForLabel,
 		Order: order,
 	}
-	newLabel, err := mergeLabels(action.Label, partialLabel)
-	if err != nil {
-		return state, err
-	}
+	newLabel := mergeLabels(action.Label, partialLabel)
 	newLabels[labelId] = newLabel
 
 	newItem := item
@@ -343,10 +342,7 @@ func (action ChangeLabelAction) updateState(
 	if err != nil {
 		return state, err
 	}
-	newLabel, err = mergeLabels(newLabel, props)
-	if err != nil {
-		return state, err
-	}
+	newLabel = mergeLabels(newLabel, props)
 
 	var newLabels = copyLabelMap(item.Labels)
 	newLabels[labelId] = newLabel
