@@ -315,7 +315,7 @@ func postLoadAssignmentV2Handler(
 			// If the separate task data does not exist, initialize it from sat
 			if err1 != nil {
 				Error.Println(err1)
-				err = saveTask(loadedSat.Task)
+				err = loadedSat.Task.save()
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -499,6 +499,25 @@ func assignmentToSat(assignment *Assignment) Sat {
 	return loadedSat
 }
 
+// Saves a Sat Object
+func (sat Sat) save() error {
+	if sat.Session.DemoMode {
+		return errors.New("can't save a demo project")
+	}
+
+	sat.Task.Config.SubmitTime = recordTimestamp()
+	err := storage.Save(sat.GetKey(), sat.GetFields())
+	return err
+}
+
+// Saves a Task Object
+func (task TaskData) save() error {
+	task.Config.SubmitTime = recordTimestamp()
+	err := storage.Save(task.GetKey(), task.GetFields())
+	return err
+}
+
+
 func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
 	// Read the data to save from the request
 	if r.Method != "POST" {
@@ -518,7 +537,7 @@ func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save the data
-	err = saveSat(sat)
+	err = sat.save()
 	if err != nil {
 		Error.Println(err)
 		writeNil(w)
@@ -536,24 +555,6 @@ func postSaveV2Handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		Error.Println(err)
 	}
-}
-
-// Saves a Sat Object
-func saveSat(sat Sat) error {
-	if sat.Session.DemoMode {
-		return errors.New("can't save a demo project")
-	}
-
-	sat.Task.Config.SubmitTime = recordTimestamp()
-	err := storage.Save(sat.GetKey(), sat.GetFields())
-	return err
-}
-
-// Saves a Task Object
-func saveTask(task TaskData) error {
-	task.Config.SubmitTime = recordTimestamp()
-	err := storage.Save(task.GetKey(), task.GetFields())
-	return err
 }
 
 // Handles the export of submitted assignments

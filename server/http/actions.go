@@ -279,13 +279,11 @@ func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
 	var newLabels = copyLabelMap(item.Labels)
 	// Add the new label from the action
 	var shapesForLabel = append(action.Label.Shapes, shapeIds...)
-	partialLabel := LabelData{
-		Id: labelId,
-		Item: action.ItemIndex,
-		Shapes: shapesForLabel,
-		Order: order,
-	}
-	newLabel := mergeLabels(action.Label, partialLabel)
+	newLabel := aciton.label
+	newLabel.Id = labelId
+	newLabel.Item = action.ItemIndex
+	newLabel.Shapes = shapesForLabel
+	newLabel.Order = order
 	newLabels[labelId] = newLabel
 
 	newItem := item
