@@ -10,7 +10,7 @@ interface Props {
 /**
  * Canvas Viewer
  */
-class MainView extends React.Component<Props> {
+class ViewerContainer extends React.Component<Props> {
   /** The container */
   private divRef?: any
 
@@ -63,4 +63,4 @@ class MainView extends React.Component<Props> {
   }
 }
 
-export default MainView
+export default ViewerContainer

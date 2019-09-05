@@ -5,6 +5,8 @@ import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
 import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
 import { ImageViewerConfigType, State } from '../functional/types'
+import { Vector2D } from '../math/vector2d'
+import { imageViewStyle } from '../styles/label'
 import {
   clearCanvas,
   drawImageOnCanvas,
@@ -19,12 +21,10 @@ import {
   UP_RES_RATIO,
   updateCanvasScale,
   ZOOM_RATIO
-} from '../functional/view2d'
-import { Vector2D } from '../math/vector2d'
-import { imageViewStyle } from '../styles/label'
-import { Canvas2d } from './canvas2d'
+} from '../view/image'
 import MouseEventListeners from './mouse_event_listeners'
 import PlayerControl from './player_control'
+import { Viewer } from './viewer'
 
 interface ClassType {
   /** image canvas */
@@ -49,7 +49,7 @@ interface Props {
 /**
  * Canvas Viewer
  */
-export class ImageView extends Canvas2d<Props> {
+export class ImageView extends Viewer<Props> {
   /** The image context */
   public imageContext: CanvasRenderingContext2D | null
   /** The label context */

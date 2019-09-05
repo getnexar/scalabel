@@ -3,9 +3,9 @@ import { decodeControlIndex, rgbToIndex } from '../drawable/util'
 import {
   getCurrentItem
 } from '../functional/state_util'
+import { ImageViewerConfigType } from '../functional/types'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
-import { ImageViewerConfigType } from './types'
 
 // display export constants
 /** The maximum scale */

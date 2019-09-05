@@ -8,8 +8,8 @@ import { Label3DList } from '../drawable/label3d_list'
 import { getCurrentItem, getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
-import { Canvas3d } from './canvas3d'
 import PlayerControl from './player_control'
+import { Viewer } from './viewer'
 
 const styles = () => createStyles({
   canvas: {
@@ -53,7 +53,7 @@ function normalizeCoordinatesToCanvas (
 /**
  * Canvas Viewer
  */
-class PointCloudView extends Canvas3d<Props> {
+class PointCloudView extends Viewer<Props> {
   /** Canvas to draw on */
   private canvas: HTMLCanvasElement | null
   /** ThreeJS Renderer */

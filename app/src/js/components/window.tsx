@@ -1,10 +1,10 @@
 import React from 'react'
 import Path from '../common/path'
 import Session from '../common/session'
-import ImageView from './image_view'
+import ImageView from './image_viewer'
 import LabelLayout from './label_layout'
 import MainView from './main_view'
-import PointCloudView from './point_cloud_view'
+import PointCloudView from './point_cloud_viewer'
 import TitleBar from './title_bar'
 // $FlowFixMe
 import { ToolBar } from './toolbar'
