@@ -18,6 +18,7 @@ export const IMAGE_ZOOM = 'IMAGE_ZOOM'
 export const ADD_LABEL = 'ADD_LABEL'
 export const CHANGE_LABEL_SHAPE = 'CHANGE_LABEL_SHAPE'
 export const CHANGE_LABEL_PROPS = 'CHANGE_LABEL_PROPS'
+export const LINK_LABELS = 'LINK_LABELS'
 export const DELETE_LABEL = 'DELETE_LABEL'
 // Image specific actions
 export const TAG_IMAGE = 'TAG_IMAGE'
@@ -89,6 +90,13 @@ export interface ChangeLabelAction extends BaseAction {
   props: object
 }
 
+export interface LinkLabelsAction extends BaseAction {
+  /** item of the labels */
+  itemIndex: number,
+  /** ids of the labels to link */
+  labelIds: number[]
+}
+
 export interface DeleteLabelAction extends BaseAction {
   /** item of the label */
   itemIndex: number
@@ -131,6 +139,7 @@ export type TaskType =
   | ChangeShapeAction
   | ChangeLabelAction
   | DeleteLabelAction
+  | LinkLabelsAction
   | TagImageAction
 
 export type ActionType =

@@ -1,25 +1,27 @@
 import _ from 'lodash'
-// import { sprintf } from 'sprintf-js'
-// import * as LabelTypes from '../common/label_types'
+import { sprintf } from 'sprintf-js'
+import * as LabelTypes from '../common/label_types'
 import Session from '../common/session'
 import { State } from '../functional/types'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
 import { Box2D } from './box2d'
 import { DrawMode, Label2D } from './label2d'
+import { Tag2D } from './tag2d'
 import { Context2D } from './util'
 
 /**
  * Make a new drawable label based on the label type
  * @param {string} labelType: type of the new label
  */
-function makeDrawableLabel (_labelType: string): Label2D {
-  // if (labelType === LabelTypes.BOX_2D) {
-  //   return new Box2D()
-  // } else {
-  //   throw new Error(sprintf('Undefined label type %s', labelType))
-  // }
-  return new Box2D()
+function makeDrawableLabel (labelType: string): Label2D {
+  if (labelType === LabelTypes.BOX_2D) {
+    return new Box2D()
+  } else if (labelType === LabelTypes.TAG) {
+    return new Tag2D()
+  } else {
+    throw new Error(sprintf('Undefined label type %s', labelType))
+  }
 }
 
 /**
@@ -39,10 +41,6 @@ export class Label2DList {
   private _highlightedLabel: Label2D | null
   /** whether mouse is down */
   private _mouseDown: boolean
-  /** mouse position when it is down */
-  private _mouseDownCoord: Vector2D
-  /** whether the selected label is changed */
-  private _labelChanged: boolean
 
   constructor () {
     this._labels = {}
@@ -50,8 +48,6 @@ export class Label2DList {
     this._selectedLabel = null
     this._highlightedLabel = null
     this._mouseDown = false
-    this._mouseDownCoord = new Vector2D()
-    this._labelChanged = false
     this._state = Session.getState()
     this.updateState(this._state, this._state.user.select.item)
   }
@@ -63,7 +59,7 @@ export class Label2DList {
     return this._labelList[index]
   }
 
-  /** get readonly label list for state inspectation */
+  /** get readonly label list for state inspection */
   public getLabelList (): Array<Readonly<Label2D>> {
     return this._labelList
   }
@@ -72,7 +68,7 @@ export class Label2DList {
    * Draw label and control context
    * @param {Context2D} labelContext
    * @param {Context2D} controlContext
-   * @param {numbrer} ratio: ratio: display to image size ratio
+   * @param {number} ratio: ratio: display to image size ratio
    */
   public redraw (
       labelContext: Context2D, controlContext: Context2D, ratio: number): void {
@@ -127,7 +123,6 @@ export class Label2DList {
   public onMouseDown (
       coord: Vector2D, labelIndex: number, handleIndex: number): void {
     this._mouseDown = true
-    this._mouseDownCoord.set(...coord)
     if (this._highlightedLabel !== null) {
       this._highlightedLabel.setHighlighted(false)
       this._highlightedLabel = null
@@ -139,6 +134,15 @@ export class Label2DList {
     if (labelIndex >= 0) {
       this._selectedLabel = this._labelList[labelIndex]
       this._selectedLabel.setSelected(true, handleIndex)
+      this._selectedLabel.onMouseDown(coord)
+    } else {
+      const state = this._state
+      const label = makeDrawableLabel(
+        state.task.config.labelTypes[state.user.select.labelType])
+      label.initTemp(state, coord)
+      this._selectedLabel = label
+      this._labelList.push(label)
+      label.onMouseDown(coord)
     }
   }
 
@@ -149,12 +153,15 @@ export class Label2DList {
    * @param handleIndex
    */
   public onMouseUp (
-      _coord: Vector2D, _labelIndex: number, _handleIndex: number): void {
+      coord: Vector2D, _labelIndex: number, _handleIndex: number): void {
     this._mouseDown = false
-    if (this._labelChanged && this._selectedLabel !== null) {
-      this._selectedLabel.commitLabel()
+    if (this._selectedLabel !== null) {
+      this._selectedLabel.onMouseUp(coord)
+      // If label did not commit remove from list
+      if (!this._selectedLabel.commitLabel()) {
+        this._labelList.splice(this._labelList.indexOf(this._selectedLabel), 1)
+      }
     }
-    this._labelChanged = false
   }
 
   /**
@@ -163,20 +170,8 @@ export class Label2DList {
   public onMouseMove (
       coord: Vector2D, canvasLimit: Size2D,
       labelIndex: number, handleIndex: number): void {
-    if (this._mouseDown) {
-      // draging
-      if (this._selectedLabel === null) {
-        const state = this._state
-        const label = makeDrawableLabel(
-          state.task.config.labelTypes[state.user.select.labelType])
-        label.initTemp(state, this._mouseDownCoord)
-        this._selectedLabel = label
-        this._labelList.push(label)
-      }
-      this._selectedLabel.drag(this._mouseDownCoord, coord, canvasLimit)
-      this._labelChanged = true
-      this._mouseDownCoord.set(...coord)
-    } else {
+    if (!this._selectedLabel ||
+        !this._selectedLabel.onMouseMove(coord, canvasLimit)) {
       if (labelIndex >= 0) {
         if (this._highlightedLabel === null) {
           this._highlightedLabel = this._labelList[labelIndex]
