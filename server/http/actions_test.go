@@ -73,7 +73,7 @@ func readTaskData() (*TaskData, error) {
 }
 
 // Gets a random index corresponding to a nonzero value
-func indexOfNonzero(values []int) int {
+func randomIndexOfNonzero(values []int) int {
   numNonzero := 0
   for _, v := range(values) {
     if v != 0 {
@@ -92,6 +92,18 @@ func indexOfNonzero(values []int) int {
       }
       currentNum++
     }
+  }
+  return -1
+}
+
+func randomKey(dict map[int]LabelData) int {
+  labelInd := rand.Intn(len(dict))
+  j := 0
+  for k := range(dict) {
+    if j == labelInd {
+      return k
+    }
+    j++
   }
   return -1
 }
@@ -165,6 +177,27 @@ func checkChangeShape(state *TaskData, checkData CheckData) error {
   return nil
 }
 
+//Create a new DeleteLabel action, and use it to update the state
+func runDeleteLabel(state *TaskData, itemIndex int, labelId int) (
+  *TaskData, error) {
+  deleteAction := DeleteLabelAction{
+    ItemIndex: itemIndex,
+    LabelId: labelId,
+  }
+  newState, err := deleteAction.updateState(state)
+  return newState, err
+}
+
+//Check that a DeleteLabel action was executed correctly
+func checkDeleteLabel(state *TaskData, checkData CheckData) error {
+  itemIndex := checkData.ItemIndex
+  labelId := checkData.LabelId
+  if _, ok := state.Items[itemIndex].Labels[labelId]; ok {
+    return errors.New("Label was not deleted")
+  }
+  return nil
+}
+
 // Routes action to appropriate checking function
 func checkAction(actionType string, state *TaskData, checkData CheckData) error {
   switch actionType {
@@ -172,6 +205,8 @@ func checkAction(actionType string, state *TaskData, checkData CheckData) error 
     return checkAddLabel(state, checkData)
   case changeShape:
     return checkChangeShape(state, checkData)
+  case deleteLabel:
+    return checkDeleteLabel(state, checkData)
   default:
     return errors.New("tried to check non-existent action")
   }
@@ -199,7 +234,7 @@ func runActions(initialState *TaskData, actionQueue []string, maxItem int) error
     var newState *TaskData
     var newCheckData CheckData
     itemIndex := rand.Intn(maxItem + 1)
-    itemIndexWithShape := indexOfNonzero(numShapes)
+    itemIndexWithShape := randomIndexOfNonzero(numShapes)
     switch actionType {
     case addLabel:
       returnState, newShape, err := runAddLabel(
@@ -232,6 +267,24 @@ func runActions(initialState *TaskData, actionQueue []string, maxItem int) error
         ShapeId: shapeId,
         ItemIndex: itemIndexWithShape,
       }
+    case deleteLabel:
+      if itemIndexWithShape == -1 {
+        return errors.New("There are no labels to delete")
+      }
+      labelMap := states[i].Items[itemIndexWithShape].Labels
+      labelId := randomKey(labelMap)
+      returnState, err := runDeleteLabel(
+        states[i], itemIndexWithShape, labelId)
+      if err != nil {
+        return fmt.Errorf("deleteLabel failed: %v", err)
+      }
+      newState = returnState
+      newCheckData = CheckData{
+        LabelId: labelId,
+        ItemIndex: itemIndexWithShape,
+      }
+      //This assumes label only had one shape attached
+      numShapes[itemIndexWithShape]--
     default:
       return errors.New("tried to run non-existent action")
     }
@@ -293,6 +346,22 @@ func TestChangeShape(t *testing.T) {
 
   // add a label then change it a few times
   actionQueue := []string{addLabel, changeShape, changeShape}
+  err = runActions(initialState, actionQueue, 0)
+  if err != nil {
+    t.Fatal(err)
+  }
+}
+
+// Tests that the deleteLabel action works
+func TestDeleteLabel(t *testing.T) {
+  // Prepare initial state
+	initialState, err := readTaskData()
+  if err != nil {
+    t.Fatal(err)
+  }
+
+  // add some labels then delete them
+  actionQueue := []string{addLabel, deleteLabel, addLabel, deleteLabel}
   err = runActions(initialState, actionQueue, 0)
   if err != nil {
     t.Fatal(err)

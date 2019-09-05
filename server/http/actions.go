@@ -380,7 +380,7 @@ func (action DeleteLabelAction) updateState(
 	var newItems = updateItems(state, newItem, action.ItemIndex)
 	newState.Items = newItems
 
-	return state, nil
+	return &newState, nil
 }
 
 func (action TagImageAction) updateState(state *TaskData) (*TaskData, error) {
