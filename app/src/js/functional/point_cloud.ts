@@ -12,13 +12,9 @@ import { updateObject } from './util'
  * @return {State}
  */
 export function moveCameraAndTarget (
-  state: State, action: types.MoveCameraAndTargetAction): State {
+  state: State, action: types.UpdatePointCloudViewerConfigAction): State {
   let config = getCurrentItemViewerConfig(state)
-  if ('newTarget' in action) {
-    config = updateObject(
-      config, { position: action.newPosition, target: action.newTarget })
-  } else {
-    config = updateObject(config, { position: action.newPosition })
-  }
+  config = updateObject(
+    config, action.newFields)
   return setCurrentItemViewerConfig(state, config)
 }

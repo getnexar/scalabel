@@ -50,9 +50,9 @@ export const reducer: Reducer<State> = (
       return tag.tagImage(state, action as types.TagImageAction)
     case types.TOGGLE_ASSISTANT_VIEW:
       return common.toggleAssistantView(state)
-    case types.MOVE_CAMERA_AND_TARGET:
+    case types.UPDATE_POINT_CLOUD_VIEWER_CONFIG:
       return pointCloud.moveCameraAndTarget(
-        state, action as types.MoveCameraAndTargetAction)
+        state, action as types.UpdatePointCloudViewerConfigAction)
     default:
   }
   return state

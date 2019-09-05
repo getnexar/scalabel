@@ -13,11 +13,13 @@ export const ZOOM_SPEED = 1.1
  * @param {Vector3D} newPosition
  */
 export function moveCamera (
-  newPosition: Vector3D): types.MoveCameraAndTargetAction {
+  newPosition: Vector3D): types.UpdatePointCloudViewerConfigAction {
   return {
-    type: types.MOVE_CAMERA_AND_TARGET,
+    type: types.UPDATE_POINT_CLOUD_VIEWER_CONFIG,
     sessionId: Session.id,
-    newPosition: newPosition.toObject()
+    newFields: {
+      position: newPosition.toObject()
+    }
   }
 }
 
@@ -27,12 +29,16 @@ export function moveCamera (
  * @param {Vector3D} newTarget
  */
 export function moveCameraAndTarget (
-  newPosition: Vector3D, newTarget: Vector3D): types.MoveCameraAndTargetAction {
+  newPosition: Vector3D,
+  newTarget: Vector3D
+): types.UpdatePointCloudViewerConfigAction {
   return {
-    type: types.MOVE_CAMERA_AND_TARGET,
+    type: types.UPDATE_POINT_CLOUD_VIEWER_CONFIG,
     sessionId: Session.id,
-    newPosition: newPosition.toObject(),
-    newTarget: newTarget.toObject()
+    newFields: {
+      position: newPosition.toObject(),
+      target: newTarget.toObject()
+    }
   }
 }
 
@@ -42,7 +48,7 @@ export function moveCameraAndTarget (
 export function zoomCamera (
   viewerConfig: PointCloudViewerConfigType,
   deltaY: number
-): types.MoveCameraAndTargetAction | null {
+): types.UpdatePointCloudViewerConfigAction | null {
   const target = new THREE.Vector3(viewerConfig.target.x,
       viewerConfig.target.y,
       viewerConfig.target.z)
@@ -85,7 +91,7 @@ export function rotateCamera (
   newX: number,
   newY: number,
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   const target = new THREE.Vector3(viewerConfig.target.x,
     viewerConfig.target.y,
     viewerConfig.target.z)
@@ -138,7 +144,7 @@ export function dragCamera (
   newY: number,
   camera: THREE.Camera,
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   const dragVector = new THREE.Vector3(
     (initialX - newX) / MOUSE_CORRECTION_FACTOR * 2,
     (newY - initialY) / MOUSE_CORRECTION_FACTOR * 2,
@@ -166,7 +172,7 @@ export function dragCamera (
  */
 export function moveUp (
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   return moveCameraAndTarget(
     new Vector3D(
       viewerConfig.position.x,
@@ -187,7 +193,7 @@ export function moveUp (
  */
 export function moveDown (
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   return moveCameraAndTarget(
     new Vector3D(
       viewerConfig.position.x,
@@ -224,7 +230,7 @@ function calculateForward (
  */
 export function moveBack (
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   const forward = calculateForward(viewerConfig)
   return moveCameraAndTarget(
     new Vector3D(
@@ -246,7 +252,7 @@ export function moveBack (
  */
 export function moveForward (
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   const forward = calculateForward(viewerConfig)
   return moveCameraAndTarget(
     new Vector3D(
@@ -292,7 +298,7 @@ function calculateLeft (
  */
 export function moveLeft (
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   const forward = calculateForward(viewerConfig)
   const left = calculateLeft(viewerConfig, forward)
   return moveCameraAndTarget(
@@ -315,7 +321,7 @@ export function moveLeft (
  */
 export function moveRight (
   viewerConfig: PointCloudViewerConfigType
-): types.MoveCameraAndTargetAction {
+): types.UpdatePointCloudViewerConfigAction {
   const forward = calculateForward(viewerConfig)
   const left = calculateLeft(viewerConfig, forward)
   return moveCameraAndTarget(

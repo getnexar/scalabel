@@ -4,7 +4,7 @@
 import {
   ImageViewerConfigType,
   LabelType,
-  Select, ShapeType, Vector3Type, ViewerConfigType
+  PointCloudViewerConfigType, Select, ShapeType, ViewerConfigType
 } from '../functional/types'
 
 export const INIT_SESSION = 'INIT_SESSION'
@@ -27,7 +27,8 @@ export const UPDATE_IMAGE_VIEWER_CONFIG = 'UPDATE_IMAGE_VIEWER_CONFIG'
 export const TOGGLE_ASSISTANT_VIEW = 'TOGGLE_ASSISTANT_VIEW'
 
 // Point Cloud Specific
-export const MOVE_CAMERA_AND_TARGET = 'MOVE_CAMERA_AND_TARGET'
+export const UPDATE_POINT_CLOUD_VIEWER_CONFIG =
+  'UPDATE_POINT_CLOUD_VIEWER_CONFIG'
 
 interface BaseAction {
   /** type of the action */
@@ -111,11 +112,9 @@ export interface TagImageAction extends BaseAction {
 
 export type ToggleAssistantViewAction = BaseAction
 
-export interface MoveCameraAndTargetAction extends BaseAction {
-  /** New position */
-  newPosition: Vector3Type
-  /** New target */
-  newTarget?: Vector3Type
+export interface UpdatePointCloudViewerConfigAction extends BaseAction {
+  /** Fields to update */
+  newFields: Partial<PointCloudViewerConfigType>
 }
 
 export type ActionType =
@@ -131,4 +130,4 @@ export type ActionType =
     | DeleteLabelAction
     | TagImageAction
     | ToggleAssistantViewAction
-    | MoveCameraAndTargetAction
+    | UpdatePointCloudViewerConfigAction
