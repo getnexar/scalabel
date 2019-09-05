@@ -197,7 +197,7 @@ export class Box2D extends Label2D {
    */
   public onMouseUp (coord: Vector2D): boolean {
     this._mouseDown = false
-    this.edit = false
+    this.editing = false
     if (this._selected) {
       const area = Math.abs(coord.x - this._mouseDownCoord.x) *
                    Math.abs(coord.y - this._mouseDownCoord.y)

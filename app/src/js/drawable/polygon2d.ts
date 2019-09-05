@@ -54,7 +54,7 @@ export class Polygon2D extends Label2D {
   public draw (_context: Context2D, _ratio: number, _mode: DrawMode): void {}
 
   /**
-   * reshape the polygon
+   * reshape the polygon: drag vertex or control points
    * @param _end
    * @param _limit
    */
@@ -66,6 +66,13 @@ export class Polygon2D extends Label2D {
    * @param _limit
    */
   public move (_end: Vector2D, _limit: Size2D): void {}
+
+  /**
+   * add a new vertex to polygon label
+   * @param _coord
+   * @param _limit
+   */
+  public newVertex (_coord: Vector2D, _limit: Size2D): void {}
 
   /**
    * Handle mouse down
@@ -108,8 +115,8 @@ export class Polygon2D extends Label2D {
   public updateShapes (_shapes: ShapeType[]): void {}
 
   /**
-   *  transfer point to edges
+   *  read the polygonType and set the variable
    * @param _poly
    */
-  private _updateShapesValues (_poly: EdgePoint2D[]): void {}
+  private updateShapesValues (_poly: PolygonType): void {}
 }

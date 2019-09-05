@@ -167,7 +167,8 @@ export class Label2DList {
     if (this._selectedLabel !== null) {
       this._selectedLabel.onMouseUp(coord)
       // If label did not commit remove from list
-      if (!this._selectedLabel.commitLabel()) {
+      if (!this._selectedLabel.commitLabel() &&
+      this._selectedLabel.editing === false) {
         this._labelList.splice(this._labelList.indexOf(this._selectedLabel), 1)
       }
     }

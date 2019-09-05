@@ -122,7 +122,7 @@ export abstract class Label2D {
     return this._editing
   }
 
-  /** set the edit of this label */
+  /** set the editing of this label */
   public set editing (e: boolean) {
     this._editing = e
   }

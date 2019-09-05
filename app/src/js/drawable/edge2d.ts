@@ -2,8 +2,11 @@ import { EdgePoint2D } from './edge_point2d'
 import { Context2D } from './util'
 
 export interface Edge2DStyle {
+  /** width of the line on drawing */
   lineWidth: number
+  /** color of the line */
   color: number[]
+  /** whether dashed */
   dashed: boolean
 }
 
