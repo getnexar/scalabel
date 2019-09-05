@@ -1,6 +1,6 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
-import { updateImageViewerConfig } from '../action/image'
+import { updateImageViewerConfig, zoomImage } from '../action/image'
 import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
 import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
@@ -49,7 +49,7 @@ interface Props {
 /**
  * Canvas Viewer
  */
-export class ImageView extends Viewer<Props> {
+export class ImageViewer extends Viewer<Props> {
   /** The image context */
   public imageContext: CanvasRenderingContext2D | null
   /** The label context */
@@ -164,59 +164,17 @@ export class ImageView extends Viewer<Props> {
     const newScale = viewerConfig.viewScale * zoomRatio
     if (newScale >= MIN_SCALE && newScale <= MAX_SCALE &&
         this.display && this.imageCanvas) {
-      const state = Session.getState()
-      const displayRect = this.display.getBoundingClientRect()
-      const config =
-      getCurrentItemViewerConfig(state) as ImageViewerConfigType
-      // mouseOffset
-      let mouseOffset
-      let upperLeftCoords
-      if (config.viewScale > 1.0) {
-        upperLeftCoords = getVisibleCanvasCoords(this.display, this.imageCanvas)
-        if (config.viewOffsetX < 0 || config.viewOffsetY < 0) {
-          mouseOffset = [
-            Math.min(displayRect.width, this.imageCanvas.width) / 2,
-            Math.min(displayRect.height, this.imageCanvas.height) / 2
-          ]
-        } else {
-          mouseOffset = toCanvasCoords(
-            new Vector2D(config.viewOffsetX, config.viewOffsetY),
-            false,
-            this.displayToImageRatio
-          )
-          mouseOffset[0] -= upperLeftCoords[0]
-          mouseOffset[1] -= upperLeftCoords[1]
-        }
-      }
-
-      // zoom to point
-      let scrollLeft = this.display.scrollTop
-      let scrollTop = this.display.scrollLeft
-      // translate back to origin
-      if (mouseOffset) {
-        scrollTop = this.imageCanvas.offsetTop
-        scrollLeft = this.imageCanvas.offsetLeft
-      }
-
-      if (mouseOffset && upperLeftCoords) {
-        if (this.canvasWidth > displayRect.width) {
-          scrollLeft =
-            zoomRatio * (upperLeftCoords[0] + mouseOffset[0])
-            - mouseOffset[0]
-        }
-        if (this.canvasHeight > displayRect.height) {
-          scrollTop =
-            zoomRatio * (upperLeftCoords[1] + mouseOffset[1])
-            - mouseOffset[1]
-        }
-      }
-      Session.dispatch(updateImageViewerConfig({
-        viewScale: newScale,
-        viewOffsetX: offsetX,
-        viewOffsetY: offsetY,
-        displayTop: scrollTop,
-        displayLeft: scrollLeft
-      }))
+      zoomImage(
+        zoomRatio,
+        offsetX,
+        offsetY,
+        this.display,
+        this.imageCanvas,
+        viewerConfig,
+        this.canvasWidth,
+        this.canvasHeight,
+        this.displayToImageRatio
+      )
     }
   }
 
@@ -645,4 +603,4 @@ export class ImageView extends Viewer<Props> {
   }
 }
 
-export default withStyles(imageViewStyle, { withTheme: true })(ImageView)
+export default withStyles(imageViewStyle, { withTheme: true })(ImageViewer)

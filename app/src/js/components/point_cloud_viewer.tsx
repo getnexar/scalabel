@@ -53,7 +53,7 @@ function normalizeCoordinatesToCanvas (
 /**
  * Canvas Viewer
  */
-class PointCloudView extends Viewer<Props> {
+class PointCloudViewer extends Viewer<Props> {
   /** Canvas to draw on */
   private canvas: HTMLCanvasElement | null
   /** ThreeJS Renderer */
@@ -105,6 +105,8 @@ class PointCloudView extends Viewer<Props> {
   private MOUSE_CORRECTION_FACTOR: number
   /** Move amount when using arrow keys */
   private MOVE_AMOUNT: number
+  /** Zoom speed */
+  private ZOOM_SPEED: number
   /**
    * Constructor, handles subscription to store
    * @param {Object} props: react props
@@ -155,6 +157,7 @@ class PointCloudView extends Viewer<Props> {
 
     this.MOUSE_CORRECTION_FACTOR = 50.0
     this.MOVE_AMOUNT = 0.3
+    this.ZOOM_SPEED = 1.03
 
     document.onkeydown = this.keyDownHandler
     document.onkeyup = this.keyUpHandler
@@ -531,10 +534,14 @@ class PointCloudView extends Viewer<Props> {
     spherical.setFromVector3(offset)
 
     // Decrease distance from origin by amount specified
-    const amount = e.deltaY / this.MOUSE_CORRECTION_FACTOR
-    const newRadius = (1 - amount) * spherical.radius
+    let newRadius = spherical.radius
+    if (e.deltaY > 0) {
+      newRadius *= this.ZOOM_SPEED
+    } else {
+      newRadius /= this.ZOOM_SPEED
+    }
     // Limit zoom to not be too close
-    if (newRadius > 0.1) {
+    if (newRadius > 0.1 && newRadius < 500) {
       spherical.radius = newRadius
 
       offset.setFromSpherical(spherical)
@@ -645,4 +652,4 @@ class PointCloudView extends Viewer<Props> {
   }
 }
 
-export default withStyles(styles, { withTheme: true })(PointCloudView)
+export default withStyles(styles, { withTheme: true })(PointCloudViewer)
