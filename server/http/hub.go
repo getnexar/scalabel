@@ -74,7 +74,7 @@ func (h *Hub) run() {
 			if len(h.sessionsByTask[taskId]) == 0 {
 				// Save the task data to disk, then delete it from the hub
 				delete(h.sessionsByTask, taskId)
-				err := *h.statesByTask[taskId]).save()
+				err := (*h.statesByTask[taskId]).save()
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -94,7 +94,7 @@ func (h *Hub) run() {
 				h.statesByTask[taskId] = newState
 				// Save task data to disk every few actions
 				if (len(h.actionsByTask[taskId]) % saveFrequency == 0) {
-					err := *h.statesByTask[taskId].save()
+					err := (*h.statesByTask[taskId]).save()
 					if err != nil {
 						log.Fatal(err)
 					}

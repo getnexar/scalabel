@@ -21,9 +21,9 @@ func readMessage(messageType string, rawMessage json.RawMessage) (
 	switch messageType {
 	case addLabel:
 		actionMessage = &AddLabelAction{}
-	case changeLabelShape:
-		actionMessage = &ChangeShapeAction{}
 	case changeShape:
+		actionMessage = &ChangeShapeAction{}
+	case changeLabel:
 		actionMessage = &ChangeLabelAction{}
 	case deleteLabel:
 		actionMessage = &DeleteLabelAction{}

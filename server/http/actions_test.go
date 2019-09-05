@@ -1,6 +1,7 @@
 package main
 
 import (
+  "errors"
   "encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -71,130 +72,229 @@ func readTaskData() (*TaskData, error) {
   return &taskState, nil
 }
 
-// Create a random new AddLabel action, and use it to update the state
-func addShapeToState(startState *TaskData, itemIndex int, labelId int) (
-  *TaskData, ShapeRect) {
-  addLabel := LabelData{
+// Gets a random index corresponding to a nonzero value
+func indexOfNonzero(values []int) int {
+  numNonzero := 0
+  for _, v := range(values) {
+    if v != 0 {
+      numNonzero++
+    }
+  }
+  if numNonzero == 0 {
+    return -1
+  }
+  ind := rand.Intn(numNonzero)
+  currentNum := 0
+  for i, v := range(values) {
+    if v != 0 {
+      if currentNum == ind {
+        return i
+      }
+      currentNum++
+    }
+  }
+  return -1
+}
+
+// Object used to store metadata about actions so they can be checked later
+type CheckData struct {
+   Shape     ShapeRect
+   LabelId   int
+   NumShapes int
+   ItemIndex int
+   ShapeId   int
+}
+
+// Create a new AddLabel action, and use it to update the state
+func runAddLabel(state *TaskData, itemIndex int, labelId int) (
+  *TaskData, ShapeRect, error) {
+  label := LabelData{
     Id: labelId,
     Item: itemIndex,
     Shapes: []int{},
   }
-  addShapes := make([]ShapeRect, 1)
-  addShape := makeRect()
-  addShapes[0] = addShape
-  addAction := AddLabelAction{
+  shapes := make([]ShapeRect, 1)
+  shape := makeRect()
+  shapes[0] = shape
+  action := AddLabelAction{
     ItemIndex: itemIndex,
-    Label: addLabel,
-    Shapes: addShapes,
+    Label: label,
+    Shapes: shapes,
   }
-  addState := addAction.updateState(startState)
-  return addState, addShape
+  newState, err := action.updateState(state)
+  return newState, shape, err
 }
 
-//Have randomly created acitons (within some parameters)
-//Limit parameters to certain use cases
-//As well as make them collide (want some on the same tasks/labels for testing)
+// Check that an AddLabel action was executed correctly
+func checkAddLabel(state *TaskData, checkData CheckData) error {
+  numShapes := checkData.NumShapes
+  labelId := checkData.LabelId
+  shape := checkData.Shape
+  itemIndex := checkData.ItemIndex
+  item := state.Items[itemIndex]
+  err := checkShapeCorrect(item, numShapes, labelId, labelId, shape)
+  if err != nil {
+    return fmt.Errorf("Label not added correctly: %v", err)
+  }
+  return nil
+}
 
-// Runs the desired actions and checks the effects
-func updateTaskWithActions(initialState *TaskData, actionQueue []string) {
+// Create a new ChangeShape action, and use it to update the state
+func runChangeShape(state *TaskData, itemIndex int, shapeId int) (
+  *TaskData, ShapeRect, error){
+  shape := makeRect()
+  changeAction := ChangeShapeAction{
+    ItemIndex: itemIndex,
+    ShapeId: shapeId,
+    Props: shape,
+  }
+  newState, err := changeAction.updateState(state)
+  return newState, shape, err
+}
+
+// Check that a ChangeShape action was executed correctly
+func checkChangeShape(state *TaskData, checkData CheckData) error {
+  shape := checkData.Shape
+  itemIndex := checkData.ItemIndex
+  shapeId := checkData.ShapeId
+  realShape := state.Items[itemIndex].Shapes[shapeId].Shape
+  err := checkRectsEqual(shape, realShape)
+  if err != nil {
+    return fmt.Errorf("Shape was not modified correctly: %v", err)
+  }
+  return nil
+}
+
+// Routes action to appropriate checking function
+func checkAction(actionType string, state *TaskData, checkData CheckData) error {
+  switch actionType {
+  case addLabel:
+    return checkAddLabel(state, checkData)
+  case changeShape:
+    return checkChangeShape(state, checkData)
+  default:
+    return errors.New("tried to check non-existent action")
+  }
+}
+
+// Runs the desired actions with random parameters and checks the effects
+// To only operate on one item, can set maxItem = 0
+func runActions(initialState *TaskData, actionQueue []string, maxItem int) error {
   // Store states to check for immutability later
-  states = make([]TaskData, len(actionQueue))
+  states := make([]*TaskData, len(actionQueue) + 1)
+  states[0] = initialState
   // Store info about actions to check for immutability later
-  checkData = make([]CheckData, len(actionQueue))
+  checkData := make([]CheckData, len(actionQueue) + 1)
+  currentLabelId := 0
+  numShapes := make([]int, maxItem + 1)
+  // First check the initial state is empty
+  for i := 0; i <= maxItem; i++ {
+    err := checkShapesAdded(initialState.Items[i], numShapes[i])
+    if err != nil {
+      return fmt.Errorf("initial state not empty: %v", err)
+    }
+  }
   // Run actions and check updated state
   for i, actionType := range(actionQueue) {
     var newState *TaskData
+    var newCheckData CheckData
+    itemIndex := rand.Intn(maxItem + 1)
+    itemIndexWithShape := indexOfNonzero(numShapes)
     switch actionType {
     case addLabel:
-      f
-    case changeLabelShape:
-      g
+      returnState, newShape, err := runAddLabel(
+        states[i], itemIndex, currentLabelId)
+      if err != nil {
+        return fmt.Errorf("addLabel failed: %v", err)
+      }
+      newState = returnState
+      numShapes[itemIndex]++
+      newCheckData = CheckData{
+        Shape: newShape,
+        LabelId: currentLabelId,
+        NumShapes: numShapes[itemIndex],
+        ItemIndex: itemIndex,
+      }
+      currentLabelId++
+    case changeShape:
+      if itemIndexWithShape == -1 {
+        return errors.New("There are no shapes to change")
+      }
+      shapeId := rand.Intn(numShapes[itemIndexWithShape])
+      returnState, newShape, err := runChangeShape(
+        states[i], itemIndexWithShape, shapeId)
+      if err != nil {
+        return fmt.Errorf("changeShape failed: %v", err)
+      }
+      newState = returnState
+      newCheckData = CheckData{
+        Shape: newShape,
+        ShapeId: shapeId,
+        ItemIndex: itemIndexWithShape,
+      }
+    default:
+      return errors.New("tried to run non-existent action")
     }
-    states[i] = newState
-    checkData[i] = checkData
+    err := checkAction(actionType, newState, newCheckData)
+    if err != nil {
+      return err
+    }
+    states[i+1] = newState
+    checkData[i+1] = newCheckData
   }
 
+  // Check the initial state is unchanged
+  for i := 0; i <= maxItem; i++ {
+    err := checkShapesAdded(initialState.Items[i], 0)
+    if err != nil {
+      return fmt.Errorf("initial state changed: %v", err)
+    }
+  }
   // Check that states are all immutable
-
+  for i, actionType := range(actionQueue) {
+    err := checkAction(actionType, states[i+1], checkData[i+1])
+    if err != nil {
+      return fmt.Errorf("Not immutable: %v", err)
+    }
+  }
+  return nil
 }
 
 // Test action updates for task data
-// Tests that the add label and change shape actions work
-func TestAddChangeShapeActions(t *testing.T) {
+// Tests that the addLabel action works
+func TestAddLabel(t *testing.T) {
   // Prepare initial state
 	initialState, err := readTaskData()
   if err != nil {
     t.Fatal(err)
   }
-  itemIndex := 1
-  numShapes := 0
-  initialItem := initialState.Items[itemIndex]
-  err = checkShapesAdded(initialItem, numShapes)
+  // add some labels to one items
+  actionQueue := []string{addLabel, addLabel, addLabel}
+  err = runActions(initialState, actionQueue, 0)
   if err != nil {
-    t.Fatal(fmt.Errorf("Initial state not empty: %v", err))
+    t.Fatal(err)
   }
 
-  actionQueue := [addLabel, changeLabelShape, addLabel]string{}
-  updateTaskWithActions(actionQueue)
-
-
-
-  // Add the first shape
-  labelId1 := 0
-  addState, shape1 := addShapeToState(initialState, itemIndex, labelId1)
-  numShapes++
-  addItem := addState.Items[itemIndex]
-  err = checkShapeCorrect(addItem, numShapes, labelId1, labelId1, shape1)
+  // add some labels to different items
+  actionQueue = []string{addLabel, addLabel, addLabel}
+  err = runActions(initialState, actionQueue, 1)
   if err != nil {
-    t.Fatal(fmt.Errorf("First label not added correctly: %v", err))
+    t.Fatal(err)
   }
+}
 
-  // Change the shape
-  shape2 := makeRect()
-  changeAction := ChangeShapeAction{
-    ItemIndex: itemIndex,
-    ShapeId: 0,
-    Props: shape2,
-  }
-  changeState := changeAction.updateState(addState)
-  changeShape := changeState.Items[itemIndex].Shapes[0].Shape
-  err = checkRectsEqual(changeShape, shape2)
+// Tests that the changeShape action works
+func TestChangeShape(t *testing.T) {
+  // Prepare initial state
+	initialState, err := readTaskData()
   if err != nil {
-    t.Fatal(fmt.Errorf("Shape was not modified correctly"))
+    t.Fatal(err)
   }
 
-  // Add another shape
-  labelId2 := labelId1 + 1
-  addState2, shape3 := addShapeToState(changeState, itemIndex, labelId2)
-  numShapes++
-  addItem2 := addState2.Items[itemIndex]
-  err = checkShapeCorrect(addItem2, numShapes, labelId2, labelId2, shape3)
+  // add a label then change it a few times
+  actionQueue := []string{addLabel, changeShape, changeShape}
+  err = runActions(initialState, actionQueue, 0)
   if err != nil {
-    t.Fatal(fmt.Errorf("Second label not added correctly: %v ", err))
-  }
-
-  // Check immutability of state
-  numShapes = 0
-  initialItem = initialState.Items[itemIndex]
-  err = checkShapesAdded(initialItem, numShapes)
-  if err != nil {
-    t.Fatal(fmt.Errorf("Not immutable; initialState changed: %v", err))
-  }
-  numShapes++
-  addItem = addState.Items[itemIndex]
-  err = checkShapeCorrect(addItem, numShapes, labelId1, labelId1, shape1)
-  if err != nil {
-    t.Fatal(fmt.Errorf("Not immutable; addState changed: %v", err))
-  }
-  changeShape = changeState.Items[itemIndex].Shapes[0].Shape
-  err = checkRectsEqual(changeShape, shape2)
-  if err != nil {
-    t.Fatal(fmt.Errorf("Not immutable; changeState changed: %v", err))
-  }
-  numShapes++
-  addItem2 = addState2.Items[itemIndex]
-  err = checkShapeCorrect(addItem2, numShapes, labelId2, labelId2, shape3)
-  if err != nil {
-    t.Fatal(fmt.Errorf("Not immutable; addState2 changed: %v", err))
+    t.Fatal(err)
   }
 }

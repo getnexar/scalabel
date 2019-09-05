@@ -8,14 +8,14 @@ import (
 
 // Task actions
 const addLabel = "ADD_LABEL"
-const changeLabelShape = "CHANGE_LABEL_SHAPE"
-const changeShape = "CHANGE_LABEL_PROPS"
+const changeShape = "CHANGE_LABEL_SHAPE"
+const changeLabel = "CHANGE_LABEL_PROPS"
 const deleteLabel = "DELETE_LABEL"
 const tagImage = "TAG_IMAGE"
 var taskActions = map[string]struct{}{
   addLabel: {},
-  changeLabelShape: {},
-	changeShape: {},
+  changeShape: {},
+	changeLabel: {},
 	deleteLabel: {},
 	tagImage: {},
 }
@@ -279,7 +279,7 @@ func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
 	var newLabels = copyLabelMap(item.Labels)
 	// Add the new label from the action
 	var shapesForLabel = append(action.Label.Shapes, shapeIds...)
-	newLabel := aciton.label
+	newLabel := action.Label
 	newLabel.Id = labelId
 	newLabel.Item = action.ItemIndex
 	newLabel.Shapes = shapesForLabel
