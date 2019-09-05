@@ -110,6 +110,20 @@ func randomKey(dict map[int]LabelData) int {
   return -1
 }
 
+func generateTaskActions(n int) []string {
+  actions := make([]string, n)
+  possibleActions := []string{addLabel, changeShape, changeLabel, deleteLabel}
+  numLabels := 0
+  for i := 0; i < n; i++ {
+    if numLabels == 0 {
+      actions[i] = addLabel
+    } else {
+      actions[i] = possibleActions[rand.Intn(len(possibleActions))]
+    }
+  }
+  return actions
+}
+
 // Object used to store metadata about actions so they can be checked later
 type CheckData struct {
    Shape      ShapeRect
@@ -438,6 +452,10 @@ func TestDeleteLabel(t *testing.T) {
 }
 
 // Tests some random sequeneces of actions
-// func TestRandomizedActions(t *testing.T) {
-//
-// }
+func TestRandomizedActions(t *testing.T) {
+  // do several randomized tests
+  for i := 0; i < 5; i++ {
+    actionQueue := generateTaskActions(10)
+    runTest(t, actionQueue, 2)
+  }
+}

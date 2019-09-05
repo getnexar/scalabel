@@ -29,7 +29,7 @@ func readMessage(messageType string, rawMessage json.RawMessage) (
 		actionMessage = &DeleteLabelAction{}
 	case tagImage:
 		actionMessage = &TagImageAction{}
-	case linkLabel:
+	case linkLabels:
 		actionMessage = &LinkLabelAction{}
 	case changeSelect:
 		actionMessage = &ChangeSelectAction{}
