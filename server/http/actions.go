@@ -12,12 +12,14 @@ const changeShape = "CHANGE_LABEL_SHAPE"
 const changeLabel = "CHANGE_LABEL_PROPS"
 const deleteLabel = "DELETE_LABEL"
 const tagImage = "TAG_IMAGE"
+const linkLabels = "LINK_LABELS"
 var taskActions = map[string]struct{}{
   addLabel: {},
   changeShape: {},
 	changeLabel: {},
 	deleteLabel: {},
 	tagImage: {},
+	linkLabels: {},
 }
 
 // User actions
@@ -107,6 +109,12 @@ type TagImageAction struct {
 	ItemIndex      int   `json:"itemIndex" yaml:"itemIndex"`
 	AttributeIndex int   `json:"attributeIndex" yaml:"attributeIndex"`
 	SelectedIndex  []int `json:"selectedIndex" yaml:"selectedIndex"`
+}
+
+type LinkLabelAction struct {
+		GenericAction
+		ItemIndex int   `json:"itemIndex" yaml:"itemIndex"`
+		LabelIds  []int `json:"labelIds" yaml:"labelIds"`
 }
 
 // User actions
@@ -384,6 +392,10 @@ func (action DeleteLabelAction) updateState(
 }
 
 func (action TagImageAction) updateState(state *TaskData) (*TaskData, error) {
+	return state, nil
+}
+
+func (action LinkLabelAction) updateState(state *TaskData) (*TaskData, error) {
 	return state, nil
 }
 
