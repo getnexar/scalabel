@@ -117,8 +117,6 @@ type ImageViewerConfig struct {
 	ImageWidth  int     `json:"imageWidth" yaml:"imageWidth"`
 	ImageHeight int     `json:"imageHeight" yaml:"imageHeight"`
 	ViewScale   float32 `json:"viewScale" yaml:"viewScale"`
-	ViewOffsetX int     `json:"viewOffsetX" yaml:"viewOffsetX"`
-	ViewOffsetY int     `json:"viewOffsetY" yaml:"viewOffsetY"`
 	DisplayTop  int     `json:"displayTop" yaml:"displayTop"`
 	DisplayLeft int     `json:"displayLeft" yaml:"displayLeft"`
 }
@@ -371,8 +369,6 @@ func assignmentToSat(assignment *Assignment) Sat {
 		ImageWidth:  0,
 		ImageHeight: 0,
 		ViewScale:   1.0,
-		ViewOffsetX: -1,
-		ViewOffsetY: -1,
 		DisplayLeft: 0,
 		DisplayTop:  0,
 	}

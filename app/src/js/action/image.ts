@@ -74,8 +74,6 @@ export function zoomImage (
   }
   Session.dispatch(updateImageViewerConfig({
     viewScale: config.viewScale * zoomRatio,
-    viewOffsetX: offsetX,
-    viewOffsetY: offsetY,
     displayTop: scrollTop,
     displayLeft: scrollLeft
   }))
