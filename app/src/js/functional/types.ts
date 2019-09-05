@@ -104,6 +104,10 @@ export interface ImageViewerConfigType {
   viewOffsetX: number
   /** View Offset Y */
   viewOffsetY: number
+  /** Display Scroll Top */
+  displayTop: number
+  /** Display Scroll Left */
+  displayLeft: number
 }
 
 export interface PointCloudViewerConfigType {

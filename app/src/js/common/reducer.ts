@@ -31,8 +31,10 @@ export const reducer: Reducer<State> = (
       return common.loadItem(state, action as types.LoadItemAction)
     case types.UPDATE_ALL:
       return common.updateAll(state)
-    case types.IMAGE_ZOOM:
-      return image.zoomImage(state, action as types.ImageZoomAction)
+    case types.UPDATE_IMAGE_VIEWER_CONFIG:
+      return image.updateImageViewerConfig(
+        state, action as types.UpdateImageViewerConfigAction
+      )
     case types.ADD_LABEL:
       return common.addLabel(state, action as types.AddLabelAction)
     case types.CHANGE_LABEL_SHAPE:

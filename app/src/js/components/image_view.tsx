@@ -1,9 +1,9 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
-import { zoomImage } from '../action/image'
+import { updateImageViewerConfig } from '../action/image'
 import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
-import { getCurrentItem, getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
+import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
 import { ImageViewerConfigType, State } from '../functional/types'
 import {
   clearCanvas,
@@ -17,6 +17,7 @@ import {
   SCROLL_ZOOM_RATIO,
   toCanvasCoords,
   UP_RES_RATIO,
+  updateCanvasScale,
   ZOOM_RATIO
 } from '../functional/view2d'
 import { Vector2D } from '../math/vector2d'
@@ -161,8 +162,61 @@ export class ImageView extends Canvas2d<Props> {
     const viewerConfig =
       getCurrentItemViewerConfig(Session.getState()) as ImageViewerConfigType
     const newScale = viewerConfig.viewScale * zoomRatio
-    if (newScale >= MIN_SCALE && newScale <= MAX_SCALE) {
-      Session.dispatch(zoomImage(zoomRatio, offsetX, offsetY))
+    if (newScale >= MIN_SCALE && newScale <= MAX_SCALE &&
+        this.display && this.imageCanvas) {
+      const state = Session.getState()
+      const displayRect = this.display.getBoundingClientRect()
+      const config =
+      getCurrentItemViewerConfig(state) as ImageViewerConfigType
+      // mouseOffset
+      let mouseOffset
+      let upperLeftCoords
+      if (config.viewScale > 1.0) {
+        upperLeftCoords = getVisibleCanvasCoords(this.display, this.imageCanvas)
+        if (config.viewOffsetX < 0 || config.viewOffsetY < 0) {
+          mouseOffset = [
+            Math.min(displayRect.width, this.imageCanvas.width) / 2,
+            Math.min(displayRect.height, this.imageCanvas.height) / 2
+          ]
+        } else {
+          mouseOffset = toCanvasCoords(
+            new Vector2D(config.viewOffsetX, config.viewOffsetY),
+            false,
+            this.displayToImageRatio
+          )
+          mouseOffset[0] -= upperLeftCoords[0]
+          mouseOffset[1] -= upperLeftCoords[1]
+        }
+      }
+
+      // zoom to point
+      let scrollLeft = this.display.scrollTop
+      let scrollTop = this.display.scrollLeft
+      // translate back to origin
+      if (mouseOffset) {
+        scrollTop = this.imageCanvas.offsetTop
+        scrollLeft = this.imageCanvas.offsetLeft
+      }
+
+      if (mouseOffset && upperLeftCoords) {
+        if (this.canvasWidth > displayRect.width) {
+          scrollLeft =
+            zoomRatio * (upperLeftCoords[0] + mouseOffset[0])
+            - mouseOffset[0]
+        }
+        if (this.canvasHeight > displayRect.height) {
+          scrollTop =
+            zoomRatio * (upperLeftCoords[1] + mouseOffset[1])
+            - mouseOffset[1]
+        }
+      }
+      Session.dispatch(updateImageViewerConfig({
+        viewScale: newScale,
+        viewOffsetX: offsetX,
+        viewOffsetY: offsetY,
+        displayTop: scrollTop,
+        displayLeft: scrollLeft
+      }))
     }
   }
 
@@ -183,8 +237,9 @@ export class ImageView extends Canvas2d<Props> {
             this.display.getBoundingClientRect()
           if (displayRect.width
             && displayRect.height
-            && this.currentItemIsLoaded()) {
-            this.updateScale(canvas, true)
+            && this.currentItemIsLoaded()
+            && this.controlContext) {
+            this.updateScale(this.controlCanvas, this.controlContext, true)
           }
         }
       }}
@@ -200,8 +255,9 @@ export class ImageView extends Canvas2d<Props> {
             this.display.getBoundingClientRect()
           if (displayRect.width
             && displayRect.height
-            && this.currentItemIsLoaded()) {
-            this.updateScale(canvas, true)
+            && this.currentItemIsLoaded()
+            && this.labelContext) {
+            this.updateScale(this.labelCanvas, this.labelContext, true)
           }
         }
       }}
@@ -217,8 +273,9 @@ export class ImageView extends Canvas2d<Props> {
             this.display.getBoundingClientRect()
           if (displayRect.width
             && displayRect.height
-            && this.currentItemIsLoaded()) {
-            this.updateScale(canvas, false)
+            && this.currentItemIsLoaded()
+            && this.imageContext) {
+            this.updateScale(this.imageCanvas, this.imageContext, true)
           }
         }
       }}
@@ -256,6 +313,11 @@ export class ImageView extends Canvas2d<Props> {
           <div ref={(element) => {
             if (element) {
               this.display = element
+              const state = Session.getState()
+              const config =
+                getCurrentItemViewerConfig(state) as ImageViewerConfigType
+              this.display.scrollTop = config.displayTop
+              this.display.scrollLeft = config.displayLeft
             }
           }}
             className={classes.display}
@@ -370,8 +432,8 @@ export class ImageView extends Canvas2d<Props> {
     if (!this.isWithinFrame(e) || e.button !== 0) {
       return
     }
-    // ctrl + click for dragging
-    if (this.isKeyDown('ctrl')) {
+    // Control + click for dragging
+    if (this.isKeyDown('Control')) {
       if (this.display && this.imageCanvas) {
         const display = this.display.getBoundingClientRect()
         if (this.imageCanvas.width > display.width ||
@@ -434,14 +496,15 @@ export class ImageView extends Canvas2d<Props> {
     }
     // TODO: update hovered label
     // grabbing image
-    if (this.isKeyDown('ctrl')) {
+    if (this.isKeyDown('Control')) {
       if (this._isGrabbingImage) {
         if (this.display) {
           this.setCursor('grabbing')
           const dx = e.clientX - this._startGrabX
           const dy = e.clientY - this._startGrabY
-          this.display.scrollLeft = this._startGrabVisibleCoords[0] - dx
-          this.display.scrollTop = this._startGrabVisibleCoords[1] - dy
+          const displayLeft = this._startGrabVisibleCoords[0] - dx
+          const displayTop = this._startGrabVisibleCoords[1] - dy
+          Session.dispatch(updateImageViewerConfig({ displayLeft, displayTop }))
         }
       } else {
         this.setCursor('grab')
@@ -468,7 +531,7 @@ export class ImageView extends Canvas2d<Props> {
     }
     // get mouse position in image coordinates
     const mousePos = this.getMousePos(e)
-    if (this.isKeyDown('ctrl')) { // control for zoom
+    if (this.isKeyDown('Control')) { // control for zoom
       e.preventDefault()
       if (this.scrollTimer !== undefined) {
         clearTimeout(this.scrollTimer)
@@ -520,8 +583,8 @@ export class ImageView extends Canvas2d<Props> {
   private onKeyUp (e: KeyboardEvent) {
     const key = e.key
     delete this._keyDownMap[key]
-    if (key === 'Ctrl' || key === 'Meta') {
-      // ctrl or command
+    if (key === 'Control' || key === 'Meta') {
+      // Control or command
       this.setDefaultCursor()
     }
   }
@@ -536,122 +599,41 @@ export class ImageView extends Canvas2d<Props> {
   }
 
   /**
-   * Get the padding for the image given its size and canvas size.
-   * @return {Vector2D} padding
-   */
-  private _getPadding (): Vector2D {
-    if (this.display) {
-      const displayRect = this.display.getBoundingClientRect()
-      return new Vector2D(
-        Math.max(0, (displayRect.width - this.canvasWidth) / 2),
-        Math.max(0, (displayRect.height - this.canvasHeight) / 2))
-    }
-    return new Vector2D(0, 0)
-  }
-
-  /**
    * Set the scale of the image in the display
    * @param {object} canvas
    * @param {boolean} upRes
    */
-  private updateScale (canvas: HTMLCanvasElement, upRes: boolean) {
-    if (!this.display || !this.imageCanvas || !this.imageContext) {
+  private updateScale (
+    canvas: HTMLCanvasElement,
+    context: CanvasRenderingContext2D,
+    upRes: boolean
+  ) {
+    if (!this.display) {
       return
     }
     const state = Session.getState()
-    const displayRect = this.display.getBoundingClientRect()
     const config =
       getCurrentItemViewerConfig(state) as ImageViewerConfigType
-    // mouseOffset
-    let mouseOffset
-    let upperLeftCoords
-    if (config.viewScale > 1.0) {
-      upperLeftCoords = getVisibleCanvasCoords(this.display, this.imageCanvas)
-      if (config.viewOffsetX < 0 || config.viewOffsetY < 0) {
-        mouseOffset = [
-          Math.min(displayRect.width, this.imageCanvas.width) / 2,
-          Math.min(displayRect.height, this.imageCanvas.height) / 2
-        ]
-      } else {
-        mouseOffset = toCanvasCoords(
-          new Vector2D(config.viewOffsetX, config.viewOffsetY),
-          false,
-          this.displayToImageRatio
-        )
-        mouseOffset[0] -= upperLeftCoords[0]
-        mouseOffset[1] -= upperLeftCoords[1]
-      }
-    }
 
-    // set scale
-    let zoomRatio
-    if (config.viewScale >= MIN_SCALE
-      && config.viewScale < MAX_SCALE) {
-      zoomRatio = config.viewScale / this.scale
-      this.imageContext.scale(zoomRatio, zoomRatio)
-    } else {
+    if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return
     }
-
-    // resize canvas
-    const item = getCurrentItem(state)
-    const image = Session.images[item.index]
-    const ratio = image.width / image.height
-    if (displayRect.width / displayRect.height > ratio) {
-      this.canvasHeight = displayRect.height * config.viewScale
-      this.canvasWidth = this.canvasHeight * ratio
-      this.displayToImageRatio = this.canvasHeight
-        / image.height
-    } else {
-      this.canvasWidth = displayRect.width * config.viewScale
-      this.canvasHeight = this.canvasWidth / ratio
-      this.displayToImageRatio = this.canvasWidth / image.width
-    }
-
-    // translate back to origin
-    if (mouseOffset) {
-      this.display.scrollTop = this.imageCanvas.offsetTop
-      this.display.scrollLeft = this.imageCanvas.offsetLeft
-    }
-
-    // set canvas resolution
-    if (upRes) {
-      canvas.height = this.canvasHeight * UP_RES_RATIO
-      canvas.width = this.canvasWidth * UP_RES_RATIO
-    } else {
-      canvas.height = this.canvasHeight
-      canvas.width = this.canvasWidth
-    }
-
-    // set canvas size
-    canvas.style.height = this.canvasHeight + 'px'
-    canvas.style.width = this.canvasWidth + 'px'
-
-    // set padding
-    const padding = this._getPadding()
-    const padX = padding.x
-    const padY = padding.y
-
-    canvas.style.left = padX + 'px'
-    canvas.style.top = padY + 'px'
-    canvas.style.right = 'auto'
-    canvas.style.bottom = 'auto'
-
-    // zoom to point
-    if (mouseOffset && upperLeftCoords) {
-      if (this.canvasWidth > displayRect.width) {
-        this.display.scrollLeft =
-          zoomRatio * (upperLeftCoords[0] + mouseOffset[0])
-          - mouseOffset[0]
-      }
-      if (this.canvasHeight > displayRect.height) {
-        this.display.scrollTop =
-          zoomRatio * (upperLeftCoords[1] + mouseOffset[1])
-          - mouseOffset[1]
-      }
-    }
-
-    this.scale = config.viewScale
+    (
+      [
+        this.canvasWidth,
+        this.canvasHeight,
+        this.displayToImageRatio,
+        this.scale
+      ] =
+      updateCanvasScale(
+        this.display,
+        canvas,
+        context,
+        config,
+        config.viewScale / this.scale,
+        upRes
+      )
+    )
   }
 
   /**

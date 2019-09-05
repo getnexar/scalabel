@@ -119,6 +119,8 @@ type ImageViewerConfig struct {
 	ViewScale   float32 `json:"viewScale" yaml:"viewScale"`
 	ViewOffsetX int     `json:"viewOffsetX" yaml:"viewOffsetX"`
 	ViewOffsetY int     `json:"viewOffsetY" yaml:"viewOffsetY"`
+	DisplayTop  int     `json:"displayTop" yaml:"displayTop"`
+	DisplayLeft int     `json:"displayLeft" yaml:"displayLeft"`
 }
 
 type Vector3D struct {
@@ -371,6 +373,8 @@ func assignmentToSat(assignment *Assignment) Sat {
 		ViewScale:   1.0,
 		ViewOffsetX: -1,
 		ViewOffsetY: -1,
+		DisplayLeft: 0,
+		DisplayTop:  0,
 	}
 
 	target := Vector3D{

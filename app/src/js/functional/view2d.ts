@@ -5,6 +5,7 @@ import {
 } from '../functional/state_util'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
+import { ImageViewerConfigType } from './types'
 
 // display export constants
 /** The maximum scale */
@@ -16,7 +17,7 @@ export const UP_RES_RATIO = 2
 /** The zoom ratio */
 export const ZOOM_RATIO = 1.05
 /** The scroll-zoom ratio */
-export const SCROLL_ZOOM_RATIO = 1.01
+export const SCROLL_ZOOM_RATIO = 1.03
 
 /**
  * Get the current item in the state
@@ -163,4 +164,72 @@ export function imageDataToHandleId (data: Uint8ClampedArray) {
   // finding the mode of the data array to deal with anti-aliasing
   const hoveredIndex = mode(arr) as number
   return decodeControlIndex(hoveredIndex)
+}
+
+/**
+ * Update canvas scale
+ * @param display
+ * @param canvas
+ * @param context
+ * @param config
+ * @param zoomRatio
+ * @param upRes
+ */
+export function updateCanvasScale (
+  display: HTMLDivElement,
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+  config: ImageViewerConfigType,
+  zoomRatio: number,
+  upRes: boolean
+): number[] {
+  const state = Session.getState()
+  const displayRect = display.getBoundingClientRect()
+
+  context.scale(zoomRatio, zoomRatio)
+
+  // resize canvas
+  const item = getCurrentItem(state)
+  const image = Session.images[item.index]
+  const ratio = image.width / image.height
+  let canvasHeight
+  let canvasWidth
+  let displayToImageRatio
+  if (displayRect.width / displayRect.height > ratio) {
+    canvasHeight = displayRect.height * config.viewScale
+    canvasWidth = canvasHeight * ratio
+    displayToImageRatio = canvasHeight
+      / image.height
+  } else {
+    canvasWidth = displayRect.width * config.viewScale
+    canvasHeight = canvasWidth / ratio
+    displayToImageRatio = canvasWidth / image.width
+  }
+
+  // set canvas resolution
+  if (upRes) {
+    canvas.height = canvasHeight * UP_RES_RATIO
+    canvas.width = canvasWidth * UP_RES_RATIO
+  } else {
+    canvas.height = canvasHeight
+    canvas.width = canvasWidth
+  }
+
+  // set canvas size
+  canvas.style.height = canvasHeight + 'px'
+  canvas.style.width = canvasWidth + 'px'
+
+  // set padding
+  const padding = new Vector2D(
+    Math.max(0, (displayRect.width - canvasWidth) / 2),
+    Math.max(0, (displayRect.height - canvasHeight) / 2))
+  const padX = padding.x
+  const padY = padding.y
+
+  canvas.style.left = padX + 'px'
+  canvas.style.top = padY + 'px'
+  canvas.style.right = 'auto'
+  canvas.style.bottom = 'auto'
+
+  return [canvasWidth, canvasHeight, displayToImageRatio, config.viewScale]
 }

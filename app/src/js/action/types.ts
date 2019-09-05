@@ -2,9 +2,9 @@
  * Define string identifiers and interfaces of actions
  */
 import {
+  ImageViewerConfigType,
   LabelType,
-  Select,
-  ShapeType, Vector3Type, ViewerConfigType
+  Select, ShapeType, Vector3Type, ViewerConfigType
 } from '../functional/types'
 
 export const INIT_SESSION = 'INIT_SESSION'
@@ -12,16 +12,16 @@ export const CHANGE_SELECT = 'CHANGE_SELECT'
 export const LOAD_ITEM = 'LOAD_ITEM'
 export const UPDATE_ALL = 'UPDATE_ALL'
 
-export const IMAGE_ZOOM = 'IMAGE_ZOOM'
-
 // Item Level
 export const ADD_LABEL = 'ADD_LABEL'
 export const CHANGE_LABEL_SHAPE = 'CHANGE_LABEL_SHAPE'
 export const CHANGE_LABEL_PROPS = 'CHANGE_LABEL_PROPS'
 export const LINK_LABELS = 'LINK_LABELS'
 export const DELETE_LABEL = 'DELETE_LABEL'
+
 // Image specific actions
 export const TAG_IMAGE = 'TAG_IMAGE'
+export const UPDATE_IMAGE_VIEWER_CONFIG = 'UPDATE_IMAGE_VIEWER_CONFIG'
 
 // View Level
 export const TOGGLE_ASSISTANT_VIEW = 'TOGGLE_ASSISTANT_VIEW'
@@ -52,13 +52,9 @@ export interface LoadItemAction extends BaseAction {
 
 export type UpdateAllAction = BaseAction
 
-export interface ImageZoomAction extends BaseAction {
-  /** Zoom ratio */
-  ratio: number
-  /** View Offset X */
-  viewOffsetX: number
-  /** View Offset Y */
-  viewOffsetY: number
+export interface UpdateImageViewerConfigAction extends BaseAction {
+  /** fields to update */
+  newFields: Partial<ImageViewerConfigType>
 }
 
 export interface AddLabelAction extends BaseAction {
@@ -127,7 +123,7 @@ export type ActionType =
     | ChangeSelectAction
     | LoadItemAction
     | UpdateAllAction
-    | ImageZoomAction
+    | UpdateImageViewerConfigAction
     | AddLabelAction
     | ChangeShapeAction
     | ChangeLabelAction
