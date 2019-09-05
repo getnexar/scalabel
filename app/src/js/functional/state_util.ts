@@ -29,7 +29,7 @@ export function getCurrentItem (state: State): ItemType {
  * @return {ViewerConfigType}
  */
 export function getCurrentItemViewerConfig (state: State):
-  ViewerConfigType | null {
+  ViewerConfigType {
   switch (state.task.config.itemType) {
     case 'image':
       return state.user.imageViewerConfig

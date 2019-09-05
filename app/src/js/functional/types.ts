@@ -116,7 +116,7 @@ export interface PointCloudViewerConfigType {
 }
 
 export type ViewerConfigType =
-  ImageViewerConfigType | PointCloudViewerConfigType | null
+  ImageViewerConfigType | PointCloudViewerConfigType
 
 export interface ItemType {
   /** The ID of the item */
