@@ -2,12 +2,13 @@ import createStyles from '@material-ui/core/styles/createStyles'
 import { withStyles } from '@material-ui/core/styles/index'
 import * as React from 'react'
 import * as THREE from 'three'
-import { moveCamera, moveCameraAndTarget } from '../action/point_cloud'
+import { dragCamera, moveBack, moveCameraAndTarget, moveDown, moveForward, moveLeft, moveRight, moveUp, rotateCamera, zoomCamera } from '../action/point_cloud'
 import Session from '../common/session'
 import { Label3DList } from '../drawable/label3d_list'
 import { getCurrentItem, getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
+import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../view/point_cloud'
 import PlayerControl from './player_control'
 import { Viewer } from './viewer'
 
@@ -101,12 +102,6 @@ class PointCloudViewer extends Viewer<Props> {
   /** UI handler */
   private doubleClickHandler: () => void
 
-  /** Factor to divide mouse delta by */
-  private MOUSE_CORRECTION_FACTOR: number
-  /** Move amount when using arrow keys */
-  private MOVE_AMOUNT: number
-  /** Zoom speed */
-  private ZOOM_SPEED: number
   /**
    * Constructor, handles subscription to store
    * @param {Object} props: react props
@@ -154,10 +149,6 @@ class PointCloudViewer extends Viewer<Props> {
     this.keyUpHandler = this.handleKeyUp.bind(this)
     this.mouseWheelHandler = this.handleMouseWheel.bind(this)
     this.doubleClickHandler = this.handleDoubleClick.bind(this)
-
-    this.MOUSE_CORRECTION_FACTOR = 50.0
-    this.MOVE_AMOUNT = 0.3
-    this.ZOOM_SPEED = 1.03
 
     document.onkeydown = this.keyDownHandler
     document.onkeyup = this.keyUpHandler
@@ -222,103 +213,6 @@ class PointCloudViewer extends Viewer<Props> {
   }
 
   /**
-   * Normalize mouse coordinates
-   * @param {number} mX: Mouse x-coord
-   * @param {number} mY: Mouse y-coord
-   * @return {Array<number>}
-   */
-  private convertMouseToNDC (mX: number, mY: number): number[] {
-    if (this.canvas) {
-      let x = mX / this.canvas.offsetWidth
-      let y = mY / this.canvas.offsetHeight
-      x = 2 * x - 1
-      y = -2 * y + 1
-
-      return [x, y]
-    }
-    return [0, 0]
-  }
-
-  /**
-   * Rotate camera according to mouse movement
-   * @param newX
-   * @param newY
-   */
-  private rotateCamera (newX: number, newY: number) {
-    const viewerConfig: PointCloudViewerConfigType =
-      this.getCurrentViewerConfig()
-
-    const target = new THREE.Vector3(viewerConfig.target.x,
-      viewerConfig.target.y,
-      viewerConfig.target.z)
-    const offset = new THREE.Vector3(viewerConfig.position.x,
-      viewerConfig.position.y,
-      viewerConfig.position.z)
-    offset.sub(target)
-
-    // Rotate so that positive y-axis is vertical
-    const rotVertQuat = new THREE.Quaternion().setFromUnitVectors(
-      new THREE.Vector3(viewerConfig.verticalAxis.x,
-        viewerConfig.verticalAxis.y,
-        viewerConfig.verticalAxis.z),
-      new THREE.Vector3(0, 1, 0))
-    offset.applyQuaternion(rotVertQuat)
-
-    // Convert to spherical coordinates
-    const spherical = new THREE.Spherical()
-    spherical.setFromVector3(offset)
-
-    // Apply rotations
-    spherical.theta += (newX - this.mX) / this.MOUSE_CORRECTION_FACTOR
-    spherical.phi += (newY - this.mY) / this.MOUSE_CORRECTION_FACTOR
-
-    spherical.phi = Math.max(0, Math.min(Math.PI, spherical.phi))
-
-    spherical.makeSafe()
-
-    // Convert to Cartesian
-    offset.setFromSpherical(spherical)
-
-    // Rotate back to original coordinate space
-    const quatInverse = rotVertQuat.clone().inverse()
-    offset.applyQuaternion(quatInverse)
-
-    offset.add(target)
-
-    Session.dispatch(moveCamera((new Vector3D()).fromThree(offset)))
-  }
-
-  /**
-   * Drag camera according to mouse movement
-   * @param newX
-   * @param newY
-   */
-  private dragCamera (newX: number, newY: number) {
-    const viewerConfig: PointCloudViewerConfigType =
-      this.getCurrentViewerConfig()
-
-    const dragVector = new THREE.Vector3(
-      (this.mX - newX) / this.MOUSE_CORRECTION_FACTOR * 2,
-      (newY - this.mY) / this.MOUSE_CORRECTION_FACTOR * 2,
-      0
-    )
-    dragVector.applyQuaternion(this.camera.quaternion)
-
-    Session.dispatch(moveCameraAndTarget(
-      new Vector3D(
-        viewerConfig.position.x + dragVector.x,
-        viewerConfig.position.y + dragVector.y,
-        viewerConfig.position.z + dragVector.z
-      ),
-      new Vector3D(
-        viewerConfig.target.x + dragVector.x,
-        viewerConfig.target.y + dragVector.y,
-        viewerConfig.target.z + dragVector.z
-      )
-    ))
-  }
-
-  /**
    * Handle mouse down
    * @param {React.MouseEvent<HTMLCanvasElement>} e
    */
@@ -356,18 +250,33 @@ class PointCloudViewer extends Viewer<Props> {
     const newX = normalized[0]
     const newY = normalized[1]
 
-    const NDC = this.convertMouseToNDC(
+    const NDC = convertMouseToNDC(
       newX,
-      newY)
+      newY,
+      this.canvas
+    )
     const x = NDC[0]
     const y = NDC[1]
 
     if (!this._labels.onMouseMove(x, y, this.camera, this.raycaster) &&
         this.mouseDown) {
       if (this._keyDownMap[this._modifierString]) {
-        this.dragCamera(newX, newY)
+        Session.dispatch(dragCamera(
+          this.mX,
+          this.mY,
+          newX,
+          newY,
+          this.camera,
+          this.getCurrentViewerConfig()
+        ))
       } else {
-        this.rotateCamera(newX, newY)
+        Session.dispatch(rotateCamera(
+          this.mX,
+          this.mY,
+          newX,
+          newY,
+          this.getCurrentViewerConfig()
+        ))
       }
     }
 
@@ -385,117 +294,30 @@ class PointCloudViewer extends Viewer<Props> {
     const viewerConfig: PointCloudViewerConfigType =
       this.getCurrentViewerConfig()
 
-    // Get vector pointing from camera to target projected to horizontal plane
-    let forwardX = viewerConfig.target.x - viewerConfig.position.x
-    let forwardY = viewerConfig.target.y - viewerConfig.position.y
-    const forwardDist = Math.sqrt(forwardX * forwardX + forwardY * forwardY)
-    forwardX *= this.MOVE_AMOUNT / forwardDist
-    forwardY *= this.MOVE_AMOUNT / forwardDist
-    const forward = new THREE.Vector3(forwardX, forwardY, 0)
-
-    // Get vector pointing up
-    const vertical = new THREE.Vector3(
-      viewerConfig.verticalAxis.x,
-      viewerConfig.verticalAxis.y,
-      viewerConfig.verticalAxis.z
-    )
-
-    // Handle movement in three dimensions
-    const left = new THREE.Vector3()
-    left.crossVectors(vertical, forward)
-    left.normalize()
-    left.multiplyScalar(this.MOVE_AMOUNT)
-
     this._keyDownMap[e.key] = true
 
     switch (e.key) {
       case '.':
-        Session.dispatch(moveCameraAndTarget(
-          new Vector3D(
-            viewerConfig.position.x,
-            viewerConfig.position.y,
-            viewerConfig.position.z + this.MOVE_AMOUNT
-          ),
-          new Vector3D(
-            viewerConfig.target.x,
-            viewerConfig.target.y,
-            viewerConfig.target.z + this.MOVE_AMOUNT
-          )
-        ))
+        Session.dispatch(moveUp(viewerConfig))
         break
       case '/':
-        Session.dispatch(moveCameraAndTarget(
-          new Vector3D(
-            viewerConfig.position.x,
-            viewerConfig.position.y,
-            viewerConfig.position.z - this.MOVE_AMOUNT
-          ),
-          new Vector3D(
-            viewerConfig.target.x,
-            viewerConfig.target.y,
-            viewerConfig.target.z - this.MOVE_AMOUNT
-          )
-        ))
+        Session.dispatch(moveDown(viewerConfig))
         break
       case 'Down':
       case 'ArrowDown':
-        Session.dispatch(moveCameraAndTarget(
-          new Vector3D(
-            viewerConfig.position.x - forwardX,
-            viewerConfig.position.y - forwardY,
-            viewerConfig.position.z
-          ),
-          new Vector3D(
-            viewerConfig.target.x - forwardX,
-            viewerConfig.target.y - forwardY,
-            viewerConfig.target.z
-          )
-        ))
+        Session.dispatch(moveBack(viewerConfig))
         break
       case 'Up':
       case 'ArrowUp':
-        Session.dispatch(moveCameraAndTarget(
-          new Vector3D(
-            viewerConfig.position.x + forwardX,
-            viewerConfig.position.y + forwardY,
-            viewerConfig.position.z
-          ),
-          new Vector3D(
-            viewerConfig.target.x + forwardX,
-            viewerConfig.target.y + forwardY,
-            viewerConfig.target.z
-          )
-        ))
+        Session.dispatch(moveForward(viewerConfig))
         break
       case 'Left':
       case 'ArrowLeft':
-        Session.dispatch(moveCameraAndTarget(
-          new Vector3D(
-            viewerConfig.position.x + left.x,
-            viewerConfig.position.y + left.y,
-            viewerConfig.position.z + left.z
-          ),
-          new Vector3D(
-            viewerConfig.target.x + left.x,
-            viewerConfig.target.y + left.y,
-            viewerConfig.target.z + left.z
-          )
-        ))
+        Session.dispatch(moveLeft(viewerConfig))
         break
       case 'Right':
       case 'ArrowRight':
-        Session.dispatch(moveCameraAndTarget(
-          new Vector3D(
-            viewerConfig.position.x - left.x,
-            viewerConfig.position.y - left.y,
-            viewerConfig.position.z - left.z
-          ),
-          new Vector3D(
-            viewerConfig.target.x - left.x,
-            viewerConfig.target.y - left.y,
-            viewerConfig.target.z - left.z
-          )
-        ))
+        Session.dispatch(moveRight(viewerConfig))
         break
     }
     if (this._labels.onKeyDown(e)) {
@@ -521,34 +343,9 @@ class PointCloudViewer extends Viewer<Props> {
   private handleMouseWheel (e: React.WheelEvent<HTMLCanvasElement>) {
     const viewerConfig: PointCloudViewerConfigType =
       this.getCurrentViewerConfig()
-
-    const target = new THREE.Vector3(viewerConfig.target.x,
-      viewerConfig.target.y,
-      viewerConfig.target.z)
-    const offset = new THREE.Vector3(viewerConfig.position.x,
-      viewerConfig.position.y,
-      viewerConfig.position.z)
-    offset.sub(target)
-
-    const spherical = new THREE.Spherical()
-    spherical.setFromVector3(offset)
-
-    // Decrease distance from origin by amount specified
-    let newRadius = spherical.radius
-    if (e.deltaY > 0) {
-      newRadius *= this.ZOOM_SPEED
-    } else {
-      newRadius /= this.ZOOM_SPEED
-    }
-    // Limit zoom to not be too close
-    if (newRadius > 0.1 && newRadius < 500) {
-      spherical.radius = newRadius
-
-      offset.setFromSpherical(spherical)
-
-      offset.add(target)
-
-      Session.dispatch(moveCamera(new Vector3D().fromThree(offset)))
+    const zoomAction = zoomCamera(viewerConfig, e.deltaY)
+    if (zoomAction) {
+      Session.dispatch(zoomAction)
     }
   }
 
@@ -556,10 +353,12 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle double click
    */
   private handleDoubleClick () {
-    if (!this._labels.onDoubleClick()) {
-      const NDC = this.convertMouseToNDC(
+    if (this.canvas && !this._labels.onDoubleClick()) {
+      const NDC = convertMouseToNDC(
         this.mX,
-        this.mY)
+        this.mY,
+        this.canvas
+      )
       const x = NDC[0]
       const y = NDC[1]
 
@@ -617,29 +416,15 @@ class PointCloudViewer extends Viewer<Props> {
    * Update rendering constants
    */
   private updateRenderer () {
-    const config: PointCloudViewerConfigType =
-      this.getCurrentViewerConfig()
-    this.target.position.x = config.target.x
-    this.target.position.y = config.target.y
-    this.target.position.z = config.target.z
-
-    if (this.canvas) {
-      this.camera.aspect = this.canvas.offsetWidth /
-        this.canvas.offsetHeight
-      this.camera.updateProjectionMatrix()
-    }
-
-    this.camera.up.x = config.verticalAxis.x
-    this.camera.up.y = config.verticalAxis.y
-    this.camera.up.z = config.verticalAxis.z
-    this.camera.position.x = config.position.x
-    this.camera.position.y = config.position.y
-    this.camera.position.z = config.position.z
-    this.camera.lookAt(this.target.position)
-
-    if (this.renderer && this.canvas) {
-      this.renderer.setSize(this.canvas.offsetWidth,
-        this.canvas.offsetHeight)
+    if (this.canvas && this.renderer) {
+      const config: PointCloudViewerConfigType = this.getCurrentViewerConfig()
+      updateThreeCameraAndRenderer(
+        this.canvas,
+        config,
+        this.renderer,
+        this.camera,
+        this.target
+      )
     }
   }
 

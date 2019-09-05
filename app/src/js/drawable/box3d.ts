@@ -13,12 +13,17 @@ import {
 
 import { Vector3D } from '../math/vector3d'
 
-import { LabelTypes } from '../common/types'
-import { EditMode } from '../functional/point_cloud'
 import { Cube3D, DrawMode } from './cube3d'
 import { Label3D } from './label3d'
 
 type Shape = Cube3D
+
+enum EditMode {
+  MOVE,
+  SCALE,
+  EXTRUDE,
+  ROTATE
+}
 
 /**
  * Box3d Label
