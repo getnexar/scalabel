@@ -12,6 +12,7 @@ import { Vector2D } from '../math/vector2d'
 import { imageViewStyle } from '../styles/label'
 import { Canvas2d } from './canvas2d'
 import PlayerControl from './player_control'
+import { deleteLabel } from '../action/common'
 
 interface ClassType {
   /** image canvas */
@@ -161,8 +162,10 @@ export class ImageView extends Canvas2d<Props> {
     this.background = null
 
     // set keyboard listeners
+    /*
     document.onkeydown = this.onKeyDown.bind(this)
     document.onkeyup = this.onKeyUp.bind(this)
+    */
 
     this._labels = new Label2DList()
   }
@@ -194,6 +197,13 @@ export class ImageView extends Canvas2d<Props> {
     return new Size2D(image.width, image.height)
   }
 
+  public deleteHandler(){
+    const select = Session.getState().user.select
+    if (select.label >= 0) {
+      Session.dispatch(deleteLabel(select.item, select.label))
+    }
+  }
+  
   /**
    * Handler for zooming
    * @param {number} zoomRatio - the zoom ratio
@@ -620,6 +630,9 @@ export class ImageView extends Canvas2d<Props> {
     } else if (key === '-') {
       // - for zooming out
       this.zoomHandler(1 / this.ZOOM_RATIO, -1, -1)
+    } else if (key === 'Delete'){
+      console.log("Delete")
+      this.deleteHandler()
     }
   }
 

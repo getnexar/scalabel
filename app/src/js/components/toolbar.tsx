@@ -41,7 +41,26 @@ export class ToolBar extends React.Component<Props> {
     this.state = {
       checked: []
     }
+    this.keyDownHandler = this.keyDownHandler.bind(this)
   }
+
+  keyDownHandler(e: KeyboardEvent){
+    if(e.key === 'Delete'){
+      const select = Session.getState().user.select
+      if (select.label >= 0) {
+        Session.dispatch(deleteLabel(select.item, select.label))
+      }
+    }
+  }
+
+  componentDidMount(){
+    document.addEventListener("keydown", this.keyDownHandler)
+  }
+
+  componentWillUnmount(){
+    document.removeEventListener("keydown", this.keyDownHandler)
+  }
+
   /**
    * ToolBar render function
    * @return component
