@@ -7,8 +7,8 @@ import Session from '../common/session'
 import { Label3DList } from '../drawable/label3d_list'
 import { getCurrentItem, getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
+import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../helper/point_cloud'
 import { Vector3D } from '../math/vector3d'
-import { convertMouseToNDC, updateThreeCameraAndRenderer } from '../view/point_cloud'
 import PlayerControl from './player_control'
 import { Viewer } from './viewer'
 
@@ -87,23 +87,23 @@ class PointCloudViewer extends Viewer<Props> {
   private refInitializer:
     (component: HTMLCanvasElement | null) => void
 
-  /** UI handler */
+  /** UI onr */
   private mouseDownHandler: (e: React.MouseEvent<HTMLCanvasElement>) => void
-  /** UI handler */
+  /** UI onr */
   private mouseUpHandler: (e: React.MouseEvent<HTMLCanvasElement>) => void
-  /** UI handler */
+  /** UI onr */
   private mouseMoveHandler: (e: React.MouseEvent<HTMLCanvasElement>) => void
-  /** UI handler */
+  /** UI onr */
   private keyDownHandler: (e: KeyboardEvent) => void
-  /** UI handler */
+  /** UI onr */
   private keyUpHandler: (e: KeyboardEvent) => void
-  /** UI handler */
+  /** UI onr */
   private mouseWheelHandler: (e: React.WheelEvent<HTMLCanvasElement>) => void
-  /** UI handler */
+  /** UI onr */
   private doubleClickHandler: () => void
 
   /**
-   * Constructor, handles subscription to store
+   * Constructor, ons subscription to store
    * @param {Object} props: react props
    */
   constructor (props: Readonly<Props>) {
@@ -142,13 +142,13 @@ class PointCloudViewer extends Viewer<Props> {
 
     this.refInitializer = this.initializeRefs.bind(this)
 
-    this.mouseDownHandler = this.handleMouseDown.bind(this)
-    this.mouseUpHandler = this.handleMouseUp.bind(this)
-    this.mouseMoveHandler = this.handleMouseMove.bind(this)
-    this.keyDownHandler = this.handleKeyDown.bind(this)
-    this.keyUpHandler = this.handleKeyUp.bind(this)
-    this.mouseWheelHandler = this.handleMouseWheel.bind(this)
-    this.doubleClickHandler = this.handleDoubleClick.bind(this)
+    this.mouseDownHandler = this.onMouseDown.bind(this)
+    this.mouseUpHandler = this.onMouseUp.bind(this)
+    this.mouseMoveHandler = this.onMouseMove.bind(this)
+    this.keyDownHandler = this.onKeyDown.bind(this)
+    this.keyUpHandler = this.onKeyUp.bind(this)
+    this.mouseWheelHandler = this.onMouseWheel.bind(this)
+    this.doubleClickHandler = this.onDoubleClick.bind(this)
 
     document.onkeydown = this.keyDownHandler
     document.onkeyup = this.keyUpHandler
@@ -216,7 +216,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle mouse down
    * @param {React.MouseEvent<HTMLCanvasElement>} e
    */
-  private handleMouseDown (e: React.MouseEvent<HTMLCanvasElement>) {
+  private onMouseDown (e: React.MouseEvent<HTMLCanvasElement>) {
     e.stopPropagation()
     this.mouseDown = true
     this._labels.onMouseDown()
@@ -226,7 +226,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle mouse up
    * @param {React.MouseEvent<HTMLCanvasElement>} e
    */
-  private handleMouseUp (e: React.MouseEvent<HTMLCanvasElement>) {
+  private onMouseUp (e: React.MouseEvent<HTMLCanvasElement>) {
     e.stopPropagation()
     this.mouseDown = false
     this._labels.onMouseUp()
@@ -236,7 +236,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle mouse move
    * @param {React.MouseEvent<HTMLCanvasElement>} e
    */
-  private handleMouseMove (e: React.MouseEvent<HTMLCanvasElement>) {
+  private onMouseMove (e: React.MouseEvent<HTMLCanvasElement>) {
     e.stopPropagation()
 
     if (!this.canvas) {
@@ -290,7 +290,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle keyboard events
    * @param {KeyboardEvent} e
    */
-  private handleKeyDown (e: KeyboardEvent) {
+  private onKeyDown (e: KeyboardEvent) {
     const viewerConfig: PointCloudViewerConfigType =
       this.getCurrentViewerConfig()
 
@@ -329,7 +329,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle key up event
    * @param {KeyboardEvent} e
    */
-  private handleKeyUp (e: KeyboardEvent) {
+  private onKeyUp (e: KeyboardEvent) {
     if (this._labels.onKeyUp()) {
       this.renderThree()
     }
@@ -340,7 +340,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Handle mouse wheel
    * @param {React.WheelEvent<HTMLCanvasElement>} e
    */
-  private handleMouseWheel (e: React.WheelEvent<HTMLCanvasElement>) {
+  private onMouseWheel (e: React.WheelEvent<HTMLCanvasElement>) {
     const viewerConfig: PointCloudViewerConfigType =
       this.getCurrentViewerConfig()
     const zoomAction = zoomCamera(viewerConfig, e.deltaY)
@@ -352,7 +352,7 @@ class PointCloudViewer extends Viewer<Props> {
   /**
    * Handle double click
    */
-  private handleDoubleClick () {
+  private onDoubleClick () {
     if (this.canvas && !this._labels.onDoubleClick()) {
       const NDC = convertMouseToNDC(
         this.mX,

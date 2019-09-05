@@ -5,8 +5,6 @@ import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
 import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
 import { ImageViewerConfigType, State } from '../functional/types'
-import { Vector2D } from '../math/vector2d'
-import { imageViewStyle } from '../styles/label'
 import {
   clearCanvas,
   drawImageOnCanvas,
@@ -21,7 +19,9 @@ import {
   UP_RES_RATIO,
   updateCanvasScale,
   ZOOM_RATIO
-} from '../view/image'
+} from '../helper/image'
+import { Vector2D } from '../math/vector2d'
+import { imageViewStyle } from '../styles/label'
 import MouseEventListeners from './mouse_event_listeners'
 import PlayerControl from './player_control'
 import { Viewer } from './viewer'
