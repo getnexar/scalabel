@@ -8,19 +8,23 @@ import { Vector2D } from '../math/vector2d'
 import { Box2D } from './box2d'
 import { DrawMode, Label2D } from './label2d'
 import { Polygon2D } from './polygon2d'
+import { Tag2D } from './tag2d'
 import { Context2D } from './util'
 
 /**
  * Make a new drawable label based on the label type
  * @param {string} labelType: type of the new label
  */
-function makeDrawableLabel (_labelType: string): Label2D {
-  if (_labelType === LabelTypes.BOX_2D) {
+function makeDrawableLabel (labelType: string): Label2D {
+  if (labelType === LabelTypes.BOX_2D) {
     return new Box2D()
-  } else if (_labelType === LabelTypes.POLYGON_2D) {
+  } else if (labelType === LabelTypes.TAG) {
+    return new Tag2D()
+  } else if (labelType === LabelTypes.POLYGON_2D) {
     return new Polygon2D()
+  } else {
+    throw new Error(sprintf('Undefined label type %s', labelType))
   }
-  throw new Error(sprintf('Undefined label type %s', _labelType))
 }
 
 /**
