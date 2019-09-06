@@ -204,7 +204,8 @@ func main() {
 	http.HandleFunc("/label3d", WrapHandleFunc(Label3dHandler))
 	http.HandleFunc("/label3dv2", WrapHandleFunc(Label3dv2Handler))
 
-	hub := newhub()
+	loader := RealTaskLoader{}
+	hub := newhub(loader)
 	if env.Sync {
 		// Set up gateway server and hub for syncing
 		go hub.run()

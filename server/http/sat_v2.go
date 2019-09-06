@@ -228,8 +228,15 @@ func LoadSat(projectName string, taskIndex string,
 	return sat, nil
 }
 
+type TaskLoader interface {
+	LoadTaskData(projectName string, taskIndex string) (TaskData, error)
+}
+
+type RealTaskLoader struct{}
+
 //Gets the most recently saved TaskData Object
-func LoadTaskData(projectName string, taskIndex string) (TaskData, error) {
+func (RealTaskLoader) LoadTaskData(projectName string, taskIndex string) (
+	TaskData, error) {
 	task := TaskData{}
 	submissionsPath := GetTaskPath(projectName, taskIndex)
 	success, loadedJson, err := ReadLatest(submissionsPath)
@@ -311,7 +318,8 @@ func postLoadAssignmentV2Handler(
 			loadedSat.Task = *h.statesByTask[taskId]
 		} else {
 			// If the task is not being run, try to load the task data
-			loadedTask, err1 := LoadTaskData(projectName, taskIndex)
+			loader := RealTaskLoader{}
+			loadedTask, err1 := loader.LoadTaskData(projectName, taskIndex)
 			// If the separate task data does not exist, initialize it from sat
 			if err1 != nil {
 				Error.Println(err1)

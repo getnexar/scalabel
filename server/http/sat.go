@@ -1045,11 +1045,11 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 		session = existingSession
 	} else {
 		session = &Session{
-			sessionId:   msg.SessionId,
-			taskId:		   msg.TaskId,
-			projectName: msg.ProjectName,
-			conn:        conn,
-			send:        make(chan *TaskAction),
+			SessionId:   msg.SessionId,
+			TaskId:		   msg.TaskId,
+			ProjectName: msg.ProjectName,
+			Conn:        conn,
+			Send:        make(chan *TaskAction),
 		}
 		h.registerSession <- session
 	}

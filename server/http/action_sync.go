@@ -64,18 +64,18 @@ func readMessage(messageType string, rawMessage json.RawMessage) (
 // Receives messages from the client and sends them to the hub
 func actionReceiver(session *Session, h *Hub) {
 	defer func() {
-		session.conn.Close()
+		session.Conn.Close()
 		h.unregisterSession <- session
 	}()
 
 	// Pong receiver detects client going offline
-	err := session.conn.SetReadDeadline(time.Now().Add(pongPeriod))
+	err := session.Conn.SetReadDeadline(time.Now().Add(pongPeriod))
 	if err != nil {
 		log.Println("Read Deadline Error", err)
 		return
 	}
-	session.conn.SetPongHandler(func(string) error {
-		err := session.conn.SetReadDeadline(time.Now().Add(pongPeriod))
+	session.Conn.SetPongHandler(func(string) error {
+		err := session.Conn.SetReadDeadline(time.Now().Add(pongPeriod))
 		if err != nil {
 			log.Println("Read Deadline Error", err)
 			return err
@@ -84,7 +84,7 @@ func actionReceiver(session *Session, h *Hub) {
 	})
 
 	for {
-		_, bytes, err := session.conn.ReadMessage()
+		_, bytes, err := session.Conn.ReadMessage()
 		if err != nil {
 			log.Println("Websocket Read Bytes Error", err)
 			return
@@ -139,35 +139,35 @@ func actionReturner(session *Session) {
 	timer := time.NewTicker(pingPeriod)
 	defer func() {
 		timer.Stop()
-		session.conn.Close()
+		session.Conn.Close()
 	}()
 
 	for {
 		select {
-		case actionResponse, ok := <-session.send:
+		case actionResponse, ok := <-session.Send:
 			if !ok {
 				log.Println("Channel closed")
 				return
 			}
-			err := session.conn.SetWriteDeadline(time.Now().Add(writePeriod))
+			err := session.Conn.SetWriteDeadline(time.Now().Add(writePeriod))
 			if err != nil {
 				log.Println("Write Deadline Error", err)
 				return
 			}
 			// Sends action broadcasted by the hub to the client
-			err = session.conn.WriteJSON(actionResponse)
+			err = session.Conn.WriteJSON(actionResponse)
 			if err != nil {
 				log.Println("Websocket WriteJSON Error", err)
 				return
 			}
 		case <-timer.C:
-			err := session.conn.SetWriteDeadline(time.Now().Add(writePeriod))
+			err := session.Conn.SetWriteDeadline(time.Now().Add(writePeriod))
 			if err != nil {
 				log.Println("Write Deadline Error", err)
 				return
 			}
 			// Ping sender detects client going offline
-			err = session.conn.WriteMessage(websocket.PingMessage, nil)
+			err = session.Conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
 				return
 			}

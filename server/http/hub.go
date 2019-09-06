@@ -9,11 +9,11 @@ import (
 const saveFrequency = 5
 
 type Session struct {
-	sessionId   string
-	taskId      string
-	projectName string
-	conn        *websocket.Conn
-	send        chan *TaskAction
+	SessionId   string
+	TaskId      string
+	ProjectName string
+	Conn        *websocket.Conn
+	Send        chan *TaskAction
 }
 
 // hub stores sessions, and coordinates them to their corresponding tasks
@@ -27,9 +27,10 @@ type Hub struct {
 	sessionsByTask    map[string]map[string]*Session
 	actionsByTask     map[string][]*TaskAction
 	statesByTask      map[string]*TaskData
+	loader            TaskLoader
 }
 
-func newhub() *Hub {
+func newhub(loader TaskLoader) *Hub {
 	return &Hub{
 		registerSession:   make(chan *Session),
 		unregisterSession: make(chan *Session),
@@ -38,6 +39,7 @@ func newhub() *Hub {
 		sessionsByTask:    make(map[string]map[string]*Session),
 		actionsByTask:     make(map[string][]*TaskAction),
 		statesByTask:      make(map[string]*TaskData),
+		loader:            loader,
 	}
 }
 
@@ -46,29 +48,30 @@ func (h *Hub) run() {
 		select {
 		case session := <-h.registerSession:
 			// Check if another session is already on the task
-			if _, ok := h.sessionsByTask[session.taskId]; !ok {
+			if _, ok := h.sessionsByTask[session.TaskId]; !ok {
 				// If no other session is on the task, initialize task info
-				h.sessionsByTask[session.taskId] = make(map[string]*Session)
-				h.actionsByTask[session.taskId] = make([]*TaskAction, 0)
-				loadedTask, err := LoadTaskData(
-					session.projectName, session.taskId)
+				h.sessionsByTask[session.TaskId] = make(map[string]*Session)
+				h.actionsByTask[session.TaskId] = make([]*TaskAction, 0)
+				// loader is used to mock load during tests
+				loadedTask, err := h.loader.LoadTaskData(
+					session.ProjectName, session.TaskId)
 				if err != nil {
 					log.Fatal(err)
 				}
-				h.statesByTask[session.taskId] = &loadedTask
+				h.statesByTask[session.TaskId] = &loadedTask
 			}
-			// Initialize the sessio info
-			h.sessionsByTask[session.taskId][session.sessionId] = session
-			h.sessions[session.sessionId] = session
+			// Initialize the session info
+			h.sessionsByTask[session.TaskId][session.SessionId] = session
+			h.sessions[session.SessionId] = session
 		case session := <-h.unregisterSession:
-			sessId := session.sessionId
-			taskId := session.taskId
+			sessId := session.SessionId
+			taskId := session.TaskId
 			// Make sure the session still exists
 			if _, ok := h.sessionsByTask[taskId][sessId]; ok {
 				// Delete the session's info and close its channels
 				delete(h.sessionsByTask[taskId], sessId)
 				delete(h.sessions, sessId)
-				close(session.send)
+				close(session.Send)
 			}
 			// Check if this is the last session for its task
 			if len(h.sessionsByTask[taskId]) == 0 {
@@ -84,7 +87,7 @@ func (h *Hub) run() {
 			taskAction := *action
 			// Timestamp the action in the hub to enforce uniform times
 			taskAction.addTimestamp()
-			taskId := h.sessions[taskAction.getSessionId()].taskId
+			taskId := h.sessions[taskAction.getSessionId()].TaskId
 			// Dispatch the action to update the state in the hub
 			newState, err := taskAction.updateState(h.statesByTask[taskId])
 			if err != nil {
@@ -105,7 +108,7 @@ func (h *Hub) run() {
 					append(h.actionsByTask[taskId], action)
 				// Broadcast action to all sessions for this task
 				for _, session := range h.sessionsByTask[taskId] {
-					session.send <- &taskAction
+					session.Send <- &taskAction
 				}
 			}
 		}

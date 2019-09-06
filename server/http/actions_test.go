@@ -60,7 +60,7 @@ func makeRect() ShapeRect {
 }
 
 // Load dummy task data
-func readTaskData() (*TaskData, error) {
+func ReadTaskData() (*TaskData, error) {
   statePath := path.Join("testdata", "task_state.json")
 	inputBytes, err := ioutil.ReadFile(statePath)
 	if err != nil {
@@ -387,7 +387,7 @@ func runActions(initialState *TaskData, actionQueue []string,
 // Runs the test corresponding to the action queue
 func runTest(t *testing.T, actionQueue []string, maxTask int) {
   // Prepare initial state
-  initialState, err := readTaskData()
+  initialState, err := ReadTaskData()
   if err != nil {
     t.Fatal(err)
   }
@@ -400,7 +400,7 @@ func runTest(t *testing.T, actionQueue []string, maxTask int) {
 // Runs a test that is expected to fail
 func runFailTest(t *testing.T, actionQueue []string, maxTask int) {
   // Prepare initial state
-  initialState, err := readTaskData()
+  initialState, err := ReadTaskData()
   if err != nil {
     t.Fatal(err)
   }
