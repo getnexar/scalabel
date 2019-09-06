@@ -13,10 +13,11 @@ func makeSession(taskNum int) *Session {
 		SessionId:   getUuidV4(),
 		TaskId:		   fmt.Sprintf("fakeTaskId%v", taskNum),
 		ProjectName: "testProject",
-		Send:        make(chan *TaskAction),
+		Send:        make(chan *TaskAction, 5),
 	}
 }
 
+// Check that hub contains correct number of tasks and session
 func checkHubSessions(t *testing.T, hub *Hub, numSessions int, numTasks int) {
 	// wait for hub to process any requests
 	time.Sleep(time.Millisecond * 10)
@@ -30,9 +31,20 @@ func checkHubSessions(t *testing.T, hub *Hub, numSessions int, numTasks int) {
   }
 }
 
-func checkBroadcasted(t *testing.T, session *Session) {
-	if _, ok := <-session.Send; !ok {
-		t.Fatal("Did not broadcast action")
+// Check that session has/does not have a pending action
+func checkBroadcasted(t *testing.T, session *Session, messageExpected bool) {
+	select {
+	case _, ok := <-session.Send:
+		if !ok {
+			t.Fatal("Channel was closed")
+		}
+		if !messageExpected {
+			t.Fatal("Broadcasted action but should not have")
+		}
+	case <-time.After(100 * time.Millisecond):
+		if messageExpected {
+			t.Fatal("Did not broadcast action")
+		}
 	}
 }
 
@@ -75,42 +87,79 @@ func TestRegistration(t *testing.T) {
 }
 
 // Tests that hub broadcasts actions correctly
-// func TestActionBroadcast(t *testing.T) {
-//   // Create two sessions for a task
-//   // and one for a different task
-// 	loader := MockTaskLoader{}
-// 	hub := newhub(loader)
-// 	go hub.run()
-// 	sess1 := makeSession(0)
-//   sess2 := makeSession(0)
-//   sess3 := makeSession(1)
-// 	hub.registerSession <- sess1
-// 	hub.registerSession <- sess2
-// 	hub.registerSession <- sess3
-//
-//   // Send action from 1 session
-// 	var action BaseAction
-// 	action = &AddLabelAction{}
-// 	taskAction := action.(TaskAction)
-// 	hub.execAction <- &taskAction
-//
-//   // Make sure same task sessions received it
-//   // And different task sessions did not
-// 	checkBroadcasted(t, sess1)
-// 	checkBroadcasted(t, sess2)
-// 	_, ok := <-sess3.Send
-// 	if ok {
-// 		t.Fatal("Broadcasted but should not have")
-// 	}
-// }
+func TestActionBroadcast(t *testing.T) {
+  // Create two sessions for a task
+  // and one for a different task
+	loader := MockTaskLoader{}
+	hub := newhub(loader)
+	go hub.run()
+	sess1 := makeSession(0)
+  sess2 := makeSession(0)
+  sess3 := makeSession(1)
+	hub.registerSession <- sess1
+	hub.registerSession <- sess2
+	hub.registerSession <- sess3
+
+  // Send action from 1 session
+	var action BaseAction
+	action, _ = MakeAddLabel(0, 0, sess1.SessionId)
+	taskAction := action.(TaskAction)
+	hub.execAction <- &taskAction
+
+  // Make sure same task sessions received it
+  // And different task sessions did not
+	checkBroadcasted(t, sess1, true)
+	checkBroadcasted(t, sess2, true)
+	checkBroadcasted(t, sess3, false)
+}
 
 // // Tests that hub correctly maintains and saves state
-// // func TestSaveState(t *testing.T) {
-// //   // Similar to previous test
-// //   // Check by running actions here manually as well?
-// //   // Or reuse testing code from other file
-// //
-// // 	// Note- need to mock save and load above as well
-// // 	// To do this make an interface that must implement loading
-// // 	// for task (operates on struct of arguments)
-// // }
+func TestSaveState(t *testing.T) {
+	// Create two sessions for different task
+	loader := MockTaskLoader{}
+	hub := newhub(loader)
+	go hub.run()
+	sess1 := makeSession(0)
+	sess2 := makeSession(1)
+	hub.registerSession <- sess1
+	hub.registerSession <- sess2
+
+	// Send an action for each session
+	var action1 BaseAction
+	action1, shape1 := MakeAddLabel(0, 0, sess1.SessionId)
+	taskAction1 := action1.(TaskAction)
+	hub.execAction <- &taskAction1
+
+	var action2 BaseAction
+	action2, shape2 := MakeAddLabel(0, 0, sess2.SessionId)
+	taskAction2 := action2.(TaskAction)
+	hub.execAction <- &taskAction2
+
+	// Wait for actions to be broadcasted
+	checkBroadcasted(t, sess1, true)
+	checkBroadcasted(t, sess2, true)
+
+	// Make sure each task state is correct
+	state1 := hub.statesByTask[sess1.TaskId]
+	state2 := hub.statesByTask[sess2.TaskId]
+	checkData1 := CheckData{
+		Shape: shape1,
+		LabelId: 0,
+		NumShapes: 1,
+		ItemIndex: 0,
+	}
+	checkData2 := CheckData{
+		Shape: shape2,
+		LabelId: 0,
+		NumShapes: 1,
+		ItemIndex: 0,
+	}
+	err := CheckAddLabel(state1, checkData1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = CheckAddLabel(state2, checkData2)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

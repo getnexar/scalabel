@@ -134,9 +134,9 @@ type CheckData struct {
    LabelProps LabelData
 }
 
-// Create a new AddLabel action, and use it to update the state
-func runAddLabel(state *TaskData, itemIndex int, labelId int) (
-  *TaskData, ShapeRect, error) {
+// Makes a new AddLabel Action
+func MakeAddLabel(itemIndex int, labelId int, sessionId string) (
+  AddLabelAction, ShapeRect) {
   label := LabelData{
     Id: labelId,
     Item: itemIndex,
@@ -150,12 +150,20 @@ func runAddLabel(state *TaskData, itemIndex int, labelId int) (
     Label: label,
     Shapes: shapes,
   }
+  action.SessionId = sessionId
+  return action, shape
+}
+
+// Create a new AddLabel action, and use it to update the state
+func runAddLabel(state *TaskData, itemIndex int, labelId int) (
+  *TaskData, ShapeRect, error) {
+  action, shape := MakeAddLabel(itemIndex, labelId, getUuidV4())
   newState, err := action.updateState(state)
   return newState, shape, err
 }
 
 // Check that an AddLabel action was executed correctly
-func checkAddLabel(state *TaskData, checkData CheckData) error {
+func CheckAddLabel(state *TaskData, checkData CheckData) error {
   numShapes := checkData.NumShapes
   labelId := checkData.LabelId
   shape := checkData.Shape
@@ -253,7 +261,7 @@ func checkAction(actionType string, state *TaskData,
   checkData CheckData) error {
   switch actionType {
   case addLabel:
-    return checkAddLabel(state, checkData)
+    return CheckAddLabel(state, checkData)
   case changeShape:
     return checkChangeShape(state, checkData)
   case changeLabel:
@@ -362,6 +370,7 @@ func runActions(initialState *TaskData, actionQueue []string,
   currentLabelId := 0
   // Track the number of shapes in each item
   numShapes := make([]int, maxItem + 1)
+
   // First check the initial state is empty
   for i := 0; i <= maxItem; i++ {
     err := checkShapesAdded(initialState.Items[i], numShapes[i])

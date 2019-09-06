@@ -1049,7 +1049,7 @@ func registerHandler(h *Hub, w http.ResponseWriter, r *http.Request) {
 			TaskId:		   msg.TaskId,
 			ProjectName: msg.ProjectName,
 			Conn:        conn,
-			Send:        make(chan *TaskAction),
+			Send:        make(chan *TaskAction, 5),
 		}
 		h.registerSession <- session
 	}
