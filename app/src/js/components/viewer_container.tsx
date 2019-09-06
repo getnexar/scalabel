@@ -1,7 +1,6 @@
 import React from 'react'
 import Session from '../common/session'
-import { getCurrentItemViewerConfig } from '../functional/state_util'
-import { ImageViewerConfigType } from '../functional/types'
+import { getCurrentImageViewerConfig } from '../functional/state_util'
 import ViewerConfigUpdater from '../helper/viewer_config'
 import ImageViewer from './image_viewer'
 import Label2dViewer from './label2d_viewer'
@@ -79,7 +78,11 @@ class ViewerContainer extends React.Component<{}> {
     if (Session.itemType === 'image' || Session.itemType === 'video') {
       /* FIXME: set correct props */
       views.push(<ImageViewer key={'imageView'} display={null} />)
-      views.push(<Label2dViewer key={'label2dView'} display={null} />)
+      if (Session.getState().task.config.labelTypes[0] === 'box3d') {
+        views.push(<Label3dViewer key={'label3dView'} />)
+      } else {
+        views.push(<Label2dViewer key={'label2dView'} display={null} />)
+      }
     } else if (Session.itemType === 'pointcloud') {
       views.push(<PointCloudViewer key={'pointCloudView'}/>)
       views.push(<Label3dViewer key={'label3dView'} />)
@@ -122,7 +125,7 @@ class ViewerContainer extends React.Component<{}> {
                 this._viewerConfigUpdater.setContainer(this._container)
                 const state = Session.getState()
                 const config =
-                  getCurrentItemViewerConfig(state) as ImageViewerConfigType
+                  getCurrentImageViewerConfig(state)
                 this._container.scrollTop = config.displayTop
                 this._container.scrollLeft = config.displayLeft
               }

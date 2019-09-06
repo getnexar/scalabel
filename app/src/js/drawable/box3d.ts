@@ -5,7 +5,7 @@ import { addBox3dLabel } from '../action/box3d'
 import { changeLabelShape } from '../action/common'
 import Session from '../common/session'
 
-import { getCurrentItemViewerConfig } from '../functional/state_util'
+import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
 import { makeLabel } from '../functional/states'
 import {
   CubeType, PointCloudViewerConfigType, ShapeType, State
@@ -72,7 +72,7 @@ export class Box3D extends Label3D {
     })
     this._labelId = -1
     const viewerConfig: PointCloudViewerConfigType =
-      getCurrentItemViewerConfig(state) as PointCloudViewerConfigType
+      getCurrentPointCloudViewerConfig(state)
     this._shape.setCenter((new Vector3D()).fromObject(viewerConfig.target))
     Session.dispatch(addBox3dLabel(
       this._label.item, this._label.category,

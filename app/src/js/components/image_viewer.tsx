@@ -1,8 +1,8 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
 import Session from '../common/session'
-import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
-import { ImageViewerConfigType, State } from '../functional/types'
+import { getCurrentImageViewerConfig, isItemLoaded } from '../functional/state_util'
+import { State } from '../functional/types'
 import {
   drawImageOnCanvas,
   MAX_SCALE,
@@ -127,7 +127,7 @@ export class ImageViewer extends Viewer<Props> {
     }
     const state = Session.getState()
     const config =
-      getCurrentItemViewerConfig(state) as ImageViewerConfigType
+      getCurrentImageViewerConfig(state)
 
     if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return

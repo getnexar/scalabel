@@ -3,7 +3,7 @@ import { withStyles } from '@material-ui/core/styles/index'
 import * as React from 'react'
 import * as THREE from 'three'
 import Session from '../common/session'
-import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
+import { getCurrentPointCloudViewerConfig, isItemLoaded } from '../functional/state_util'
 import { PointCloudViewerConfigType, State } from '../functional/types'
 import { updateThreeCameraAndRenderer } from '../helper/point_cloud'
 import { Viewer } from './viewer'
@@ -160,8 +160,7 @@ class PointCloudViewer extends Viewer<Props> {
    * Get point cloud view config
    */
   private getCurrentViewerConfig (): PointCloudViewerConfigType {
-    return (getCurrentItemViewerConfig(this.state.session) as
-      PointCloudViewerConfigType)
+    return (getCurrentPointCloudViewerConfig(this.state.session))
   }
 }
 

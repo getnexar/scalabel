@@ -2,8 +2,8 @@ import _ from 'lodash'
 import * as THREE from 'three'
 import { changeLabelProps, deleteLabel } from '../action/common'
 import Session from '../common/session'
-import { getCurrentItemViewerConfig } from '../functional/state_util'
-import { PointCloudViewerConfigType, State } from '../functional/types'
+import { getCurrentPointCloudViewerConfig } from '../functional/state_util'
+import { State } from '../functional/types'
 import { Vector3D } from '../math/vector3d'
 import { Box3D } from './box3d'
 import { Cube3D } from './cube3d'
@@ -141,7 +141,7 @@ export class Label3DList {
   public onMouseDown (): boolean {
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
       const viewerConfig =
-        getCurrentItemViewerConfig(this._state) as PointCloudViewerConfigType
+        getCurrentPointCloudViewerConfig(this._state)
       if (viewerConfig) {
         this._viewPlaneNormal =
           (new Vector3D()).fromObject(viewerConfig.target).toThree()

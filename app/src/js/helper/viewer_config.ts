@@ -2,8 +2,7 @@ import * as THREE from 'three'
 import { updateImageViewerConfig, zoomImage } from '../action/image'
 import { dragCamera, moveBack, moveCameraAndTarget, moveDown, moveForward, moveLeft, moveRight, moveUp, rotateCamera, zoomCamera } from '../action/point_cloud'
 import Session from '../common/session'
-import { getCurrentItem, getCurrentItemViewerConfig } from '../functional/state_util'
-import { ImageViewerConfigType, PointCloudViewerConfigType } from '../functional/types'
+import { getCurrentImageViewerConfig, getCurrentItem, getCurrentPointCloudViewerConfig } from '../functional/state_util'
 import { SCROLL_ZOOM_RATIO } from '../helper/image'
 import { Vector3D } from '../math/vector3d'
 
@@ -83,8 +82,7 @@ export default class ViewerConfigUpdater {
         this._container.offsetHeight
       this._camera.updateProjectionMatrix()
     }
-    const config =
-      getCurrentItemViewerConfig(state) as PointCloudViewerConfigType
+    const config = getCurrentPointCloudViewerConfig(state)
     this._target.x = config.target.x
     this._target.y = config.target.y
     this._target.z = config.target.z
@@ -125,6 +123,7 @@ export default class ViewerConfigUpdater {
           }
           break
         case 'pointcloud':
+          const viewerConfig = getCurrentPointCloudViewerConfig(state)
           if (this._mouseButton === 2) {
             this.updateCamera()
             Session.dispatch(dragCamera(
@@ -133,7 +132,7 @@ export default class ViewerConfigUpdater {
               normalized[0],
               normalized[1],
               this._camera,
-              getCurrentItemViewerConfig(state) as PointCloudViewerConfigType
+              viewerConfig
             ))
           } else {
             Session.dispatch(rotateCamera(
@@ -141,7 +140,7 @@ export default class ViewerConfigUpdater {
               this._mY,
               normalized[0],
               normalized[1],
-              getCurrentItemViewerConfig(state) as PointCloudViewerConfigType
+              viewerConfig
             ))
           }
           break
@@ -214,8 +213,7 @@ export default class ViewerConfigUpdater {
 
         if (intersects.length > 0) {
           const newTarget = intersects[0].point
-          const viewerConfig =
-            getCurrentItemViewerConfig(state) as PointCloudViewerConfigType
+          const viewerConfig = getCurrentPointCloudViewerConfig(state)
           Session.dispatch(moveCameraAndTarget(
             new Vector3D(
               viewerConfig.position.x - viewerConfig.target.x + newTarget.x,
@@ -239,7 +237,6 @@ export default class ViewerConfigUpdater {
    */
   public onWheel (e: WheelEvent) {
     const state = Session.getState()
-    const viewerConfig = getCurrentItemViewerConfig(state)
     switch (state.task.config.itemType) {
       case 'image':
         if (this.isKeyDown('Control')) { // control for zoom
@@ -250,7 +247,7 @@ export default class ViewerConfigUpdater {
           }
           const imageZoomAction = zoomImage(
             zoomRatio,
-            viewerConfig as ImageViewerConfigType
+            getCurrentImageViewerConfig(state)
           )
           if (imageZoomAction) {
             Session.dispatch(imageZoomAction)
@@ -259,7 +256,7 @@ export default class ViewerConfigUpdater {
         break
       case 'pointcloud':
         const pointCloudZoomAction = zoomCamera(
-          viewerConfig as PointCloudViewerConfigType, e.deltaY
+          getCurrentPointCloudViewerConfig(state), e.deltaY
         )
         if (pointCloudZoomAction) {
           Session.dispatch(pointCloudZoomAction)
@@ -299,9 +296,7 @@ export default class ViewerConfigUpdater {
    * @param key
    */
   private pointCloudKeyEvents (key: string) {
-    const viewerConfig = getCurrentItemViewerConfig(
-      Session.getState()
-    ) as PointCloudViewerConfigType
+    const viewerConfig = getCurrentPointCloudViewerConfig(Session.getState())
     switch (key) {
       case '.':
         Session.dispatch(moveUp(viewerConfig))

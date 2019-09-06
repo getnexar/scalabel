@@ -2,8 +2,8 @@ import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
 import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
-import { getCurrentItemViewerConfig } from '../functional/state_util'
-import { ImageViewerConfigType, State } from '../functional/types'
+import { getCurrentImageViewerConfig } from '../functional/state_util'
+import { State } from '../functional/types'
 import {
   clearCanvas,
   getCurrentImageSize,
@@ -346,7 +346,7 @@ export class Label2dViewer extends Viewer<Props> {
     }
     const state = Session.getState()
     const config =
-      getCurrentItemViewerConfig(state) as ImageViewerConfigType
+      getCurrentImageViewerConfig(state)
 
     if (config.viewScale < MIN_SCALE || config.viewScale >= MAX_SCALE) {
       return

@@ -1,10 +1,10 @@
 import * as types from '../action/types'
 import {
-  getCurrentItemViewerConfig,
-  setCurrentItemViewerConfig
+  getCurrentImageViewerConfig,
+  setCurrentImageViewerConfig
 } from './state_util'
 import { makeItem } from './states'
-import { ImageViewerConfigType, ItemType, State, ViewerConfigType } from './types'
+import { ItemType, State, ViewerConfigType } from './types'
 import { updateObject } from './util'
 
 /**
@@ -26,9 +26,9 @@ export function createItem (id: number, url: string): ItemType {
 export function updateImageViewerConfig (
   state: State, action: types.UpdateImageViewerConfigAction): State {
   let config: ViewerConfigType
-    = getCurrentItemViewerConfig(state) as ImageViewerConfigType
+    = getCurrentImageViewerConfig(state)
   config = updateObject(config, action.newFields)
-  return setCurrentItemViewerConfig(state, config)
+  return setCurrentImageViewerConfig(state, config)
 }
 
 /**
