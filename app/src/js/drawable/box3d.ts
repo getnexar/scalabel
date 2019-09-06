@@ -180,7 +180,7 @@ export class Box3D extends Label3D {
    */
   public stopDrag () {
     this._dragging = false
-    this.resetModes()
+    this.resetModes('')
   }
 
   /**
@@ -267,18 +267,18 @@ export class Box3D extends Label3D {
   /**
    * Handle key up
    */
-  public onKeyUp (): boolean {
+  public onKeyUp (e: KeyboardEvent): boolean {
     if (this._dragging) {
       return false
     }
-    return this.resetModes()
+    return this.resetModes(e.key)
   }
 
   /**
    * Go back to default states
    * @returns {boolean} True if any state changed
    */
-  private resetModes (): boolean {
+  private resetModes (_key: string): boolean {
     this._editMode = EditMode.MOVE
     if (this._selected && this._shape.drawMode !== DrawMode.SELECTED) {
       this._shape.drawMode = DrawMode.SELECTED

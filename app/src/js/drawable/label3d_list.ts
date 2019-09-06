@@ -138,7 +138,7 @@ export class Label3DList {
   /**
    * Process mouse down action
    */
-  public onMouseDown (): void {
+  public onMouseDown (): boolean {
     if (this._highlightedLabel === this._selectedLabel && this._selectedLabel) {
       const viewerConfig =
         getCurrentItemViewerConfig(this._state) as PointCloudViewerConfigType
@@ -157,20 +157,23 @@ export class Label3DList {
           (new Vector3D()).fromObject(viewerConfig.position).toThree(),
           this._intersectionPoint
         )
+        return true
       }
     }
+    return false
   }
 
   /**
    * Process mouse up action
    */
-  public onMouseUp (): void {
+  public onMouseUp (): boolean {
     this._mouseDownOnSelection = false
     if (this._labelChanged && this._selectedLabel !== null) {
       this._selectedLabel.commitLabel()
       this._selectedLabel.stopDrag()
     }
     this._labelChanged = false
+    return false
   }
 
   /**
@@ -238,9 +241,9 @@ export class Label3DList {
   /**
    * Handle key up
    */
-  public onKeyUp () {
+  public onKeyUp (e: KeyboardEvent) {
     if (this._selectedLabel !== null) {
-      return this._selectedLabel.onKeyUp()
+      return this._selectedLabel.onKeyUp(e)
     }
     return false
   }

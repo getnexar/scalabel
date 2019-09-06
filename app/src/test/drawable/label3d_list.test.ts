@@ -239,7 +239,7 @@ test('Scale 3d bbox', () => {
 
   // Drag
   label3dList.onMouseDown()
-  label3dList.onKeyUp()
+  label3dList.onKeyUp(sEvent)
   label3dList.onMouseMove(0, 0, camera, raycaster)
   label3dList.onMouseUp()
 
@@ -283,7 +283,7 @@ test('Extrude 3d bbox', () => {
 
   // Drag
   label3dList.onMouseDown()
-  label3dList.onKeyUp()
+  label3dList.onKeyUp(sEvent)
   label3dList.onMouseMove(0, 0, camera, raycaster)
   label3dList.onMouseUp()
 
@@ -332,7 +332,7 @@ test('Rotate 3d bbox', () => {
 
   // Drag
   label3dList.onMouseDown()
-  label3dList.onKeyUp()
+  label3dList.onKeyUp(sEvent)
 
   // Move mouse in circle around box
   const numSteps = 10

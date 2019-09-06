@@ -5,6 +5,7 @@ import { ImageViewerConfigType } from '../functional/types'
 import ViewerConfigUpdater from '../helper/viewer_config'
 import ImageViewer from './image_viewer'
 import Label2dViewer from './label2d_viewer'
+import Label3dViewer from './label3d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
 import PointCloudViewer from './point_cloud_viewer'
 
@@ -81,6 +82,7 @@ class ViewerContainer extends React.Component<{}> {
       views.push(<Label2dViewer key={'label2dView'} display={null} />)
     } else if (Session.itemType === 'pointcloud') {
       views.push(<PointCloudViewer key={'pointCloudView'}/>)
+      views.push(<Label3dViewer key={'label3dView'} />)
     }
 
     let viewsWithProps = views
@@ -177,8 +179,8 @@ class ViewerContainer extends React.Component<{}> {
    * Handle double click
    * @param e
    */
-  private onDoubleClick (_e: MouseEvent) {
-    return
+  private onDoubleClick (e: MouseEvent) {
+    this._viewerConfigUpdater.onDoubleClick(e)
   }
 
   /**
