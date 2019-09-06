@@ -75,34 +75,34 @@ func TestRegistration(t *testing.T) {
 }
 
 // Tests that hub broadcasts actions correctly
-func TestActionBroadcast(t *testing.T) {
-  // Create two sessions for a task
-  // and one for a different task
-	loader := MockTaskLoader{}
-	hub := newhub(loader)
-	go hub.run()
-	sess1 := makeSession(0)
-  sess2 := makeSession(0)
-  sess3 := makeSession(1)
-	hub.registerSession <- sess1
-	hub.registerSession <- sess2
-	hub.registerSession <- sess3
-
-  // Send action from 1 session
-	var action BaseAction
-	action = &AddLabelAction{}
-	taskAction := action.(TaskAction)
-	hub.execAction <- &taskAction
-
-  // Make sure same task sessions received it
-  // And different task sessions did not
-	checkBroadcasted(t, sess1)
-	checkBroadcasted(t, sess2)
-	_, ok := <-sess3.Send
-	if ok {
-		t.Fatal("Broadcasted but should not have")
-	}
-}
+// func TestActionBroadcast(t *testing.T) {
+//   // Create two sessions for a task
+//   // and one for a different task
+// 	loader := MockTaskLoader{}
+// 	hub := newhub(loader)
+// 	go hub.run()
+// 	sess1 := makeSession(0)
+//   sess2 := makeSession(0)
+//   sess3 := makeSession(1)
+// 	hub.registerSession <- sess1
+// 	hub.registerSession <- sess2
+// 	hub.registerSession <- sess3
+//
+//   // Send action from 1 session
+// 	var action BaseAction
+// 	action = &AddLabelAction{}
+// 	taskAction := action.(TaskAction)
+// 	hub.execAction <- &taskAction
+//
+//   // Make sure same task sessions received it
+//   // And different task sessions did not
+// 	checkBroadcasted(t, sess1)
+// 	checkBroadcasted(t, sess2)
+// 	_, ok := <-sess3.Send
+// 	if ok {
+// 		t.Fatal("Broadcasted but should not have")
+// 	}
+// }
 
 // // Tests that hub correctly maintains and saves state
 // // func TestSaveState(t *testing.T) {

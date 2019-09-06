@@ -265,6 +265,91 @@ func checkAction(actionType string, state *TaskData,
   }
 }
 
+// Runs a single action with random parameters
+func runAction(state *TaskData, actionType string, maxItem int,
+  currentLabelId int, numShapes []int) (
+  *TaskData, CheckData, int, []int, error) {
+  var newState *TaskData
+  var newCheckData CheckData
+  itemIndex := rand.Intn(maxItem + 1)
+  itemIndexWithShape := randomIndexOfNonzero(numShapes)
+  var labelId int
+  var shapeId int
+  if itemIndexWithShape == -1 {
+    // When no shapes exist, set default values
+    // UpdateState should throw error
+    itemIndexWithShape = 0
+    labelId = 0
+    shapeId = 0
+  } else {
+    labelMap := state.Items[itemIndexWithShape].Labels
+    labelId = randomKey(labelMap)
+    shapeId = rand.Intn(numShapes[itemIndexWithShape])
+  }
+  switch actionType {
+  case addLabel:
+    returnState, newShape, err := runAddLabel(
+      state, itemIndex, currentLabelId)
+    if err != nil {
+      return newState, newCheckData, currentLabelId, numShapes,
+        fmt.Errorf("addLabel failed: %v", err)
+    }
+    newState = returnState
+    numShapes[itemIndex]++
+    newCheckData = CheckData{
+      Shape: newShape,
+      LabelId: currentLabelId,
+      NumShapes: numShapes[itemIndex],
+      ItemIndex: itemIndex,
+    }
+    currentLabelId++
+  case changeShape:
+    returnState, newShape, err := runChangeShape(
+      state, itemIndexWithShape, shapeId)
+    if err != nil {
+      return newState, newCheckData, currentLabelId, numShapes,
+        fmt.Errorf("changeShape failed: %v", err)
+    }
+    newState = returnState
+    newCheckData = CheckData{
+      Shape: newShape,
+      ShapeId: shapeId,
+      ItemIndex: itemIndexWithShape,
+    }
+  case changeLabel:
+    returnState, props, err := runChangeLabel(
+      state, itemIndexWithShape, labelId)
+    if err != nil {
+      return newState, newCheckData, currentLabelId, numShapes,
+        fmt.Errorf("changeLabel failed: %v", err)
+    }
+    newState = returnState
+    newCheckData = CheckData{
+      LabelProps: props,
+      LabelId: labelId,
+      ItemIndex: itemIndexWithShape,
+    }
+  case deleteLabel:
+    returnState, err := runDeleteLabel(
+      state, itemIndexWithShape, labelId)
+    if err != nil {
+      return newState, newCheckData, currentLabelId, numShapes,
+        fmt.Errorf("deleteLabel failed: %v", err)
+    }
+    newState = returnState
+    newCheckData = CheckData{
+      LabelId: labelId,
+      ItemIndex: itemIndexWithShape,
+    }
+    //This assumes label only had one shape attached
+    numShapes[itemIndexWithShape]--
+  default:
+    return newState, newCheckData, currentLabelId, numShapes,
+      errors.New("tried to run non-existent action")
+  }
+  return newState, newCheckData, currentLabelId, numShapes, nil
+}
+
 // Runs the desired actions with random parameters and checks the effects
 // To only operate on one item, can set maxItem = 0
 func runActions(initialState *TaskData, actionQueue []string,
@@ -275,6 +360,7 @@ func runActions(initialState *TaskData, actionQueue []string,
   // Store info about actions to check for immutability later
   checkData := make([]CheckData, len(actionQueue) + 1)
   currentLabelId := 0
+  // Track the number of shapes in each item
   numShapes := make([]int, maxItem + 1)
   // First check the initial state is empty
   for i := 0; i <= maxItem; i++ {
@@ -285,81 +371,15 @@ func runActions(initialState *TaskData, actionQueue []string,
   }
   // Run actions and check updated state
   for i, actionType := range(actionQueue) {
-    var newState *TaskData
-    var newCheckData CheckData
-    itemIndex := rand.Intn(maxItem + 1)
-    itemIndexWithShape := randomIndexOfNonzero(numShapes)
-    switch actionType {
-    case addLabel:
-      returnState, newShape, err := runAddLabel(
-        states[i], itemIndex, currentLabelId)
-      if err != nil {
-        return fmt.Errorf("addLabel failed: %v", err)
-      }
-      newState = returnState
-      numShapes[itemIndex]++
-      newCheckData = CheckData{
-        Shape: newShape,
-        LabelId: currentLabelId,
-        NumShapes: numShapes[itemIndex],
-        ItemIndex: itemIndex,
-      }
-      currentLabelId++
-    case changeShape:
-      if itemIndexWithShape == -1 {
-        return errors.New("There are no shapes to change")
-      }
-      shapeId := rand.Intn(numShapes[itemIndexWithShape])
-      returnState, newShape, err := runChangeShape(
-        states[i], itemIndexWithShape, shapeId)
-      if err != nil {
-        return fmt.Errorf("changeShape failed: %v", err)
-      }
-      newState = returnState
-      newCheckData = CheckData{
-        Shape: newShape,
-        ShapeId: shapeId,
-        ItemIndex: itemIndexWithShape,
-      }
-    case changeLabel:
-      if itemIndexWithShape == -1 {
-        return errors.New("There are no labels to modify")
-      }
-      labelMap := states[i].Items[itemIndexWithShape].Labels
-      labelId := randomKey(labelMap)
-      returnState, props, err := runChangeLabel(
-        states[i], itemIndexWithShape, labelId)
-      if err != nil {
-        return fmt.Errorf("changeLabel failed: %v", err)
-      }
-      newState = returnState
-      newCheckData = CheckData{
-        LabelProps: props,
-        LabelId: labelId,
-        ItemIndex: itemIndexWithShape,
-      }
-    case deleteLabel:
-      if itemIndexWithShape == -1 {
-        return errors.New("There are no labels to delete")
-      }
-      labelMap := states[i].Items[itemIndexWithShape].Labels
-      labelId := randomKey(labelMap)
-      returnState, err := runDeleteLabel(
-        states[i], itemIndexWithShape, labelId)
-      if err != nil {
-        return fmt.Errorf("deleteLabel failed: %v", err)
-      }
-      newState = returnState
-      newCheckData = CheckData{
-        LabelId: labelId,
-        ItemIndex: itemIndexWithShape,
-      }
-      //This assumes label only had one shape attached
-      numShapes[itemIndexWithShape]--
-    default:
-      return errors.New("tried to run non-existent action")
+    // Runs a single action with random parameters
+    newState, newCheckData, newLabelId, newNumShapes, err := runAction(
+      states[i], actionType, maxItem, currentLabelId, numShapes)
+    if err != nil {
+      return err
     }
-    err := checkAction(actionType, newState, newCheckData)
+    currentLabelId = newLabelId
+    numShapes = newNumShapes
+    err = checkAction(actionType, newState, newCheckData)
     if err != nil {
       return err
     }
