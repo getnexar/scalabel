@@ -99,7 +99,7 @@ export default class ViewerConfigUpdater {
       e.clientX, e.clientY, this._container
     )
     this._mX = normalized[0]
-    this._mY = normalized[0]
+    this._mY = normalized[1]
   }
 
   /**

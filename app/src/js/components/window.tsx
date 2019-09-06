@@ -52,7 +52,7 @@ export class Window extends React.Component {
     const views = []
     if (Session.itemType === 'image' || Session.itemType === 'video') {
       /* FIXME: set correct props */
-      views.push(<ImageViewer key={'imageView'}/>)
+      views.push(<ImageViewer key={'imageView'} display={null}/>)
     } else if (Session.itemType === 'pointcloud') {
       views.push(<PointCloudViewer key={'pointCloudView'}/>)
     }

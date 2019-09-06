@@ -90,9 +90,13 @@ class ViewerContainer extends React.Component<Props> {
       viewsWithProps = React.Children.map(views, (view) => {
         if (rectDiv) {
           return React.cloneElement(view,
-            { height: rectDiv.height, width: rectDiv.width })
+            {
+              height: rectDiv.height,
+              width: rectDiv.width,
+              display: this._container
+            })
         } else {
-          return React.cloneElement(view, {})
+          return React.cloneElement(view, { display: this._container })
         }
       }
       )
@@ -127,7 +131,8 @@ class ViewerContainer extends React.Component<Props> {
               display: 'block',
               height: 'calc(100% - 20px)',
               top: '10px', left: '10px',
-              position: 'absolute', overflow: 'scroll',
+              position: 'absolute',
+              overflow: 'hidden',
               outline: 'none',
               width: 'calc(100% - 20px)'
             }}

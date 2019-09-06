@@ -28,17 +28,13 @@ interface ClassType {
   label_canvas: string
   /** control canvas */
   control_canvas: string
-  /** image display area */
-  display: string
-  /** background */
-  background: string
-  /** background */
-  background_with_player_control: string
 }
 
 interface Props {
   /** styles */
   classes: ClassType
+  /** display */
+  display: HTMLDivElement | null
 }
 
 /**
@@ -200,22 +196,7 @@ export class ImageViewer extends Viewer<Props> {
     }
 
     return (
-      <div
-        ref={(element) => {
-          if (element) {
-            this.display = element
-            const state = Session.getState()
-            const config =
-              getCurrentItemViewerConfig(state) as ImageViewerConfigType
-            this.display.scrollTop = config.displayTop
-            this.display.scrollLeft = config.displayLeft
-          }
-        }}
-        style={{
-          width: '100%',
-          height: '100%'
-        }}
-      >
+      <div>
         <MouseEventListeners
           onMouseDown={this.onMouseDown.bind(this)}
           onMouseMove={this.onMouseMove.bind(this)}
@@ -271,6 +252,7 @@ export class ImageViewer extends Viewer<Props> {
    * notify state is updated
    */
   protected updateState (state: State): void {
+    this.display = this.props.display
     this._labels.updateState(state, state.user.select.item)
   }
 
