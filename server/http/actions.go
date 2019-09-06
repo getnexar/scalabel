@@ -191,25 +191,22 @@ func copyLabelMap(labels map[int]LabelData) map[int]LabelData {
 func getItem(state *TaskData, itemIndex int) (ItemData, error) {
 	if itemIndex >= 0 && itemIndex < len(state.Items) {
 		return state.Items[itemIndex], nil
-	} else {
-		return ItemData{}, errors.New("No item at specified index")
 	}
+	return ItemData{}, errors.New("No item at specified index")
 }
 
 func getShape(item ItemData, shapeId int) (ShapeData, error) {
 	if shape, ok := item.Shapes[shapeId]; ok {
 		return shape, nil
-	} else {
-		return ShapeData{}, errors.New("No shape with specified ID")
 	}
+	return ShapeData{}, errors.New("No shape with specified ID")
 }
 
 func getLabel(item ItemData, labelId int) (LabelData, error) {
 	if label, ok := item.Labels[labelId]; ok {
 		return label, nil
-	} else {
-		return LabelData{}, errors.New("No label with specified ID")
 	}
+	return LabelData{}, errors.New("No label with specified ID")
 }
 
 // Merges all non-default properties of mergeLable into startLabel
@@ -304,7 +301,8 @@ func (action AddLabelAction) updateState(state *TaskData) (*TaskData, error) {
   return &newState, nil
 }
 
-func (action ChangeShapeAction) updateState(state *TaskData) (*TaskData, error) {
+func (action ChangeShapeAction) updateState(
+	state *TaskData) (*TaskData, error) {
 	newState := *state
 
   var shapeId = action.ShapeId
@@ -392,11 +390,11 @@ func (action DeleteLabelAction) updateState(
 }
 
 func (action TagImageAction) updateState(state *TaskData) (*TaskData, error) {
-	return state, nil
+	return state, errors.New("tag image not yet implemented")
 }
 
 func (action LinkLabelAction) updateState(state *TaskData) (*TaskData, error) {
-	return state, nil
+	return state, errors.New("link label not yet implemented")
 }
 
 // User actions (dummy for now)

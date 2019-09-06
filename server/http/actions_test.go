@@ -249,7 +249,8 @@ func checkDeleteLabel(state *TaskData, checkData CheckData) error {
 }
 
 // Routes action to appropriate checking function
-func checkAction(actionType string, state *TaskData, checkData CheckData) error {
+func checkAction(actionType string, state *TaskData,
+  checkData CheckData) error {
   switch actionType {
   case addLabel:
     return checkAddLabel(state, checkData)
@@ -266,7 +267,8 @@ func checkAction(actionType string, state *TaskData, checkData CheckData) error 
 
 // Runs the desired actions with random parameters and checks the effects
 // To only operate on one item, can set maxItem = 0
-func runActions(initialState *TaskData, actionQueue []string, maxItem int) error {
+func runActions(initialState *TaskData, actionQueue []string,
+  maxItem int) error {
   // Store states to check for immutability later
   states := make([]*TaskData, len(actionQueue) + 1)
   states[0] = initialState

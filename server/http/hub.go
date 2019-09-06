@@ -88,7 +88,8 @@ func (h *Hub) run() {
 			// Dispatch the action to update the state in the hub
 			newState, err := taskAction.updateState(h.statesByTask[taskId])
 			if err != nil {
-				// If error occured, action was malformed, or out of sync with the state
+				// If error occured, action was malformed
+				// or out of sync with the state
 				Error.Println(err)
 			} else {
 				h.statesByTask[taskId] = newState

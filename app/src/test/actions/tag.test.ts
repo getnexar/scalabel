@@ -7,7 +7,7 @@ import { testJson } from '../test_image_objects'
 
 test('Add and change tag for image label', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(goToItem(itemIndex))
   const attributeIndices = [0]

@@ -36,7 +36,7 @@ test('Change category', () => {
 
 test('Link labels', () => {
   Session.devMode = false
-  initStore(testJson)
+  initStore(testJson, null)
   const itemIndex = 0
   Session.dispatch(action.goToItem(itemIndex))
   Session.dispatch(action.addLabel(itemIndex, makeLabel(), []))

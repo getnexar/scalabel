@@ -34,8 +34,6 @@ type Env struct {
 	SrcPath        string `yaml:"src"`
 	AppSubDir      string `yaml:"appSubDir"`
 	Database       string `yaml:"database"`
-	ModelGateHost  string `yaml:"modelGateHost"`
-	ModelGatePort  string `yaml:"modelGatePort"`
 	Sync           bool   `yaml:"sync"`
 	UserManagement bool   `yaml:"userManagement"`
 	Region         string `yaml:"region"`
