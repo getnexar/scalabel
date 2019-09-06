@@ -1,6 +1,5 @@
 import { withStyles } from '@material-ui/core/styles'
 import * as React from 'react'
-import { updateImageViewerConfig, zoomImage } from '../action/image'
 import Session from '../common/session'
 import { Label2DList } from '../drawable/label2d_list'
 import { getCurrentItemViewerConfig, isItemLoaded } from '../functional/state_util'
@@ -9,21 +8,17 @@ import {
   clearCanvas,
   drawImageOnCanvas,
   getCurrentImageSize,
-  getVisibleCanvasCoords,
   imageDataToHandleId,
   MAX_SCALE,
   MIN_SCALE,
   normalizeMouseCoordinates,
-  SCROLL_ZOOM_RATIO,
   toCanvasCoords,
   UP_RES_RATIO,
-  updateCanvasScale,
-  ZOOM_RATIO
+  updateCanvasScale
 } from '../helper/image'
 import { Vector2D } from '../math/vector2d'
 import { imageViewStyle } from '../styles/label'
 import MouseEventListeners from './mouse_event_listeners'
-import PlayerControl from './player_control'
 import { Viewer } from './viewer'
 
 interface ClassType {
@@ -84,20 +79,6 @@ export class ImageViewer extends Viewer<Props> {
   /** The hashed list of keys currently down */
   private _keyDownMap: { [key: string]: boolean }
 
-  // scrolling
-  /** The timer for scrolling */
-  private scrollTimer: number | undefined
-
-  // grabbing
-  /** Whether or not the mouse is currently grabbing the image */
-  private _isGrabbingImage: boolean
-  /** The x coordinate when the grab starts */
-  private _startGrabX: number
-  /** The y coordinate when the grab starts */
-  private _startGrabY: number
-  /** The visible coordinates when the grab starts */
-  private _startGrabVisibleCoords: number[]
-
   /**
    * Constructor, handles subscription to store
    * @param {Object} props: react props
@@ -109,15 +90,10 @@ export class ImageViewer extends Viewer<Props> {
 
     // initialization
     this._keyDownMap = {}
-    this._isGrabbingImage = false
-    this._startGrabX = -1
-    this._startGrabY = -1
-    this._startGrabVisibleCoords = []
     this.scale = 1
     this.canvasHeight = 0
     this.canvasWidth = 0
     this.displayToImageRatio = 1
-    this.scrollTimer = undefined
     this.imageContext = null
     this.imageCanvas = null
     this.controlContext = null
@@ -149,33 +125,6 @@ export class ImageViewer extends Viewer<Props> {
    */
   public setDefaultCursor () {
     this.setCursor('crosshair')
-  }
-
-  /**
-   * Handler for zooming
-   * @param {number} zoomRatio - the zoom ratio
-   * @param {number} offsetX - the offset of x for zooming to cursor
-   * @param {number} offsetY - the offset of y for zooming to cursor
-   */
-  public zoomHandler (zoomRatio: number,
-                      offsetX: number, offsetY: number) {
-    const viewerConfig =
-      getCurrentItemViewerConfig(Session.getState()) as ImageViewerConfigType
-    const newScale = viewerConfig.viewScale * zoomRatio
-    if (newScale >= MIN_SCALE && newScale <= MAX_SCALE &&
-        this.display && this.imageCanvas) {
-      zoomImage(
-        zoomRatio,
-        offsetX,
-        offsetY,
-        this.display,
-        this.imageCanvas,
-        viewerConfig,
-        this.canvasWidth,
-        this.canvasHeight,
-        this.displayToImageRatio
-      )
-    }
   }
 
   /**
@@ -239,9 +188,6 @@ export class ImageViewer extends Viewer<Props> {
       }}
     />)
 
-    const playerControl = (<PlayerControl key='player-control'
-      num_frames={Session.getState().task.items.length}
-    />)
     let canvasesWithProps
     if (this.display) {
       const displayRect = this.display.getBoundingClientRect()
@@ -254,36 +200,31 @@ export class ImageViewer extends Viewer<Props> {
     }
 
     return (
-      <div className={classes.background_with_player_control}>
-        <div ref={(element) => {
+      <div
+        ref={(element) => {
           if (element) {
-            this.background = element
+            this.display = element
+            const state = Session.getState()
+            const config =
+              getCurrentItemViewerConfig(state) as ImageViewerConfigType
+            this.display.scrollTop = config.displayTop
+            this.display.scrollLeft = config.displayLeft
           }
-        }} className={classes.background}>
-          <MouseEventListeners
-            onMouseDown={this.onMouseDown.bind(this)}
-            onMouseMove={this.onMouseMove.bind(this)}
-            onMouseUp={this.onMouseUp.bind(this)}
-            onMouseLeave={this.onMouseLeave.bind(this)}
-            onDblClick={this.onDblClick.bind(this)}
-            onWheel={this.onWheel.bind(this)}
-          />
-          <div ref={(element) => {
-            if (element) {
-              this.display = element
-              const state = Session.getState()
-              const config =
-                getCurrentItemViewerConfig(state) as ImageViewerConfigType
-              this.display.scrollTop = config.displayTop
-              this.display.scrollLeft = config.displayLeft
-            }
-          }}
-            className={classes.display}
-          >
-            {canvasesWithProps}
-          </div>
-        </div>
-        {playerControl}
+        }}
+        style={{
+          width: '100%',
+          height: '100%'
+        }}
+      >
+        <MouseEventListeners
+          onMouseDown={this.onMouseDown.bind(this)}
+          onMouseMove={this.onMouseMove.bind(this)}
+          onMouseUp={this.onMouseUp.bind(this)}
+          onMouseLeave={this.onMouseLeave.bind(this)}
+          onDblClick={this.onDblClick.bind(this)}
+          onWheel={this.onWheel.bind(this)}
+        />
+        {canvasesWithProps}
       </div>
     )
   }
@@ -391,21 +332,7 @@ export class ImageViewer extends Viewer<Props> {
       return
     }
     // Control + click for dragging
-    if (this.isKeyDown('Control')) {
-      if (this.display && this.imageCanvas) {
-        const display = this.display.getBoundingClientRect()
-        if (this.imageCanvas.width > display.width ||
-          this.imageCanvas.height > display.height) {
-          // if needed, start grabbing
-          this.setCursor('grabbing')
-          this._isGrabbingImage = true
-          this._startGrabX = e.clientX
-          this._startGrabY = e.clientY
-          this._startGrabVisibleCoords =
-            getVisibleCanvasCoords(this.display, this.imageCanvas)
-        }
-      }
-    } else {
+    if (!this.isKeyDown('Control')) {
       // get mouse position in image coordinates
       const mousePos = this.getMousePos(e)
       const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
@@ -422,11 +349,6 @@ export class ImageViewer extends Viewer<Props> {
     if (!this.isWithinFrame(e) || e.button !== 0) {
       return
     }
-    // get mouse position in image coordinates
-    this._isGrabbingImage = false
-    this._startGrabX = -1
-    this._startGrabY = -1
-    this._startGrabVisibleCoords = []
 
     const mousePos = this.getMousePos(e)
     const [labelIndex, handleIndex] = this.fetchHandleId(mousePos)
@@ -454,20 +376,7 @@ export class ImageViewer extends Viewer<Props> {
     }
     // TODO: update hovered label
     // grabbing image
-    if (this.isKeyDown('Control')) {
-      if (this._isGrabbingImage) {
-        if (this.display) {
-          this.setCursor('grabbing')
-          const dx = e.clientX - this._startGrabX
-          const dy = e.clientY - this._startGrabY
-          const displayLeft = this._startGrabVisibleCoords[0] - dx
-          const displayTop = this._startGrabVisibleCoords[1] - dy
-          Session.dispatch(updateImageViewerConfig({ displayLeft, displayTop }))
-        }
-      } else {
-        this.setCursor('grab')
-      }
-    } else {
+    if (!this.isKeyDown('Control')) {
       this.setDefaultCursor()
     }
 
@@ -486,21 +395,6 @@ export class ImageViewer extends Viewer<Props> {
   private onWheel (e: WheelEvent) {
     if (!this.isWithinFrame(e)) {
       return
-    }
-    // get mouse position in image coordinates
-    const mousePos = this.getMousePos(e)
-    if (this.isKeyDown('Control')) { // control for zoom
-      e.preventDefault()
-      if (this.scrollTimer !== undefined) {
-        clearTimeout(this.scrollTimer)
-      }
-      if (e.deltaY < 0) {
-        this.zoomHandler(SCROLL_ZOOM_RATIO, mousePos[0], mousePos[1])
-      } else if (e.deltaY > 0) {
-        this.zoomHandler(
-          1 / SCROLL_ZOOM_RATIO, mousePos[0], mousePos[1])
-      }
-      this.redraw()
     }
   }
 
@@ -525,13 +419,6 @@ export class ImageViewer extends Viewer<Props> {
   private onKeyDown (e: KeyboardEvent) {
     const key = e.key
     this._keyDownMap[key] = true
-    if (key === '+') {
-      // + for zooming in
-      this.zoomHandler(ZOOM_RATIO, -1, -1)
-    } else if (key === '-') {
-      // - for zooming out
-      this.zoomHandler(1 / ZOOM_RATIO, -1, -1)
-    }
   }
 
   /**
