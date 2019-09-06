@@ -95,7 +95,7 @@ export class ImageView extends Canvas2d<Props> {
   /** The boosted ratio to draw shapes sharper */
   private readonly UP_RES_RATIO: number
   /** The zoom ratio */
-  private readonly ZOOM_RATIO: number
+  //private readonly ZOOM_RATIO: number
   /** The scroll-zoom ratio */
   private readonly SCROLL_ZOOM_RATIO: number
 
@@ -137,7 +137,7 @@ export class ImageView extends Canvas2d<Props> {
     // constants
     this.MAX_SCALE = 3.0
     this.MIN_SCALE = 1.0
-    this.ZOOM_RATIO = 1.05
+    //this.ZOOM_RATIO = 1.05
     this.SCROLL_ZOOM_RATIO = 1.01
     this.UP_RES_RATIO = 2
 
@@ -166,7 +166,6 @@ export class ImageView extends Canvas2d<Props> {
     document.onkeydown = this.onKeyDown.bind(this)
     document.onkeyup = this.onKeyUp.bind(this)
     */
-
     this._labels = new Label2DList()
   }
 
@@ -620,9 +619,13 @@ export class ImageView extends Canvas2d<Props> {
    * Callback function when key is down
    * @param {KeyboardEvent} e - event
    */
+  /*
   private onKeyDown (e: KeyboardEvent) {
     const key = e.key
     this._keyDownMap[key] = true
+    if (key === 'a'){
+      console.log("a")
+    }
     if (key === '+') {
       // + for zooming in
       this.zoomHandler(this.ZOOM_RATIO, -1, -1)
@@ -634,11 +637,13 @@ export class ImageView extends Canvas2d<Props> {
       this.deleteHandler()
     }
   }
+  */
 
   /**
    * Callback function when key is up
    * @param {KeyboardEvent} e - event
    */
+  /*
   private onKeyUp (e: KeyboardEvent) {
     const key = e.key
     delete this._keyDownMap[key]
@@ -647,6 +652,7 @@ export class ImageView extends Canvas2d<Props> {
       this.setDefaultCursor()
     }
   }
+  */
 
   /**
    * Whether a specific key is pressed down
