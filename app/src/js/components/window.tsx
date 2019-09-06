@@ -1,9 +1,7 @@
 import React from 'react'
 import Path from '../common/path'
 import Session from '../common/session'
-import ImageViewer from './image_viewer'
 import LabelLayout from './label_layout'
-import PointCloudViewer from './point_cloud_viewer'
 import TitleBar from './title_bar'
 // $FlowFixMe
 import { ToolBar } from './toolbar'
@@ -49,14 +47,7 @@ export class Window extends React.Component {
         />
     )
 
-    const views = []
-    if (Session.itemType === 'image' || Session.itemType === 'video') {
-      /* FIXME: set correct props */
-      views.push(<ImageViewer key={'imageView'} display={null}/>)
-    } else if (Session.itemType === 'pointcloud') {
-      views.push(<PointCloudViewer key={'pointCloudView'}/>)
-    }
-    const main = (<ViewerContainer views={views} />)
+    const main = (<ViewerContainer />)
     const bottomBar = null
     const rightSidebar1 = null
     const rightSidebar2 = null

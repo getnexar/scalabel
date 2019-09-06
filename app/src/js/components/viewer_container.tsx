@@ -1,23 +1,19 @@
-// tslint:disable:no-any
-// TODO: remove the disable tag
 import React from 'react'
 import Session from '../common/session'
 import { getCurrentItemViewerConfig } from '../functional/state_util'
 import { ImageViewerConfigType } from '../functional/types'
 import ViewerConfigUpdater from '../helper/viewer_config'
+import ImageViewer from './image_viewer'
+import Label2dViewer from './label2d_viewer'
 import MouseEventListeners from './mouse_event_listeners'
-
-interface Props {
-  /** Views */
-  views: any[]
-}
+import PointCloudViewer from './point_cloud_viewer'
 
 /**
  * Canvas Viewer
  */
-class ViewerContainer extends React.Component<Props> {
+class ViewerContainer extends React.Component<{}> {
   /** Topmost div */
-  private divRef?: any
+  private _divRef: HTMLDivElement | null
   /** Moveable container */
   private _container: HTMLDivElement | null
   /** Manage viewer config */
@@ -44,26 +40,20 @@ class ViewerContainer extends React.Component<Props> {
    * Constructor
    * @param {Object} props: react props
    */
-  constructor (props: any) {
+  constructor (props: {}) {
     super(props)
     this._container = null
+    this._divRef = null
     this._viewerConfigUpdater = new ViewerConfigUpdater()
-    this._mouseDownHandler =
-      this._viewerConfigUpdater.onMouseDown.bind(this._viewerConfigUpdater)
-    this._mouseUpHandler =
-      this._viewerConfigUpdater.onMouseUp.bind(this._viewerConfigUpdater)
-    this._mouseMoveHandler =
-      this._viewerConfigUpdater.onMouseMove.bind(this._viewerConfigUpdater)
-    this._mouseLeaveHandler =
-      this._viewerConfigUpdater.onMouseLeave.bind(this._viewerConfigUpdater)
-    this._doubleClickHandler =
-      this._viewerConfigUpdater.onDoubleClick.bind(this._viewerConfigUpdater)
-    this._wheelHandler =
-      this._viewerConfigUpdater.onMouseWheel.bind(this._viewerConfigUpdater)
-    this._keyDownHandler =
-      this._viewerConfigUpdater.onKeyDown.bind(this._viewerConfigUpdater)
-    this._keyUpHandler =
-      this._viewerConfigUpdater.onKeyUp.bind(this._viewerConfigUpdater)
+
+    this._mouseDownHandler = this.onMouseDown.bind(this)
+    this._mouseUpHandler = this.onMouseUp.bind(this)
+    this._mouseMoveHandler = this.onMouseMove.bind(this)
+    this._mouseLeaveHandler = this.onMouseLeave.bind(this)
+    this._doubleClickHandler = this.onDoubleClick.bind(this)
+    this._wheelHandler = this.onWheel.bind(this)
+    this._keyDownHandler = this.onKeyDown.bind(this)
+    this._keyUpHandler = this.onKeyUp.bind(this)
   }
 
   /**
@@ -79,12 +69,20 @@ class ViewerContainer extends React.Component<Props> {
    * @return {React.Fragment} React fragment
    */
   public render () {
-    let rectDiv: any
-    if (this.divRef) {
-      rectDiv = this.divRef.getBoundingClientRect()
+    let rectDiv: DOMRect | ClientRect | null = null
+    if (this._divRef) {
+      rectDiv = this._divRef.getBoundingClientRect()
     }
 
-    const { views } = this.props
+    const views: React.ReactElement[] = []
+    if (Session.itemType === 'image' || Session.itemType === 'video') {
+      /* FIXME: set correct props */
+      views.push(<ImageViewer key={'imageView'} display={null} />)
+      views.push(<Label2dViewer key={'label2dView'} display={null} />)
+    } else if (Session.itemType === 'pointcloud') {
+      views.push(<PointCloudViewer key={'pointCloudView'}/>)
+    }
+
     let viewsWithProps = views
     if (rectDiv) {
       viewsWithProps = React.Children.map(views, (view) => {
@@ -106,7 +104,7 @@ class ViewerContainer extends React.Component<Props> {
         <div
           ref={(element) => {
             if (element) {
-              this.divRef = element
+              this._divRef = element
             }
           }}
           style={{
@@ -149,6 +147,70 @@ class ViewerContainer extends React.Component<Props> {
           </div>
         </div >
     )
+  }
+
+  /**
+   * Handle mouse down
+   * @param e
+   */
+  private onMouseDown (e: MouseEvent) {
+    this._viewerConfigUpdater.onMouseDown(e)
+  }
+
+  /**
+   * Handle mouse up
+   * @param e
+   */
+  private onMouseUp (e: MouseEvent) {
+    this._viewerConfigUpdater.onMouseUp(e)
+  }
+
+  /**
+   * Handle mouse move
+   * @param e
+   */
+  private onMouseMove (e: MouseEvent) {
+    this._viewerConfigUpdater.onMouseMove(e)
+  }
+
+  /**
+   * Handle double click
+   * @param e
+   */
+  private onDoubleClick (_e: MouseEvent) {
+    return
+  }
+
+  /**
+   * Handle mouse leave
+   * @param e
+   */
+  private onMouseLeave (_e: MouseEvent) {
+    return
+  }
+
+  /**
+   * Handle mouse wheel
+   * @param e
+   */
+  private onWheel (e: WheelEvent) {
+    this._viewerConfigUpdater.onWheel(e)
+  }
+
+  /**
+   * Handle key down
+   * @param e
+   */
+  private onKeyUp (e: KeyboardEvent) {
+    this._viewerConfigUpdater.onKeyUp(e)
+  }
+
+  /**
+   * Handle key down
+   * @param e
+   */
+  private onKeyDown (e: KeyboardEvent) {
+    this._viewerConfigUpdater.onKeyDown(e)
   }
 }
 

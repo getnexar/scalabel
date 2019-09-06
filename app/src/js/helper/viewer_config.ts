@@ -114,7 +114,7 @@ export default class ViewerConfigUpdater {
    * Handle mouse wheel
    * @param _e
    */
-  public onMouseWheel (e: WheelEvent) {
+  public onWheel (e: WheelEvent) {
     if (this.isKeyDown('Control')) { // control for zoom
       e.preventDefault()
       let zoomRatio = SCROLL_ZOOM_RATIO
@@ -131,22 +131,6 @@ export default class ViewerConfigUpdater {
         Session.dispatch(zoomAction)
       }
     }
-  }
-
-  /**
-   * Handle mouse leave
-   * @param _e
-   */
-  public onMouseLeave (_e: MouseEvent) {
-    return
-  }
-
-  /**
-   * Handle Double Click
-   * @param _e
-   */
-  public onDoubleClick (_e: MouseEvent) {
-    return
   }
 
   /**
