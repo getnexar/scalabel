@@ -23,11 +23,11 @@ func TestSavePostV2(t *testing.T) {
 		postSaveV2Handler(rr, req)
 		if rr.Code != 200 {
 			errString := "Save assignment handler HTTP code: %d"
-			t.Fatal(fmt.Errorf(errString, rr.Code))
+			t.Fatalf(errString, rr.Code)
 		}
 		if rr.Body.String() != "0" {
 			errString := "Response writer contains: %s"
-			t.Fatal(fmt.Errorf(errString, rr.Body.String()))
+			t.Fatalf(errString, rr.Body.String())
 		}
 	}
 }
@@ -44,7 +44,7 @@ func TestSavePostMalformedV2(t *testing.T) {
 	Info.Println(rr.Body.String())
 	if rr.Body.Len() != 0 {
 		errString := "Response should be nil but is: %s"
-		t.Fatal(fmt.Errorf(errString, rr.Body.String()))
+		t.Fatalf(errString, rr.Body.String())
 	}
 }
 
@@ -60,7 +60,7 @@ func TestSavePostDemoV2(t *testing.T) {
 	Info.Println(rr.Body.String())
 	if rr.Body.Len() != 0 {
 		errString := "Response should be nil but is: %s"
-		t.Fatal(fmt.Errorf(errString, rr.Body.String()))
+		t.Fatalf(errString, rr.Body.String())
 	}
 }
 
@@ -81,10 +81,10 @@ func TestSavePostRealInputV2(t *testing.T) {
 	postSaveV2Handler(rr, req)
 	if rr.Code != 200 {
 		errString := "Save assignment handler HTTP code: %d"
-		t.Fatal(fmt.Errorf(errString, rr.Code))
+		t.Fatalf(errString, rr.Code)
 	}
 	if rr.Body.String() != "0" {
 		errString := "Response writer contains: %s"
-		t.Fatal(fmt.Errorf(errString, rr.Body.String()))
+		t.Fatalf(errString, rr.Body.String())
 	}
 }

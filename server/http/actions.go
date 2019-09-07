@@ -151,7 +151,7 @@ type UpdateAllAction struct {
 }
 
 // Define common functions for all actions
-func (action GenericAction) addTimestamp() {
+func (action *GenericAction) addTimestamp() {
   action.Time = time.Now().String()
   log.Printf("Timestamped this message: %v\n", action)
 }

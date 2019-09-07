@@ -60,7 +60,7 @@ func makeRect() ShapeRect {
 }
 
 // Load dummy task data
-func ReadTaskData() (*TaskData, error) {
+func ReadSampleTaskData() (*TaskData, error) {
   statePath := path.Join("testdata", "task_state.json")
 	inputBytes, err := ioutil.ReadFile(statePath)
 	if err != nil {
@@ -136,7 +136,7 @@ type CheckData struct {
 
 // Makes a new AddLabel Action
 func MakeAddLabel(itemIndex int, labelId int, sessionId string) (
-  AddLabelAction, ShapeRect) {
+  *AddLabelAction, ShapeRect) {
   label := LabelData{
     Id: labelId,
     Item: itemIndex,
@@ -151,7 +151,8 @@ func MakeAddLabel(itemIndex int, labelId int, sessionId string) (
     Shapes: shapes,
   }
   action.SessionId = sessionId
-  return action, shape
+  action.Type = addLabel
+  return &action, shape
 }
 
 // Create a new AddLabel action, and use it to update the state
@@ -416,7 +417,7 @@ func runActions(initialState *TaskData, actionQueue []string,
 // Runs the test corresponding to the action queue
 func runTest(t *testing.T, actionQueue []string, maxTask int) {
   // Prepare initial state
-  initialState, err := ReadTaskData()
+  initialState, err := ReadSampleTaskData()
   if err != nil {
     t.Fatal(err)
   }
@@ -429,7 +430,7 @@ func runTest(t *testing.T, actionQueue []string, maxTask int) {
 // Runs a test that is expected to fail
 func runFailTest(t *testing.T, actionQueue []string, maxTask int) {
   // Prepare initial state
-  initialState, err := ReadTaskData()
+  initialState, err := ReadSampleTaskData()
   if err != nil {
     t.Fatal(err)
   }

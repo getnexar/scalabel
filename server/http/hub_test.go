@@ -8,7 +8,7 @@ import (
 
 // Helper functions
 // Makes a dummy session
-func makeSession(taskNum int) *Session {
+func MakeSession(taskNum int) *Session {
   return &Session{
 		SessionId:   getUuidV4(),
 		TaskId:		   fmt.Sprintf("fakeTaskId%v", taskNum),
@@ -52,7 +52,7 @@ type MockTaskLoader struct{}
 
 func (MockTaskLoader) LoadTaskData(projectName string, taskIndex string) (
 	TaskData, error) {
-		taskData, err := ReadTaskData()
+		taskData, err := ReadSampleTaskData()
 		return *taskData, err
 }
 
@@ -62,9 +62,9 @@ func TestRegistration(t *testing.T) {
 	loader := MockTaskLoader{}
   hub := newhub(loader)
 	go hub.run()
-  sess1 := makeSession(0)
-  sess2 := makeSession(0)
-  sess3 := makeSession(1)
+  sess1 := MakeSession(0)
+  sess2 := MakeSession(0)
+  sess3 := MakeSession(1)
 
   // Register 2 sessions from same task
   hub.registerSession <- sess1
@@ -93,9 +93,9 @@ func TestActionBroadcast(t *testing.T) {
 	loader := MockTaskLoader{}
 	hub := newhub(loader)
 	go hub.run()
-	sess1 := makeSession(0)
-  sess2 := makeSession(0)
-  sess3 := makeSession(1)
+	sess1 := MakeSession(0)
+  sess2 := MakeSession(0)
+  sess3 := MakeSession(1)
 	hub.registerSession <- sess1
 	hub.registerSession <- sess2
 	hub.registerSession <- sess3
@@ -119,8 +119,8 @@ func TestSaveState(t *testing.T) {
 	loader := MockTaskLoader{}
 	hub := newhub(loader)
 	go hub.run()
-	sess1 := makeSession(0)
-	sess2 := makeSession(1)
+	sess1 := MakeSession(0)
+	sess2 := MakeSession(1)
 	hub.registerSession <- sess1
 	hub.registerSession <- sess2
 
