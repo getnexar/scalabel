@@ -164,7 +164,10 @@ export class ImageView extends Canvas2d<Props> {
     this._labels = new Label2DList()
   }
 
-  componentDidMount(){
+  /**
+   * Bind onKeyDown and onKeyUp
+   */
+  public componentDidMount () {
     document.onkeydown = this.onKeyDown.bind(this)
     document.onkeyup = this.onKeyUp.bind(this)
   }
@@ -195,7 +198,7 @@ export class ImageView extends Canvas2d<Props> {
     const image = Session.images[item.index]
     return new Size2D(image.width, image.height)
   }
-  
+
   /**
    * Handler for zooming
    * @param {number} zoomRatio - the zoom ratio

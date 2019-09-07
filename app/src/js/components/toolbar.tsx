@@ -44,8 +44,12 @@ export class ToolBar extends Component<Props> {
     this.keyDownHandler = this.keyDownHandler.bind(this)
   }
 
-  keyDownHandler(e: KeyboardEvent){
-    if(e.key === 'Backspace'){
+  /**
+   * handles keyDown Events
+   * @param {keyboardEvent} e
+   */
+  public keyDownHandler (e: KeyboardEvent) {
+    if (e.key === 'Backspace') {
       const select = Session.getState().user.select
       if (select.label >= 0) {
         Session.dispatch(deleteLabel(select.item, select.label))
@@ -53,12 +57,18 @@ export class ToolBar extends Component<Props> {
     }
   }
 
-  componentDidMount(){
-    document.addEventListener("keydown", this.keyDownHandler)
+  /**
+   * Add keyDown Event Listener
+   */
+  public componentDidMount () {
+    document.addEventListener('keydown', this.keyDownHandler)
   }
 
-  componentWillUnmount(){
-    document.removeEventListener("keydown", this.keyDownHandler)
+  /**
+   * Remove keyDown Event Listener
+   */
+  public componentWillUnmount () {
+    document.removeEventListener('keydown', this.keyDownHandler)
   }
 
   /**
