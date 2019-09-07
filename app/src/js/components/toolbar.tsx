@@ -45,7 +45,7 @@ export class ToolBar extends Component<Props> {
   }
 
   keyDownHandler(e: KeyboardEvent){
-    if(e.key === 'Delete'){
+    if(e.key === 'Backspace'){
       const select = Session.getState().user.select
       if (select.label >= 0) {
         Session.dispatch(deleteLabel(select.item, select.label))

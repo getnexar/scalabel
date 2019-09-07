@@ -12,7 +12,6 @@ import { imageViewStyle } from '../styles/label'
 import { Canvas2d } from './canvas2d'
 import MouseEventListeners from './mouse_event_listeners'
 import PlayerControl from './player_control'
-import { deleteLabel } from '../action/common'
 
 interface ClassType {
   /** image canvas */
@@ -195,13 +194,6 @@ export class ImageView extends Canvas2d<Props> {
     const item = getCurrentItem()
     const image = Session.images[item.index]
     return new Size2D(image.width, image.height)
-  }
-
-  public deleteHandler(){
-    const select = Session.getState().user.select
-    if (select.label >= 0) {
-      Session.dispatch(deleteLabel(select.item, select.label))
-    }
   }
   
   /**
@@ -623,18 +615,12 @@ export class ImageView extends Canvas2d<Props> {
   private onKeyDown (e: KeyboardEvent) {
     const key = e.key
     this._keyDownMap[key] = true
-    if (key === 'a'){
-      console.log("a")
-    }
     if (key === '+') {
       // + for zooming in
       this.zoomHandler(this.ZOOM_RATIO, -1, -1)
     } else if (key === '-') {
       // - for zooming out
       this.zoomHandler(1 / this.ZOOM_RATIO, -1, -1)
-    } else if (key === 'Delete'){
-      console.log("Delete")
-      this.deleteHandler()
     }
   }
 
