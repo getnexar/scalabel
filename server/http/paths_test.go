@@ -40,7 +40,7 @@ func TestPaths(t *testing.T) {
   // Test that the task submission paths are correct
   taskKey := path.Join(projectName, "submissions", taskId, "sync", submitTime)
   assertEqual(task.GetKey(), taskKey, t)
-  taskPath := path.Join(projectName, "submissions", taskId, "sync"
+  taskPath := path.Join(projectName, "submissions", taskId, "sync")
   assertEqual(task.GetPath(), taskPath, t)
   assertEqual(GetTaskPath(projectName, taskId), taskPath, t)
 }

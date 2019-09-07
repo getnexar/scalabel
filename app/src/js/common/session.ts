@@ -6,6 +6,7 @@ import * as types from '../action/types'
 import { Window } from '../components/window'
 import { State } from '../functional/types'
 import { configureStore } from './configure_store'
+
 export const enum ConnectionStatus {
   SAVED, SAVING, RECONNECTING, UNSAVED
 }

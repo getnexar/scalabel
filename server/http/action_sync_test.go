@@ -82,7 +82,8 @@ func TestActionLoop(t *testing.T) {
     ItemIndex: 4,
   }
   userAction2.Type = changeSelect
-  sendActions := []interface{}{*taskAction1, userAction1, userAction2, *taskAction2}
+  sendActions := []interface{}{
+    *taskAction1, userAction1, userAction2, *taskAction2}
   if err := ws.WriteJSON(sendActions); err != nil {
     t.Fatal(err)
   }
