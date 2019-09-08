@@ -16,6 +16,7 @@ export const IMAGE_ZOOM = 'IMAGE_ZOOM'
 
 // Item Level
 export const ADD_LABEL = 'ADD_LABEL'
+export const ADD_LABELS = 'ADD_LABELS'
 export const CHANGE_LABEL_SHAPE = 'CHANGE_LABEL_SHAPE'
 export const CHANGE_LABEL_PROPS = 'CHANGE_LABEL_PROPS'
 export const LINK_LABELS = 'LINK_LABELS'
@@ -70,6 +71,17 @@ export interface AddLabelAction extends BaseAction {
   shapeTypes: string[]
   /** Shapes of the label */
   shapes: ShapeType[]
+}
+
+export interface AddLabelsAction extends BaseAction {
+  /** item of the added label */
+  itemIndices: number[]
+  /** label to add */
+  labels: LabelType[]
+  /** types of the shapes */
+  shapeTypes: string[][]
+  /** Shapes of the label */
+  shapes: ShapeType[][]
 }
 
 export interface ChangeShapeAction extends BaseAction {

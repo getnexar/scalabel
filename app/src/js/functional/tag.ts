@@ -43,14 +43,6 @@ export function tagImage (
     return changeLabel(state, newAction)
   } else {
     const label = createTagLabel(0, state.user.select.item, attributes)
-    const newAction: types.AddLabelAction = {
-      type: types.ADD_LABEL,
-      sessionId: action.sessionId,
-      itemIndex: action.itemIndex,
-      label,
-      shapeTypes: [],
-      shapes: []
-    }
-    return addLabel(state, newAction)
+    return addLabel(state, action.sessionId, action.itemIndex, label)
   }
 }

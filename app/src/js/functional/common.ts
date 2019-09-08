@@ -2,7 +2,7 @@ import _ from 'lodash'
 import * as types from '../action/types'
 import { makeIndexedShape } from './states'
 import {
-  ItemType, LabelType, Select, State, UserType
+  ItemType, LabelType, Select, ShapeType, State, TaskStatus, UserType
 } from './types'
 import {
   removeListItems, removeObjectFields,
@@ -43,40 +43,89 @@ function updateUserSelect (user: UserType, pselect: Partial<Select>): UserType {
  * @param {types.AddLabelAction} action
  * @return {State}
  */
-export function addLabel (state: State, action: types.AddLabelAction): State {
-  let { task, user } = state
-  const session = state.session
-  const itemIndex = action.itemIndex
-  let label = action.label
-  const shapes = action.shapes
-  const newShapeId = task.status.maxShapeId + 1
-  const labelId = task.status.maxLabelId + 1
+export function addLabel (
+  state: State, sessionId: string, itemIndex: number, label: LabelType,
+  shapeTypes: string[] = [], shapes: ShapeType[] = []): State {
+  const addLabelsAction: types.AddLabelsAction = {
+    type: types.ADD_LABELS,
+    sessionId,
+    itemIndices: [itemIndex],
+    labels: [label],
+    shapeTypes: [shapeTypes],
+    shapes: [shapes]
+  }
+  return addLabels(state, addLabelsAction)
+}
+
+/**
+ * Add news labels to items
+ * @param item
+ * @param taskStatus
+ * @param label
+ * @param shapeTypes
+ * @param shapes
+ */
+function addLabelToItem (
+    item: ItemType, taskStatus: TaskStatus, label: LabelType,
+    shapeTypes: string[], shapes: ShapeType[]
+  ): [ItemType, LabelType, TaskStatus] {
+  const newShapeId = taskStatus.maxShapeId + 1
+  const labelId = taskStatus.maxLabelId + 1
   const shapeIds = _.range(shapes.length).map((i) => i + newShapeId)
-  const shapeTypes = action.shapeTypes
   const newShapes = shapes.map(
     (s, i) => makeIndexedShape(shapeIds[i], [labelId], shapeTypes[i], s))
-  const order = task.status.maxOrder + 1
+  const order = taskStatus.maxOrder + 1
   label = updateObject(label, {
-    id: labelId, item: itemIndex, order,
+    id: labelId, item: item.index, order,
     shapes: label.shapes.concat(shapeIds)
   })
-  let item = state.task.items[itemIndex]
   const labels = updateObject(
     item.labels,
     { [labelId]: label })
   const allShapes = updateObject(item.shapes, _.zipObject(shapeIds, newShapes))
   item = updateObject(item, { labels, shapes: allShapes })
-  const items = updateListItem(state.task.items, itemIndex, item)
-  if (action.sessionId === session.id) {
-    user = updateUserSelect(user, { label: labelId })
-  }
-  const status = updateObject(
-    task.status,
+  taskStatus = updateObject(
+    taskStatus,
     {
       maxLabelId: labelId,
       maxShapeId: shapeIds[shapeIds.length - 1],
       maxOrder: order
     })
+  return [item, label, taskStatus]
+}
+
+/**
+ * Add new label. The ids of label and shapes will be updated according to
+ * the current state.
+ * @param {State} state: current state
+ * @param {types.AddLabelsAction} action
+ * @return {State}
+ */
+export function addLabels (state: State, action: types.AddLabelsAction): State {
+  let { task, user } = state
+  const session = state.session
+  let status = task.status
+  const items = [...task.items]
+  const newLabels: LabelType[] = []
+  action.itemIndices.forEach((itemIndex, i) => {
+    const [newItem, newLabel, newStatus] = addLabelToItem(
+      items[itemIndex], status, action.labels[i],
+      action.shapeTypes[i], action.shapes[i])
+    items[itemIndex] = newItem
+    newLabels.push(newLabel)
+    status = newStatus
+  })
+
+  // Find the first new label in the selected item if the labels are created
+  // by this session.
+  if (action.sessionId === session.id) {
+    for (const label of newLabels) {
+      if (label.item === user.select.item) {
+        user = updateUserSelect(user, { label: label.id })
+        break
+      }
+    }
+  }
   task = updateObject(task, { status, items })
   return { task, user, session }
 }
@@ -165,13 +214,7 @@ export function linkLabels (
   newLabel.parent = -1
   newLabel.shapes = []
   newLabel.children = children
-  const addLabelAction: types.AddLabelAction = {
-    label: newLabel,
-    shapeTypes: [],
-    shapes: [],
-    ...action
-  }
-  state = addLabel(state, addLabelAction)
+  state = addLabel(state, action.sessionId, action.itemIndex, newLabel)
 
   // assign the label properties
   item = state.task.items[action.itemIndex]

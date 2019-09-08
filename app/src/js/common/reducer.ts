@@ -33,8 +33,8 @@ export const reducer: Reducer<State> = (
       return common.updateAll(state)
     case types.IMAGE_ZOOM:
       return image.zoomImage(state, action as types.ImageZoomAction)
-    case types.ADD_LABEL:
-      return common.addLabel(state, action as types.AddLabelAction)
+    case types.ADD_LABELS:
+      return common.addLabels(state, action as types.AddLabelsAction)
     case types.CHANGE_LABEL_SHAPE:
       return common.changeShape(state, action as types.ChangeShapeAction)
     case types.CHANGE_LABEL_PROPS:

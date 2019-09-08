@@ -45,12 +45,14 @@ export function loadItem (
  */
 export function addLabel (
   itemIndex: number, label: LabelType, shapeTypes: string[] = [],
-  shapes: ShapeType[] = []): types.AddLabelAction {
+  shapes: ShapeType[] = []): types.AddLabelsAction {
   return {
-    type: types.ADD_LABEL,
+    type: types.ADD_LABELS,
     sessionId: Session.id,
-    itemIndex,
-    label, shapeTypes, shapes
+    itemIndices: [itemIndex],
+    labels: [label],
+    shapeTypes: [shapeTypes],
+    shapes: [shapes]
   }
 }
 
