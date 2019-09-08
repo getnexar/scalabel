@@ -2,7 +2,8 @@ import _ from 'lodash'
 import * as types from '../action/types'
 import { makeIndexedShape } from './states'
 import {
-  ItemType, LabelType, Select, ShapeType, State, TaskStatus, UserType
+  IndexedShapeType, ItemType, LabelType, Select, ShapeType, State,
+  TaskStatus, UserType
 } from './types'
 import {
   removeListItems, removeObjectFields,
@@ -69,29 +70,61 @@ function addLabelToItem (
     item: ItemType, taskStatus: TaskStatus, label: LabelType,
     shapeTypes: string[], shapes: ShapeType[]
   ): [ItemType, LabelType, TaskStatus] {
-  const newShapeId = taskStatus.maxShapeId + 1
-  const labelId = taskStatus.maxLabelId + 1
-  const shapeIds = _.range(shapes.length).map((i) => i + newShapeId)
-  const newShapes = shapes.map(
-    (s, i) => makeIndexedShape(shapeIds[i], [labelId], shapeTypes[i], s))
-  const order = taskStatus.maxOrder + 1
-  label = updateObject(label, {
-    id: labelId, item: item.index, order,
-    shapes: label.shapes.concat(shapeIds)
+  const [newItem, newLabels, newStatus] = addLabelsToItem(
+    item, taskStatus, [label], [shapeTypes], [shapes])
+  return [newItem, newLabels[0], newStatus]
+}
+
+/**
+ * Add news labels to items
+ * @param item
+ * @param taskStatus
+ * @param label
+ * @param shapeTypes
+ * @param shapes
+ */
+function addLabelsToItem (
+    item: ItemType, taskStatus: TaskStatus, newLabels: LabelType[],
+    shapeTypes: string[][], shapes: ShapeType[][]
+  ): [ItemType, LabelType[], TaskStatus] {
+  newLabels = [...newLabels]
+  const newLabelIds: number[] = []
+  const newShapeIds: number[] = []
+  const newShapes: IndexedShapeType[] = []
+  newLabels.forEach((label, index) => {
+    const newShapeId = taskStatus.maxShapeId + 1 + newShapes.length
+    const labelId = taskStatus.maxLabelId + 1 + index
+    const shapeIds = _.range(shapes[index].length).map((i) => i + newShapeId)
+    const newLabelShapes = shapes[index].map((s, i) =>
+        makeIndexedShape(shapeIds[i], [labelId], shapeTypes[index][i], s)
+      )
+    const order = taskStatus.maxOrder + 1 + index
+    label = updateObject(label, {
+      id: labelId,
+      item: item.index,
+      order,
+      shapes: label.shapes.concat(shapeIds)
+    })
+    newLabels[index] = label
+    newLabelIds.push(labelId)
+    newShapes.push(...newLabelShapes)
+    newShapeIds.push(...shapeIds)
   })
   const labels = updateObject(
-    item.labels,
-    { [labelId]: label })
-  const allShapes = updateObject(item.shapes, _.zipObject(shapeIds, newShapes))
+    item.labels, _.zipObject(newLabelIds, newLabels))
+  const allShapes = updateObject(
+    item.shapes,
+    _.zipObject(newShapeIds, newShapes)
+  )
   item = updateObject(item, { labels, shapes: allShapes })
   taskStatus = updateObject(
     taskStatus,
     {
-      maxLabelId: labelId,
-      maxShapeId: shapeIds[shapeIds.length - 1],
-      maxOrder: order
+      maxLabelId: newLabelIds[newLabelIds.length - 1],
+      maxShapeId: newShapeIds[newShapeIds.length - 1],
+      maxOrder: taskStatus.maxOrder + newLabels.length
     })
-  return [item, label, taskStatus]
+  return [item, newLabels, taskStatus]
 }
 
 /**
