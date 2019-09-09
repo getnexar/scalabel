@@ -15,12 +15,12 @@ export const UPDATE_ALL = 'UPDATE_ALL'
 export const IMAGE_ZOOM = 'IMAGE_ZOOM'
 
 // Item Level
-export const ADD_LABEL = 'ADD_LABEL'
 export const ADD_LABELS = 'ADD_LABELS'
 export const CHANGE_LABEL_SHAPE = 'CHANGE_LABEL_SHAPE'
 export const CHANGE_LABEL_PROPS = 'CHANGE_LABEL_PROPS'
 export const LINK_LABELS = 'LINK_LABELS'
-export const DELETE_LABEL = 'DELETE_LABEL'
+export const DELETE_LABELS = 'DELETE_LABELS'
+
 // Image specific actions
 export const TAG_IMAGE = 'TAG_IMAGE'
 
@@ -62,26 +62,15 @@ export interface ImageZoomAction extends BaseAction {
   viewOffsetY: number
 }
 
-export interface AddLabelAction extends BaseAction {
-  /** item of the added label */
-  itemIndex: number
-  /** label to add */
-  label: LabelType
-  /** types of the shapes */
-  shapeTypes: string[]
-  /** Shapes of the label */
-  shapes: ShapeType[]
-}
-
 export interface AddLabelsAction extends BaseAction {
   /** item of the added label */
   itemIndices: number[]
-  /** label to add */
-  labels: LabelType[]
-  /** types of the shapes */
-  shapeTypes: string[][]
-  /** Shapes of the label */
-  shapes: ShapeType[][]
+  /** labels to add to each item */
+  labels: LabelType[][]
+  /** shape types for each label */
+  shapeTypes: string[][][]
+  /** shapes for each label */
+  shapes: ShapeType[][][]
 }
 
 export interface ChangeShapeAction extends BaseAction {
@@ -109,11 +98,11 @@ export interface LinkLabelsAction extends BaseAction {
   labelIds: number[]
 }
 
-export interface DeleteLabelAction extends BaseAction {
+export interface DeleteLabelsAction extends BaseAction {
   /** item of the label */
-  itemIndex: number
+  itemIndices: number[]
   /** ID of label to be deleted */
-  labelId: number
+  labelIds: number[][]
 }
 
 export interface TagImageAction extends BaseAction {
@@ -140,11 +129,11 @@ export type ActionType =
     | LoadItemAction
     | UpdateAllAction
     | ImageZoomAction
-    | AddLabelAction
+    | AddLabelsAction
     | ChangeShapeAction
     | ChangeLabelAction
     | LinkLabelsAction
-    | DeleteLabelAction
+    | DeleteLabelsAction
     | TagImageAction
     | ToggleAssistantViewAction
     | MoveCameraAndTargetAction

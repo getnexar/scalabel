@@ -42,8 +42,8 @@ export const reducer: Reducer<State> = (
         state, action as types.ChangeLabelAction)
     case types.LINK_LABELS:
       return common.linkLabels(state, action as types.LinkLabelsAction)
-    case types.DELETE_LABEL:
-      return common.deleteLabel(state, action as types.DeleteLabelAction)
+    case types.DELETE_LABELS:
+      return common.deleteLabels(state, action as types.DeleteLabelsAction)
     case types.TAG_IMAGE:
       return tag.tagImage(state, action as types.TagImageAction)
     case types.TOGGLE_ASSISTANT_VIEW:

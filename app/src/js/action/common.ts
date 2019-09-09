@@ -50,9 +50,9 @@ export function addLabel (
     type: types.ADD_LABELS,
     sessionId: Session.id,
     itemIndices: [itemIndex],
-    labels: [label],
-    shapeTypes: [shapeTypes],
-    shapes: [shapes]
+    labels: [[label]],
+    shapeTypes: [[shapeTypes]],
+    shapes: [[shapes]]
   }
 }
 
@@ -115,12 +115,12 @@ export function linkLabels (
  * @return {DeleteLabelAction}
  */
 export function deleteLabel (
-    itemIndex: number, labelId: number): types.DeleteLabelAction {
+    itemIndex: number, labelId: number): types.DeleteLabelsAction {
   return {
-    type: types.DELETE_LABEL,
+    type: types.DELETE_LABELS,
     sessionId: Session.id,
-    itemIndex,
-    labelId
+    itemIndices: [itemIndex],
+    labelIds: [[labelId]]
   }
 }
 

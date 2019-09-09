@@ -6,7 +6,11 @@ import {
   TaskStatus, UserType
 } from './types'
 import {
-  removeListItems, removeObjectFields,
+  assignToArray, getObjectKeys,
+  pickArray,
+  pickObject,
+  removeListItems,
+  removeObjectFields,
   updateListItem,
   updateObject
 } from './util'
@@ -51,32 +55,15 @@ export function addLabel (
     type: types.ADD_LABELS,
     sessionId,
     itemIndices: [itemIndex],
-    labels: [label],
-    shapeTypes: [shapeTypes],
-    shapes: [shapes]
+    labels: [[label]],
+    shapeTypes: [[shapeTypes]],
+    shapes: [[shapes]]
   }
   return addLabels(state, addLabelsAction)
 }
 
 /**
- * Add news labels to items
- * @param item
- * @param taskStatus
- * @param label
- * @param shapeTypes
- * @param shapes
- */
-function addLabelToItem (
-    item: ItemType, taskStatus: TaskStatus, label: LabelType,
-    shapeTypes: string[], shapes: ShapeType[]
-  ): [ItemType, LabelType, TaskStatus] {
-  const [newItem, newLabels, newStatus] = addLabelsToItem(
-    item, taskStatus, [label], [shapeTypes], [shapes])
-  return [newItem, newLabels[0], newStatus]
-}
-
-/**
- * Add news labels to items
+ * Add news labels to one item
  * @param item
  * @param taskStatus
  * @param label
@@ -128,6 +115,30 @@ function addLabelsToItem (
 }
 
 /**
+ * Add labels to multiple items
+ * @param item
+ * @param taskStatus
+ * @param newLabels
+ * @param shapeTypes
+ * @param shapes
+ */
+function addLabelstoItems (
+  items: ItemType[], taskStatus: TaskStatus, labelsToAdd: LabelType[][],
+  shapeTypes: string[][][], shapes: ShapeType[][][]
+  ): [ItemType[], LabelType[], TaskStatus] {
+  const allNewLabels: LabelType[] = []
+  items = [...items]
+  items.forEach((item, index) => {
+    const [newItem, newLabels, newStatus] = addLabelsToItem(
+      item, taskStatus, labelsToAdd[index], shapeTypes[index], shapes[index])
+    items[index] = newItem
+    taskStatus = newStatus
+    allNewLabels.push(...newLabels)
+  })
+  return [items, allNewLabels, taskStatus]
+}
+
+/**
  * Add new label. The ids of label and shapes will be updated according to
  * the current state.
  * @param {State} state: current state
@@ -137,18 +148,11 @@ function addLabelsToItem (
 export function addLabels (state: State, action: types.AddLabelsAction): State {
   let { task, user } = state
   const session = state.session
-  let status = task.status
-  const items = [...task.items]
-  const newLabels: LabelType[] = []
-  action.itemIndices.forEach((itemIndex, i) => {
-    const [newItem, newLabel, newStatus] = addLabelToItem(
-      items[itemIndex], status, action.labels[i],
-      action.shapeTypes[i], action.shapes[i])
-    items[itemIndex] = newItem
-    newLabels.push(newLabel)
-    status = newStatus
-  })
-
+  let items = [...task.items]
+  const selectedItems = pickArray(items, action.itemIndices)
+  const [newItems, newLabels, status] = addLabelstoItems(
+    selectedItems, task.status, action.labels, action.shapeTypes, action.shapes)
+  items = assignToArray(items, newItems, action.itemIndices)
   // Find the first new label in the selected item if the labels are created
   // by this session.
   if (action.sessionId === session.id) {
@@ -320,36 +324,90 @@ export function loadItem (state: State, action: types.LoadItemAction): State {
 }
 
 /**
- * Deconstruct given label
- * @param {State} state
- * @param {number} itemIndex
- * @param {number} labelId
- * @return {State}
+ * Delete labels from one item
+ * @param item
+ * @param labelIds
  */
-export function deleteLabel (
-  state: State, action: types.DeleteLabelAction): State {
-  let { task, user } = state
-  const itemIndex = action.itemIndex
-  const labelId = action.labelId
-  const item = state.task.items[itemIndex]
-  const label = item.labels[labelId]
-  let labels = removeObjectFields(item.labels, [labelId])
-  // Also remove the label from its parent
-  if (label.parent >= 0) {
-    const parentLabel = _.cloneDeep(labels[label.parent])
-    parentLabel.children = removeListItems(parentLabel.children, [labelId])
-    labels = updateObject(labels, { [parentLabel.id]: parentLabel })
-  }
-  // TODO: should we remove shapes?
-  // depending on how boundary sharing is implemented.
-  // remove labels
-  const shapes = removeObjectFields(item.shapes, label.shapes)
-  const items = updateListItem(state.task.items, itemIndex,
-    updateObject(item, { labels, shapes }))
-  task = updateObject(task, { items })
+export function deleteLabelsFromItem (
+  item: ItemType, labelIds: number[]): ItemType {
+  let labels = item.labels
+  const deletedLabels = pickObject(item.labels, labelIds)
+
+  // find related labels and shapes
+  const updatedLabels: {[key: number]: LabelType} = {}
+  const updatedShapes: { [key: number]: IndexedShapeType } = {}
+  const deletedShapes: { [key: number]: IndexedShapeType } = {}
+  _.forEach(deletedLabels, (label) => {
+    if (label.parent >= 0) {
+      const parentLabel = _.cloneDeep(labels[label.parent])
+      parentLabel.children = removeListItems(parentLabel.children, [label.id])
+      updatedLabels[parentLabel.id] = parentLabel
+    }
+    label.shapes.forEach((shapeId) => {
+      let shape = item.shapes[shapeId]
+      shape = updateObject(
+          shape, { label: removeListItems(shape.label, [label.id]) })
+      updatedShapes[shape.id] = shape
+    })
+  })
+  // remove widow labels
+  _.forEach(updatedLabels, (label) => {
+    if (label.children.length === 0) {
+      deletedLabels[label.id] = label
+    }
+  })
+  // remove orphan shapes
+  _.forEach(updatedShapes, (shape) => {
+    if (shape.label.length === 0) {
+      deletedShapes[shape.id] = shape
+    }
+  })
+
+  labels = removeObjectFields(updateObject(
+    item.labels, updatedLabels), getObjectKeys(deletedLabels))
+  const shapes = removeObjectFields(updateObject(
+    item.shapes, updatedShapes), getObjectKeys(deletedShapes))
+  return { ...item, labels, shapes }
+}
+
+/**
+ * Delete labels from one item
+ * @param item
+ * @param labelIds
+ */
+export function deleteLabelsFromItems (
+  items: ItemType[], labelIds: number[][]): ItemType[] {
+  items = [...items]
+  items.forEach((item, index) => {
+    items[index] = deleteLabelsFromItem(item, labelIds[index])
+  })
+  return items
+}
+
+/**
+ * Delete labels action
+ * @param state
+ * @param action
+ */
+export function deleteLabels (
+  state: State, action: types.DeleteLabelsAction): State {
+  const newItems = deleteLabelsFromItems(
+    pickArray(state.task.items, action.itemIndices), action.labelIds)
+  const items = assignToArray(
+    [...state.task.items], newItems, action.itemIndices)
+  const task = updateObject(state.task, { items })
   // Reset selected object
-  if (user.select.label === labelId) {
-    user = updateUserSelect(user, { label: -1 })
+  let { user } = state
+  for (const ids of action.labelIds) {
+    if (user.select.label === -1) {
+      break
+    }
+    for (const labelId of ids) {
+      if (user.select.label === labelId) {
+        user = updateUserSelect(user, { label: -1 })
+        break
+      }
+    }
   }
   return updateObject(state, { user, task })
 }

@@ -26,7 +26,7 @@ export interface LabelType {
   manual: boolean
 }
 
-export interface Track {
+export interface TrackType {
   /** ID of the track */
   id: number
   /** labels in this track [item index, label id] */
@@ -198,7 +198,7 @@ export interface TaskType {
   /** Items */
   items: ItemType[]
   /** tracks */
-  tracks: { [key: number]: Track }
+  tracks: { [key: number]: TrackType }
 }
 
 export interface Select {
