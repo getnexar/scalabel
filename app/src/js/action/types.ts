@@ -21,6 +21,8 @@ export const CHANGE_LABEL_PROPS = 'CHANGE_LABEL_PROPS'
 export const LINK_LABELS = 'LINK_LABELS'
 export const DELETE_LABELS = 'DELETE_LABELS'
 
+export const ADD_TRACK = 'ADD_TRACK'
+
 // Image specific actions
 export const TAG_IMAGE = 'TAG_IMAGE'
 
@@ -71,6 +73,17 @@ export interface AddLabelsAction extends BaseAction {
   shapeTypes: string[][][]
   /** shapes for each label */
   shapes: ShapeType[][][]
+}
+
+export interface AddTrackAction extends BaseAction {
+  /** item of the added label */
+  itemIndices: number[]
+  /** labels to add to each item */
+  labels: LabelType[]
+  /** shape types for each label */
+  shapeTypes: string[][]
+  /** shapes for each label */
+  shapes: ShapeType[][]
 }
 
 export interface ChangeShapesAction extends BaseAction {

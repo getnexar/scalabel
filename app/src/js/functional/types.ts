@@ -29,8 +29,8 @@ export interface LabelType {
 export interface TrackType {
   /** ID of the track */
   id: number
-  /** labels in this track [item index, label id] */
-  labels: Array<[number, number]>
+  /** labels in this track {item index: label id} */
+  labels: {[key: number]: number}
 }
 
 export interface RectType {
@@ -188,6 +188,8 @@ export interface TaskStatus {
   maxShapeId: number
   /** max order number */
   maxOrder: number
+  /** max track ID */
+  maxTrackId: number
 }
 
 export interface TaskType {

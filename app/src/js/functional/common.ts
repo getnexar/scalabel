@@ -5,10 +5,10 @@
  */
 import _ from 'lodash'
 import * as types from '../action/types'
-import { makeIndexedShape } from './states'
+import { makeIndexedShape, makeTrack } from './states'
 import {
   IndexedShapeType, ItemType, LabelType, Select, ShapeType, State,
-  TaskStatus, UserType
+  TaskStatus, TaskType, TrackType, UserType
 } from './types'
 import {
   assignToArray, getObjectKeys,
@@ -173,6 +173,59 @@ export function addLabels (state: State, action: types.AddLabelsAction): State {
 }
 
 /**
+ * Add one track to task
+ * @param task
+ * @param itemIndices
+ * @param labels
+ * @param shapeTypes
+ * @param shapes
+ */
+function addTrackToTask (
+  task: TaskType, itemIndices: number[],
+  labels: LabelType[], shapeTypes: string[][],
+  shapes: ShapeType[][]
+  ): [TaskType, TrackType, LabelType[]] {
+  const labelList = labels.map((l) => [l])
+  const shapeTypeList = shapeTypes.map((s) => [s])
+  const shapeList = shapes.map((s) => [s])
+  const [newItems, newLabels, status] = addLabelstoItems(
+    pickArray(task.items, itemIndices),
+    task.status, labelList, shapeTypeList, shapeList)
+  const items = assignToArray(task.items, newItems, itemIndices)
+  const trackLabels: {[key: number]: number} = {}
+  newLabels.map((l) => {
+    trackLabels[l.item] = l.id
+  })
+  const track = makeTrack(task.status.maxTrackId + 1, trackLabels)
+  const tracks = updateObject(task.tracks, { [track.id]: track })
+  status.maxTrackId += 1
+  task = { ...task, items, status, tracks }
+  return [ task, track, newLabels ]
+}
+
+/**
+ * Add track action
+ * @param {State} state
+ * @param {types.AddTrackAction} action
+ */
+export function addTrack (state: State, action: types.AddTrackAction): State {
+  let { user } = state
+  const [task,, newLabels] = addTrackToTask(
+    state.task, action.itemIndices, action.labels,
+    action.shapeTypes, action.shapes)
+  // select the label on the current item
+  if (action.sessionId === state.session.id) {
+    for (const l of newLabels) {
+      if (l.item === user.select.item) {
+        user = updateUserSelect(user, { label: l.id })
+        break
+      }
+    }
+  }
+  return { ...state, user, task }
+}
+
+/**
  * update shapes in an item
  * @param item
  * @param shapeIds
@@ -313,10 +366,8 @@ export function linkLabels (
   if (trackId >= 0) {
     newLabel.track = trackId
     let track = tracks[trackId]
-    const trackLabelIndex = _.findIndex(
-      track.labels, (p) => (p[0] === item.index))
-    track = updateObject(track, { labels: updateListItem(
-      track.labels, trackLabelIndex, [item.index, newLabelId ])})
+    track = updateObject(track, { labels: updateObject(
+      track.labels, { [item.index]: newLabelId })})
     tracks = updateObject(tracks, { [trackId]: track })
   }
 
