@@ -64,14 +64,14 @@ export function addLabel (
  * @return {ChangeLabelShapeAction}
  */
 export function changeLabelShape (
-    itemIndex: number, shapeId: number, props: Partial<ShapeType>
-  ): types.ChangeShapeAction {
+    itemIndex: number, shapeId: number, shape: Partial<ShapeType>
+  ): types.ChangeShapesAction {
   return {
-    type: types.CHANGE_LABEL_SHAPE,
+    type: types.CHANGE_SHAPES,
     sessionId: Session.id,
-    itemIndex,
-    shapeId,
-    props
+    itemIndices: [itemIndex],
+    shapeIds: [[shapeId]],
+    shapes: [[shape]]
   }
 }
 

@@ -1,3 +1,8 @@
+/**
+ * Main functions for transforming state
+ * NOTE: All the functions should be pure
+ * Pure Function: https://en.wikipedia.org/wiki/Pure_function
+ */
 import _ from 'lodash'
 import * as types from '../action/types'
 import { makeIndexedShape } from './states'
@@ -168,27 +173,58 @@ export function addLabels (state: State, action: types.AddLabelsAction): State {
 }
 
 /**
- * Update the properties of a shape
- * @param {State} state
- * @param {types.ChangeShapeAction} action
- * @return {State}
+ * update shapes in an item
+ * @param item
+ * @param shapeIds
+ * @param shapes
  */
-export function changeShape (
-  state: State, action: types.ChangeShapeAction): State {
+function changeShapesInItem (
+  item: ItemType, shapeIds: number[],
+  shapes: Array<Partial<ShapeType>>): ItemType {
+  const newShapes = { ...item.shapes }
+  shapeIds.forEach((shapeId, index) => {
+    newShapes[shapeId] = updateObject(newShapes[shapeId],
+      { shape: updateObject(newShapes[shapeId].shape, shapes[index]) })
+  })
+  return { ...item, shapes: newShapes }
+}
+
+/**
+ * changes shapes in items
+ * @param items
+ * @param shapeIds
+ * @param shapes
+ */
+function changeShapesInItems (
+  items: ItemType[], shapeIds: number[][],
+  shapes: Array<Array<Partial<ShapeType>>>): ItemType[] {
+  items = [...items]
+  items.forEach((item, index) => {
+    items[index] = changeShapesInItem(item, shapeIds[index], shapes[index])
+  })
+  return items
+}
+
+/**
+ * Change shapes action
+ * @param state
+ * @param action
+ */
+export function changeShapes (
+    state: State, action: types.ChangeShapesAction): State {
   let { task, user } = state
-  const itemIndex = action.itemIndex
-  const shapeId = action.shapeId
-  let item = state.task.items[itemIndex]
-  let indexedShape = item.shapes[shapeId]
-  indexedShape = updateObject(
-    indexedShape, { shape: updateObject(indexedShape.shape, action.props) })
-  item = updateObject(
-    item, { shapes: updateObject(item.shapes, { [shapeId]: indexedShape }) })
-  const selectedLabelId = (action.sessionId === state.session.id) ?
-    indexedShape.label[0] : user.select.label
-  const select = updateObject(user.select, { label: selectedLabelId })
-  user = updateObject(user, { select })
-  const items = updateListItem(state.task.items, itemIndex, item)
+  const shapeIds = action.shapeIds
+  const newItems = changeShapesInItems(
+    pickArray(task.items, action.itemIndices), shapeIds, action.shapes)
+  const items = assignToArray(task.items, newItems, action.itemIndices)
+  // select the label of the first shape on the current item
+  if (action.sessionId === state.session.id) {
+    const index = _.find(action.itemIndices, user.select.item)
+    if (index) {
+      const labelId = items[index].shapes[shapeIds[index][0]].label[0]
+      user = updateUserSelect(user, { label: labelId })
+    }
+  }
   task = updateObject(task, { items })
   return { ...state, task, user }
 }
@@ -339,6 +375,7 @@ export function deleteLabelsFromItem (
   const deletedShapes: { [key: number]: IndexedShapeType } = {}
   _.forEach(deletedLabels, (label) => {
     if (label.parent >= 0) {
+      // TODO: consider multiple level parenting
       const parentLabel = _.cloneDeep(labels[label.parent])
       parentLabel.children = removeListItems(parentLabel.children, [label.id])
       updatedLabels[parentLabel.id] = parentLabel

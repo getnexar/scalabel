@@ -16,7 +16,7 @@ export const IMAGE_ZOOM = 'IMAGE_ZOOM'
 
 // Item Level
 export const ADD_LABELS = 'ADD_LABELS'
-export const CHANGE_LABEL_SHAPE = 'CHANGE_LABEL_SHAPE'
+export const CHANGE_SHAPES = 'CHANGE_SHAPES'
 export const CHANGE_LABEL_PROPS = 'CHANGE_LABEL_PROPS'
 export const LINK_LABELS = 'LINK_LABELS'
 export const DELETE_LABELS = 'DELETE_LABELS'
@@ -73,13 +73,13 @@ export interface AddLabelsAction extends BaseAction {
   shapes: ShapeType[][][]
 }
 
-export interface ChangeShapeAction extends BaseAction {
+export interface ChangeShapesAction extends BaseAction {
   /** item of the shape */
-  itemIndex: number
-  /** Shape ID */
-  shapeId: number
+  itemIndices: number[]
+  /** Shape ids in each item */
+  shapeIds: number[][]
   /** properties to update for the shape */
-  props: object
+  shapes: Array<Array<Partial<ShapeType>>>
 }
 
 export interface ChangeLabelAction extends BaseAction {
@@ -130,7 +130,7 @@ export type ActionType =
     | UpdateAllAction
     | ImageZoomAction
     | AddLabelsAction
-    | ChangeShapeAction
+    | ChangeShapesAction
     | ChangeLabelAction
     | LinkLabelsAction
     | DeleteLabelsAction
