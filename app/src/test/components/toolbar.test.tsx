@@ -3,6 +3,9 @@ import FormControlLabel from '@material-ui/core/FormControlLabel/FormControlLabe
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import * as React from 'react'
 import { create } from 'react-test-renderer'
+import Session from '../../js/common/session'
+import { initStore } from '../../js/common/session_init'
+import { ToolBar } from '../../js/components/toolbar'
 import { Category } from '../../js/components/toolbar_category'
 
 afterEach(cleanup)
@@ -42,5 +45,34 @@ describe('Toolbar category setting', () => {
       <Category categories={null} headerText={'Label Category'} />)
     const root = category.getInstance()
     expect(root).toBe(null)
+  })
+
+  test('Delete by keyboard', () => {
+    Session.devMode = false
+    initStore({
+      task: {
+        taskTestKey: 'taskTestValue'
+      },
+      user: {
+        select: {
+          label: 1
+        }
+      },
+      session: {
+        sessionTestKey: 'sessionTestValue'
+      }
+    })
+    const bar = create(
+    <ToolBar
+      categories={null}
+      attributes={[]}
+      itemType={'itemType'}
+      labelType={'labelType'}
+      />
+    )
+    const deleteLabel = jest.fn()
+    bar.getInstance().keyDownHandler(new KeyboardEvent('Backspace'))
+    // fireEvent.keyDown(document, { key: 'Backspace' })
+    expect(deleteLabel).toBeCalled()
   })
 })
