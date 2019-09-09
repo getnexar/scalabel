@@ -20,7 +20,7 @@ function makeDrawableLabel (labelType: string): Label2D {
     return new Box2D()
   } else if (labelType === LabelTypes.TAG) {
     return new Tag2D()
-  } else if (labelType === LabelTypes.POLYGON_2D) {
+  } else if (labelType === LabelTypes.POLYGON_2D || LabelTypes.SEG_2D) {
     return new Polygon2D()
   } else {
     throw new Error(sprintf('Undefined label type %s', labelType))
@@ -75,6 +75,7 @@ export class Label2DList {
    */
   public redraw (
       labelContext: Context2D, controlContext: Context2D, ratio: number): void {
+    console.log('enter redraw function')
     this._labelList.forEach((v) => v.draw(labelContext, ratio, DrawMode.VIEW))
     if (!this._mouseDown) {
       this._labelList.forEach(
@@ -126,18 +127,21 @@ export class Label2DList {
   public onMouseDown (
       coord: Vector2D, labelIndex: number, handleIndex: number): void {
     this._mouseDown = true
+    // tslint:disable-next-line: no-console
+    console.log('enter the mouse down function')
 
-    if (this._highlightedLabel !== null &&
-      (this._selectedLabel === null || this._selectedLabel.editing === false)) {
-      this._highlightedLabel.setHighlighted(false)
-      this._highlightedLabel = null
-    }
+    // if (this._highlightedLabel !== null &&
+    //   (this._selectedLabel === null || this._selectedLabel.editing === false)) {
+    //   this._highlightedLabel.setHighlighted(false)
+    //   this._highlightedLabel = null
+    // }
 
     if (this._selectedLabel !== null && this._selectedLabel.editing === false) {
       this._selectedLabel.setSelected(false)
       this._selectedLabel = null
     }
-
+    // tslint:disable-next-line: no-console
+    // console.log('enter the judgement')
     if (this._selectedLabel === null) {
       if (labelIndex >= 0) {
         this._selectedLabel = this._labelList[labelIndex]
@@ -148,8 +152,12 @@ export class Label2DList {
         }
       } else { // new label
         const state = this._state
+        // tslint:disable-next-line: no-console
+        // console.log(state.task.config.labelTypes[state.user.select.labelType])
         const label = makeDrawableLabel(
         state.task.config.labelTypes[state.user.select.labelType])
+        // tslint:disable-next-line: no-console
+        console.log(state.task.config.labelTypes[state.user.select.labelType])
         label.initTemp(state, coord)
         this._selectedLabel = label
         this._labelList.push(label)
@@ -167,15 +175,18 @@ export class Label2DList {
    */
   public onMouseUp (
       coord: Vector2D, _labelIndex: number, _handleIndex: number): void {
-    this._mouseDown = false
+        // tslint:disable-next-line: no-console
+    console.log('enter the mouse up function')
     if (this._selectedLabel !== null) {
       this._selectedLabel.onMouseUp(coord)
       // If label did not commit remove from list
       if (!this._selectedLabel.commitLabel() &&
       this._selectedLabel.editing === false) {
+        // console.log('enter delete label')
         this._labelList.splice(this._labelList.indexOf(this._selectedLabel), 1)
       }
     }
+    this._mouseDown = false
   }
 
   /**
@@ -183,23 +194,24 @@ export class Label2DList {
    */
   public onMouseMove (
       coord: Vector2D, canvasLimit: Size2D,
-      labelIndex: number, handleIndex: number): void {
+      _labelIndex: number, _handleIndex: number): void {
         // can put edit in to mouse move
     if (!this._selectedLabel || this._selectedLabel.editing === false ||
         !this._selectedLabel.onMouseMove(coord, canvasLimit)) {
-      if (labelIndex >= 0) {
-        if (this._highlightedLabel === null) {
-          this._highlightedLabel = this._labelList[labelIndex]
-        }
-        if (this._highlightedLabel.index !== labelIndex) {
-          this._highlightedLabel.setHighlighted(false)
-          this._highlightedLabel = this._labelList[labelIndex]
-        }
-        this._highlightedLabel.setHighlighted(true, handleIndex)
-      } else if (this._highlightedLabel !== null) {
-        this._highlightedLabel.setHighlighted(false)
-        this._highlightedLabel = null
-      }
+      return
+      // if (labelIndex >= 0) {
+      //   if (this._highlightedLabel === null) {
+      //     this._highlightedLabel = this._labelList[labelIndex]
+      //   }
+      //   if (this._highlightedLabel.index !== labelIndex) {
+      //     this._highlightedLabel.setHighlighted(false)
+      //     this._highlightedLabel = this._labelList[labelIndex]
+      //   }
+      //   this._highlightedLabel.setHighlighted(true, handleIndex)
+      // } else if (this._highlightedLabel !== null) {
+      //   this._highlightedLabel.setHighlighted(false)
+      //   this._highlightedLabel = null
+      // }
     }
   }
 }

@@ -24,7 +24,7 @@ export function makeEdge2DStyle (
   }
 }
 
-enum EdgeType {
+export enum EdgeType {
   line,
   curve
 }
@@ -40,7 +40,7 @@ export class Edge2D {
   /** type of the edge */
   private _type: EdgeType
   /** control points of the edge */
-  private _control_points: EdgePoint2D[]
+  private _controlPoints: EdgePoint2D[]
 
   constructor (src: EdgePoint2D, dest: EdgePoint2D,
                type: EdgeType = EdgeType.line,
@@ -48,7 +48,43 @@ export class Edge2D {
     this._src = src
     this._dest = dest
     this._type = type
-    this._control_points = _controlPoints
+    this._controlPoints = _controlPoints
+  }
+
+  /** get and set source point */
+  public get src (): EdgePoint2D {
+    return this._src
+  }
+
+  public set src (s: EdgePoint2D) {
+    this._src = s
+  }
+
+  /** get and set destination point */
+  public get dest (): EdgePoint2D {
+    return this._dest
+  }
+
+  public set dest (d: EdgePoint2D) {
+    this._dest = d
+  }
+
+  /** get and set edge type */
+  public get type (): EdgeType {
+    return this._type
+  }
+
+  public set type (t: EdgeType) {
+    this._type = t
+  }
+
+  /** get and set control points */
+  public get control_point (): EdgePoint2D[] {
+    return this._controlPoints
+  }
+
+  public set control_point (c: EdgePoint2D[]) {
+    this._controlPoints = c
   }
 
   /**
@@ -61,14 +97,15 @@ export class Edge2D {
     context: Context2D, ratio: number, _style: Edge2DStyle): void {
     context.save()
     // convert to display resolution
-    const srcReal = this._src.clone().scale(ratio)
+    // const srcReal = this._src.clone().scale(ratio)
     const destReal = this._dest.clone().scale(ratio)
 
-    context.moveTo(srcReal.x, srcReal.y)
+    // context.moveTo(srcReal.x, srcReal.y)
+    // context.strokeStyle(_style)
     context.lineTo(destReal.x, destReal.y)
-    context.closePath()
-    context.fill()
+    // context.closePath()
+    // context.fill()
     context.stroke()
-    context.restore()
+    // context.restore()
   }
 }

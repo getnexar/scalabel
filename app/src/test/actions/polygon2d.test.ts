@@ -6,7 +6,7 @@ import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
 import { PolygonType } from '../../js/functional/types'
 import { Vector2D } from '../../js/math/vector2d'
-import { testJson } from '../test_objects'
+import { testJson } from '../test_image_objects'
 
 test('Add, change and delete polygon labels', () => {
   Session.devMode = false
