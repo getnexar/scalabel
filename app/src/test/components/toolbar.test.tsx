@@ -7,8 +7,20 @@ import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
 import { ToolBar } from '../../js/components/toolbar'
 import { Category } from '../../js/components/toolbar_category'
+// import { testJson } from '../test_bar'
 
 afterEach(cleanup)
+
+let handleDeleteWasCalled: boolean = false
+
+const dummyHandleDelete = (
+): void => {
+  handleDeleteWasCalled = true
+}
+
+beforeEach(() => {
+  handleDeleteWasCalled = false
+})
 
 describe('Toolbar category setting', () => {
   test('Category selection', () => {
@@ -46,7 +58,6 @@ describe('Toolbar category setting', () => {
     const root = category.getInstance()
     expect(root).toBe(null)
   })
-
   test('Delete by keyboard', () => {
     Session.devMode = false
     initStore({
@@ -54,25 +65,24 @@ describe('Toolbar category setting', () => {
         taskTestKey: 'taskTestValue'
       },
       user: {
-        select: {
-          label: 1
-        }
+        userTestKey: 'Backspace'
       },
       session: {
         sessionTestKey: 'sessionTestValue'
       }
     })
-    const bar = create(
+    render(
     <ToolBar
       categories={null}
       attributes={[]}
       itemType={'itemType'}
       labelType={'labelType'}
+      handleDelete={dummyHandleDelete}
       />
     )
-    const deleteLabel = jest.fn()
-    bar.getInstance().keyDownHandler(new KeyboardEvent('Backspace'))
-    // fireEvent.keyDown(document, { key: 'Backspace' })
-    expect(deleteLabel).toBeCalled()
+    expect(handleDeleteWasCalled).toBe(false)
+    fireEvent.keyDown(document, { key: 'Backspace' })
+    expect(handleDeleteWasCalled).toBe(true)
+    // expect(deleteLabel).toBeCalled()
   })
 })

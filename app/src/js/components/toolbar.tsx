@@ -24,6 +24,8 @@ function onDeleteLabel () {
 
 /** This is the interface of props passed to ToolBar */
 interface Props {
+  /** handle deletion */
+  handleDelete: () => void
   /** categories of ToolBar */
   categories: string[] | null
   /** attributes of ToolBar */
@@ -50,6 +52,7 @@ export class ToolBar extends Component<Props> {
    */
   public keyDownHandler (e: KeyboardEvent) {
     if (e.key === 'Backspace') {
+      this.props.handleDelete()
       const select = Session.getState().user.select
       if (select.label >= 0) {
         Session.dispatch(deleteLabel(select.item, select.label))
