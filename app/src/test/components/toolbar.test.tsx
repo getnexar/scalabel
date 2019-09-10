@@ -7,14 +7,15 @@ import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
 import { ToolBar } from '../../js/components/toolbar'
 import { Category } from '../../js/components/toolbar_category'
-// import { testJson } from '../test_bar'
 
 afterEach(cleanup)
 
 let handleDeleteWasCalled: boolean = false
 
 const dummyHandleDelete = (
+  toggleName: string
 ): void => {
+  toggleName = toggleName
   handleDeleteWasCalled = true
 }
 

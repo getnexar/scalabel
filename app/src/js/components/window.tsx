@@ -9,16 +9,22 @@ import TitleBar from './title_bar'
 // $FlowFixMe
 import { ToolBar } from './toolbar'
 
+const dummyHandleDelete = (
+  toggleName: string
+): void => {
+  toggleName = toggleName
+}
+
 /**
  * Manage the whole window
  */
-
 export class Window extends React.Component {
   /**
    * Window constructor
    * @param {object} props: name of the container in HTML to
    * place this window
    */
+
   constructor (props: object) {
     super(props)
   }
@@ -40,8 +46,10 @@ export class Window extends React.Component {
             dashboardLink={Path.vendorDashboard()}
         />
     )
+
     const leftSidebar1 = (
         <ToolBar
+            handleDelete={dummyHandleDelete}
             categories={config.categories}
             attributes={config.attributes}
             itemType={config.itemType}
