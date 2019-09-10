@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { sprintf } from 'sprintf-js'
-import * as LabelTypes from '../common/label_types'
 import Session from '../common/session'
+import { LabelTypes } from '../common/types'
 import { State } from '../functional/types'
 import { Size2D } from '../math/size2d'
 import { Vector2D } from '../math/vector2d'
@@ -175,7 +175,7 @@ export class Label2DList {
    */
   public onMouseUp (
       coord: Vector2D, _labelIndex: number, _handleIndex: number): void {
-        // tslint:disable-next-line: no-console
+    // tslint:disable-next-line: no-console
     console.log('enter the mouse up function')
     if (this._selectedLabel !== null) {
       this._selectedLabel.onMouseUp(coord)
@@ -198,6 +198,9 @@ export class Label2DList {
         // can put edit in to mouse move
     if (!this._selectedLabel || this._selectedLabel.editing === false ||
         !this._selectedLabel.onMouseMove(coord, canvasLimit)) {
+      if (this._highlightedLabel === null) {
+        return
+      }
       return
       // if (labelIndex >= 0) {
       //   if (this._highlightedLabel === null) {

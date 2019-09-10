@@ -74,14 +74,15 @@ type LabelData struct {
 	Shapes     []int            `json:"shapes" yaml:"shapes"`
 	Track      int              `json:"track" yaml:"track"`
 	Order      int              `json:"order" yaml:"order"`
+	Manual     bool             `json:"manual" yaml:"manual"`
 }
 
 //Contains data for single shape
 type ShapeData struct {
-	Id     int         `json:"id" yaml:"id"`
-	Label  []int       `json:"label" yaml:"label"`
-	Manual bool        `json:"manual" yaml:"manual"`
-	Shape  interface{} `json:"shape" yaml:"shape"`
+	Id    int         `json:"id" yaml:"id"`
+	Label []int       `json:"label" yaml:"label"`
+	Type  string      `json:"type" yaml:"type"`
+	Shape interface{} `json:"shape" yaml:"shape"`
 }
 
 //Data for tracks

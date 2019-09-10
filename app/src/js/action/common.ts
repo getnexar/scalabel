@@ -44,13 +44,13 @@ export function loadItem (
  * @return {AddLabelAction}
  */
 export function addLabel (
-  itemIndex: number, label: LabelType,
-  shapes: ShapeType[]): types.AddLabelAction {
+  itemIndex: number, label: LabelType, shapeTypes: string[] = [],
+  shapes: ShapeType[] = []): types.AddLabelAction {
   return {
     type: types.ADD_LABEL,
     sessionId: Session.id,
     itemIndex,
-    label, shapes
+    label, shapeTypes, shapes
   }
 }
 
@@ -58,11 +58,12 @@ export function addLabel (
  * Change the shape of the label
  * @param {number} itemIndex
  * @param {number} shapeId
- * @param {{}}props
+ * @param {Partial<ShapeType>} props
  * @return {ChangeLabelShapeAction}
  */
 export function changeLabelShape (
-  itemIndex: number, shapeId: number, props: {}): types.ChangeShapeAction {
+    itemIndex: number, shapeId: number, props: Partial<ShapeType>
+  ): types.ChangeShapeAction {
   return {
     type: types.CHANGE_LABEL_SHAPE,
     sessionId: Session.id,
@@ -76,11 +77,12 @@ export function changeLabelShape (
  * Change the properties of the label
  * @param {number} itemIndex
  * @param {number} labelId
- * @param {{}}props
+ * @param {Partial<LabelType>}props
  * @return {ChangeLabelPropsAction}
  */
 export function changeLabelProps (
-  itemIndex: number, labelId: number, props: {}): types.ChangeLabelAction {
+    itemIndex: number, labelId: number, props: Partial<LabelType>
+  ): types.ChangeLabelAction {
   return {
     type: types.CHANGE_LABEL_PROPS,
     sessionId: Session.id,

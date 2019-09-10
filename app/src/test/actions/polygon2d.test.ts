@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import * as action from '../../js/action/common'
 import * as polygon2d from '../../js/action/polygon2d'
-import * as labels from '../../js/common/label_types'
 import Session from '../../js/common/session'
 import { initStore } from '../../js/common/session_init'
+import { LabelTypes } from '../../js/common/types'
 import { PolygonType } from '../../js/functional/types'
 import { Vector2D } from '../../js/math/vector2d'
 import { testJson } from '../test_image_objects'
@@ -16,22 +16,22 @@ test('Add, change and delete polygon labels', () => {
   Session.dispatch(polygon2d.addPolygon2dLabel(itemIndex, [0],
     [new Vector2D(0, 0), new Vector2D(1, 0),
       new Vector2D(1, 1), new Vector2D(0, 1)],
-      [0, 0, 0, 0]))
+      ['', '', '', '']))
   Session.dispatch(polygon2d.addPolygon2dLabel(itemIndex, [0],
     [new Vector2D(0, 0), new Vector2D(1, 0),
       new Vector2D(1, 1), new Vector2D(0, 1)],
-      [0, 0, 0, 0]))
+      ['', '', '', '']))
   Session.dispatch(polygon2d.addPolygon2dLabel(itemIndex, [0],
     [new Vector2D(0, 0), new Vector2D(1, 0),
       new Vector2D(1, 1), new Vector2D(0, 1)],
-      [0, 0, 0, 0]))
+      ['', '', '', '']))
   let state = Session.getState()
   expect(_.size(state.task.items[0].labels)).toBe(3)
   expect(_.size(state.task.items[0].shapes)).toBe(3)
   const labelIds: number[] = _.map(state.task.items[0].labels, (l) => l.id)
   let label = state.task.items[0].labels[labelIds[0]]
   expect(label.item).toBe(0)
-  expect(label.type).toBe(labels.POLYGON_2D)
+  expect(label.type).toBe(LabelTypes.POLYGON_2D)
   const indexedShape = state.task.items[0].shapes[label.shapes[0]]
   let shape = indexedShape.shape as PolygonType
   // Check label ids
@@ -59,10 +59,10 @@ test('Add, change and delete polygon labels', () => {
   expect(shape.points[2].y).toBe(1)
   expect(shape.points[3].y).toBe(1)
 
-  expect(shape.types[0]).toBe(0)
-  expect(shape.types[1]).toBe(0)
-  expect(shape.types[2]).toBe(0)
-  expect(shape.types[3]).toBe(0)
+  expect(shape.types[0]).toBe('')
+  expect(shape.types[1]).toBe('')
+  expect(shape.types[2]).toBe('')
+  expect(shape.types[3]).toBe('')
 
   Session.dispatch(
     action.changeLabelShape(
@@ -84,10 +84,10 @@ test('Add, change and delete polygon labels', () => {
   expect(shape.points[2].y).toBe(2)
   expect(shape.points[3].y).toBe(0)
 
-  expect(shape.types[0]).toBe(0)
-  expect(shape.types[1]).toBe(0)
-  expect(shape.types[2]).toBe(0)
-  expect(shape.types[3]).toBe(0)
+  expect(shape.types[0]).toBe('')
+  expect(shape.types[1]).toBe('')
+  expect(shape.types[2]).toBe('')
+  expect(shape.types[3]).toBe('')
 
   Session.dispatch(action.deleteLabel(itemIndex, label.id))
   state = Session.getState()

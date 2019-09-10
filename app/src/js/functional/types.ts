@@ -22,6 +22,8 @@ export interface LabelType {
   track: number
   /** order of the label among all the labels */
   order: number
+  /** whether the label is created manually */
+  manual: boolean
 }
 
 export interface Track {
@@ -44,16 +46,9 @@ export interface RectType {
 
 export interface PolygonType {
   /** controlPoint x coordinate   */
-  points: Vector2Type []
+  points: Point2DType []
   /** controlPoint y coordinate  */
-  types: number []
-}
-
-export interface Vector2Type {
-  /** The x-coordinate */
-  x: number
-  /** The y-coordinate */
-  y: number
+  types: string []
 }
 
 export interface Vector3Type {
@@ -76,15 +71,32 @@ export interface CubeType {
   anchorIndex: number
 }
 
-export type ShapeType = RectType | CubeType | PolygonType
+export interface Point2DType {
+  /** The x-coordinate */
+  x: number
+  /** The y-coordinate */
+  y: number
+}
+
+export interface PathPoint2DType {
+  /** The x-coordinate */
+  x: number
+  /** The y-coordinate */
+  y: number
+  /** type of the point in the path. value from common/types.PathPointType */
+  type: string
+}
+
+export type ShapeType = RectType | CubeType |
+PolygonType | Point2DType | PathPoint2DType
 
 export interface IndexedShapeType {
   /** ID of the shape */
   id: number
   /** Label ID of the shape */
-  label: [number]
-  /** Whether the shape is created manually */
-  manual: boolean
+  label: number[]
+  /** type string of the shape. Value from common/types.ShapeType */
+  type: string
   /** Shape data */
   shape: ShapeType
 }
