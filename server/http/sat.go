@@ -653,6 +653,8 @@ func postExportHandler(w http.ResponseWriter, r *http.Request) {
 					label.Category = labelToLoad.CategoryPath
 					label.Attributes = labelToLoad.Attributes
 					switch projectToLoad.Options.LabelType {
+					case "classification":
+						label.Box2d = ParseBox2d(labelToLoad.Data)
 					case "box2d":
 						label.Box2d = ParseBox2d(labelToLoad.Data)
 					case "box3d":
@@ -779,7 +781,7 @@ func getCategoriesFromProjectForm(r *http.Request) []Category {
 		Info.Printf("Miss category file and using default categories for %s.",
 			labelType)
 
-		if labelType == "box2d" {
+		if labelType == "box2d" || labelType == "classification" {
 			categories = defaultBox2dCategories
 		} else if labelType == "segmentation" {
 			categories = defaultSeg2dCategories
@@ -820,7 +822,7 @@ func getAttributesFromProjectForm(r *http.Request) []Attribute {
 		Info.Printf("Missing attribute file and"+
 			"using default attributes for %s.", labelType)
 
-		if labelType == "box2d" {
+		if labelType == "box2d" || labelType == "classification" {
 			attributes = defaultBox2dAttributes
 		} else {
 			attributes = dummyAttribute

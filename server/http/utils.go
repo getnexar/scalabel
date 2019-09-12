@@ -211,6 +211,9 @@ func GetDashboardContents(projectName string) (DashboardContents, error) {
 func GetHandlerUrl(itemType string, labelType string) string {
 	switch itemType {
 	case "image":
+		if labelType == "classification" {
+			return "classification"
+		}
 		if labelType == "box2d" || labelType == "segmentation" ||
 			labelType == "lane" {
 			return "label2d"
