@@ -31,7 +31,7 @@ export function initSatSession(labelType, itemType) {
     showTemplateById('video_usage');
     document.getElementById('div-canvas').style.height = 'calc(100vh - 103px)';
   }
-  if (labelType === 'box2d') {
+  if (labelType === 'box2d' || labelType === "classification") {
     showElementById('crosshair');
     labelClass = Box2d;
   } else if (labelType === 'segmentation' || labelType === 'lane') {
@@ -63,7 +63,7 @@ export function initSatSession(labelType, itemType) {
  */
 export function initTask(labelType, itemType) {
     let labelClass;
-    if (labelType === 'box2d') {
+    if (labelType === 'box2d' || labelType === 'classification') {
       labelClass = Box2d;
     } else if (labelType === 'segmentation' || labelType === 'lane') {
       labelClass = Seg2d;
