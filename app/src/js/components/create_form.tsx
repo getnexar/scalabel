@@ -151,6 +151,9 @@ export default class CreateForm extends React.Component<Props, State> {
                         }}
                 >
                   <option/>
+                  <option value='classification'>
+                    Classification
+                  </option>
                   <option value='tag' data-testid='image-tagging'>
                     Image Tagging
                   </option>
@@ -333,7 +336,10 @@ export default class CreateForm extends React.Component<Props, State> {
   private handleInstructions = (itemType: string) => {
     let labelName = ''
     let instructions = ''
-    if (itemType === 'tag') {
+    if (itemType === 'classification') {
+      labelName = 'Classification'
+      this.setState({ showCategoriesUpload: true })
+    } else if (itemType === 'tag') {
       labelName = 'Image Tagging'
       this.setState({ showCategoriesUpload: false })
     } else if (itemType === 'box2d') {
