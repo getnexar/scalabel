@@ -41,7 +41,7 @@
     // will be detected based on the file contents. Set to false to keep
     // the values you've explicitly set, above.
     "editor.detectIndentation": false,
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     // python settings
     "python.formatting.provider": "autopep8",
     "python.linting.pylintEnabled": true,
@@ -52,6 +52,7 @@
         "--fast"
     ],
     "files.autoSave": "afterDelay",
+    "files.insertFinalNewline": false,
     "spellright.language": [
         "en"
     ],
