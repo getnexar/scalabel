@@ -249,7 +249,7 @@ func exportItemData(
 		itemLabel.Attributes = parseSatLabelAttributes(labelToLoad.Attributes)
 		// TODO: Handle multiple categories
 		itemLabel.Category = satConfig.Categories[labelToLoad.Category[0]]
-		if labelToLoad.Type == "box2d" {
+		if labelToLoad.Type == "box2d" || labelToLoad.Type == "classification" {
 			itemLabel.ManualShape = false
 			itemLabel.Box2d = itemToLoad.Shapes[shapeId].Shape
 		}
