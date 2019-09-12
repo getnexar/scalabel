@@ -290,6 +290,21 @@ Sat.prototype.appendCascadeCategories = function(
     }
     child.size = Math.min(10, subcategories.length);
   }
+
+  // Add hidden/disabled option for classification label type view
+  // Needed to allow triggering the cagegories.onChange event on first option
+  // Otherwise, first option is preselected and clicking on the first option
+  // doesn't trigger the onChange event
+  // Needed for image.js -> SatImage.prototype._changeSelectedLabelCategory
+  if (self.labelType === "classification") {
+    const option = document.createElement('option');
+    option.setAttribute("hidden", true);
+    option.setAttribute("disabled", true);
+    option.setAttribute("selected", true);
+    option.setAttribute("value", true);
+    child.append(option);
+  }
+
   for (let subcategory of subcategories) {
     let option = document.createElement('option');
     option.innerHTML = subcategory.name;
