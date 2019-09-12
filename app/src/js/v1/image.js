@@ -1,5 +1,6 @@
 import {SatItem, SatLabel, pickColorPalette} from './sat';
 import {hiddenStyleColor, mode, rgb} from './utils';
+import {Vector2D} from '../../js/math/vector2d'
 import {UP_RES_RATIO} from './shape';
 import {sprintf} from 'sprintf-js';
 import $ from 'jquery';
@@ -1291,6 +1292,41 @@ SatImage.prototype._changeSelectedLabelCategory = function() {
     let option = self.catSel.options[self.catSel.selectedIndex].textContent;
     self.selectedLabel.setCategoryPath(option);
     self.redrawLabelCanvas();
+  } else if (self.sat.labelType === "classification") {
+    // Get selected category and attributes
+    self.catSel = document.getElementById('category_select');
+    let cat = self.catSel.options[self.catSel.selectedIndex].textContent;
+    let attributes = self._getSelectedAttributes();
+    
+    // Define label size to fill whole imageCanvas minus offset
+    const rect = self.hiddenCanvas.getBoundingClientRect();
+    const offset = 20;
+    const topLeftX = rect.x + offset;
+    const topLeftY = rect.y + offset;
+    const bottomRightX = rect.x + rect.width - offset;
+    const bottomRightY = rect.y + rect.height - offset;
+
+    // Define mouse X,Y position to pass as event to .mouse(down, up, move)
+    const mouseDownEvent = {clientX: topLeftX, clientY: topLeftY};
+    const mouseMoveEvent = {clientX: bottomRightX, clientY: bottomRightY};
+    const mouseUpEvent = {clientX: bottomRightX, clientY: bottomRightY};
+
+    // Create new label object with selected category/attribute
+    self.selectLabel(self.sat.newLabel({
+      categoryPath: cat,
+      attributes: attributes,
+      mousePos: new Vector2D(topLeftX, topLeftY)
+    }));
+
+    // Draw label on the image canvas using .mouse(down, up, move) events
+    self.selectedLabel.mousedown(mouseDownEvent);
+    self.selectedLabel.mousemove(mouseMoveEvent);
+    self.selectedLabel.mouseup(mouseUpEvent);
+
+    // Update UI after label was created
+    self.redrawLabelCanvas();
+    self.redrawHiddenCanvas();
+    self.updateLabelCount();
   }
 };
 
